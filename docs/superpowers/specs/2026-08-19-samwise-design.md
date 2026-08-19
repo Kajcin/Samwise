@@ -37,8 +37,10 @@ transplanting, pruning, fertilizing, harvesting) that syncs to Google Calendar.
 - **Backend**: Supabase.
   - Postgres for all data, Row Level Security on every table keyed by
     `user_id = auth.uid()`.
-  - Supabase Auth with Google as the sole OAuth provider (reused later for
-    Calendar scope).
+  - Supabase Auth with Google as the sole OAuth provider, requesting only
+    basic profile scope at sign-in. Connecting Calendar sync later is a
+    separate, incremental Google OAuth request (triggered from Settings),
+    not a reuse of the sign-in token.
   - One Supabase Edge Function handles Google Calendar push, keeping the
     stored Calendar refresh token server-side only.
   - Task generation lives in a Postgres function + trigger, not client code,
@@ -52,9 +54,10 @@ is inherently relational, which Postgres/Supabase models directly (foreign
 keys, joins) versus Firestore's document/denormalization approach. RLS is
 also a clean, additive path from single-user to multi-user: add a `user_id`
 column and policy now, no schema rework later. Supabase Auth's Google OAuth
-flow can also surface a Calendar refresh token that the app stores for
-background sync; Firebase Auth doesn't manage a Google refresh token for
-later reuse, which would require a separate OAuth flow bolted on regardless.
+integration is also what the app reuses for the incremental Calendar-scope
+request, surfacing a refresh token the app stores for background sync;
+Firebase Auth doesn't manage a Google refresh token for later reuse, which
+would require a separate OAuth flow bolted on regardless.
 
 ## Data model
 
@@ -71,7 +74,10 @@ readable by all, writable by none from the client).
   `notes`
 - **`beds`** — `id`, `user_id`, `name`, `rows`, `cols`
 - **`plantings`** — `id`, `user_id`, `bed_id` (FK), `cell_row`, `cell_col`,
-  `plant_id` (FK), `planted_date`, `status` (`active` / `removed`)
+  `plant_id` (FK), `planted_date`, `status` (`active` / `removed`). Unique
+  constraint on (`bed_id`, `cell_row`, `cell_col`) where `status = 'active'`
+  — one active planting per cell; removing a planting frees the cell for a
+  new one while keeping the removed row for history.
 - **`tasks`** — `id`, `user_id`, `planting_id` (FK, nullable for manually
   added tasks), `task_type`, `due_date`, `completed_at`,
   `google_calendar_event_id` (nullable)
