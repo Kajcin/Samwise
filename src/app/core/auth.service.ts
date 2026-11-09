@@ -33,6 +33,16 @@ export class AuthService {
     });
   }
 
+  /**
+   * Local development only (login form is shown when environment.devEmailLogin is true).
+   * Production uses Google sign-in exclusively; the hosted project has the Email provider disabled.
+   * Returns null on success, or the error message.
+   */
+  async signInWithPassword(email: string, password: string): Promise<string | null> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return error ? error.message : null;
+  }
+
   async signOut(): Promise<void> {
     await supabase.auth.signOut();
     this.currentUserSignal.set(null);

@@ -1,4 +1,22 @@
 <main>
   <h1>Samwise</h1>
   <button (click)="signIn()">Sign in with Google</button>
+
+  @if (devEmailLogin) {
+    <form (submit)="devSignIn($event)">
+      <h2>Local development sign-in</h2>
+      <label>
+        Email
+        <input type="email" autocomplete="username" [value]="email()" (input)="email.set($any($event.target).value)" />
+      </label>
+      <label>
+        Password
+        <input type="password" autocomplete="current-password" [value]="password()" (input)="password.set($any($event.target).value)" />
+      </label>
+      <button type="submit">Sign in</button>
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
+    </form>
+  }
 </main>

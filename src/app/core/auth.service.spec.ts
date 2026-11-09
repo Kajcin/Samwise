@@ -21,6 +21,17 @@ describe('AuthService', () => {
     });
   });
 
+  it('signInWithPassword passes the credentials to Supabase and returns null on success', async () => {
+    spyOn(supabase.auth, 'signInWithPassword').and.resolveTo({ data: {}, error: null } as any);
+    expect(await service.signInWithPassword('dev@samwise.local', 'pw')).toBeNull();
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'dev@samwise.local', password: 'pw' });
+  });
+
+  it('signInWithPassword returns the error message on failure', async () => {
+    spyOn(supabase.auth, 'signInWithPassword').and.resolveTo({ data: {}, error: { message: 'Invalid login credentials' } } as any);
+    expect(await service.signInWithPassword('dev@samwise.local', 'wrong')).toBe('Invalid login credentials');
+  });
+
   it('signOut calls supabase.auth.signOut and clears currentUser', async () => {
     spyOn(supabase.auth, 'signOut').and.resolveTo({ error: null } as any);
     (service as any).currentUserSignal.set({ id: 'u1' } as any);

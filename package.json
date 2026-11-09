@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "db:psql": "node scripts/psql.mjs"
+    "db:psql": "node scripts/psql.mjs",
+    "dev:user": "node scripts/create-dev-user.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",

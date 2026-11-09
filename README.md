@@ -120,6 +120,17 @@ the client secret in the frontend.
 npx ng serve             # http://localhost:4200
 ```
 
+**Signing in locally without Google.** In development, the login page also
+has an email/password form. Create the user once:
+
+```bash
+npm run dev:user         # dev@samwise.local / samwise-dev
+```
+
+Then sign in with those credentials. `npx supabase db reset` deletes all
+users, so run `npm run dev:user` again after a reset. Google sign-in works
+locally too, once `supabase/.env` holds the OAuth client from step 2.
+
 ### 4. Hosted Supabase (production)
 
 1. Create a Supabase project, then link and push:
@@ -134,6 +145,10 @@ npx ng serve             # http://localhost:4200
    are enabled. The migrations create the first two, so this is a check.
 3. **Authentication → Providers → Google:** enable it and enter the client
    ID and secret.
+   **Authentication → Providers → Email:** disable it. Google is the only
+   sign-in method in production. The email/password form is hidden in
+   production builds, but only disabling the provider stops someone from
+   calling the sign-up API directly.
 4. **Authentication → URL Configuration:** set Site URL to
    `https://<your-domain>` and add it to the redirect allow-list.
 5. **Edge Function secrets:**

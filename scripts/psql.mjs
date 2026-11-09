@@ -19,7 +19,7 @@ function hasLocalPsql() {
 
 function localDbUrl() {
   if (process.env.DB_URL) return process.env.DB_URL;
-  const status = spawnSync('npx', ['--no-install', 'supabase', 'status', '-o', 'env'], {
+  const status = spawnSync('npx --no-install supabase status -o env', {
     encoding: 'utf8',
     shell: true, // npx is npx.cmd on Windows
   });
