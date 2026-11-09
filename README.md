@@ -12,16 +12,17 @@ care info, and auto-generate care tasks that sync to Google Calendar.
 
 | Tool | Used for |
 | --- | --- |
-| Node.js (LTS) + npm | Angular app |
-| Angular CLI (`npm i -g @angular/cli`) | `ng serve` / `ng test` / `ng build` |
-| Supabase CLI | Local stack, migrations, Edge Functions, deploys |
-| Docker Desktop (running) | Required by `supabase start` |
-| Deno | Edge Function tests (`deno test`) |
-| `psql` | SQL-level tests against the local database |
+| Node.js (LTS) + npm | Angular app, helper scripts |
+| Docker Desktop (running) | Required by `npx supabase start` |
+| Deno (`winget install DenoLand.Deno`) | Edge Function tests (only from Stage 5) |
 
-On Windows, `psql` isn't installed by default (install the PostgreSQL
-command-line tools), and the plan's test commands use `grep`/`cut`, so run
-them in Git Bash.
+You don't need to install the following separately:
+
+- **Angular CLI and Supabase CLI** are project dependencies. Run them with
+  `npx ng …` and `npx supabase …` after `npm install`.
+- **`psql`** is optional. `npm run db:psql -- -f <file>` (or `-c "<sql>"`)
+  uses your local `psql` if it's installed, and otherwise the one inside
+  the Supabase database container.
 
 ### 2. Google Cloud project
 
@@ -96,13 +97,13 @@ injected into Edge Functions automatically.
 **Start the stack:**
 
 ```bash
-supabase start          # prints API URL, anon key, DB URL
-supabase db reset       # applies migrations + seed data
-supabase functions serve
+npx supabase start          # prints API URL, anon key, DB URL
+npx supabase db reset       # applies migrations + seed data
+npx supabase functions serve
 ```
 
 **Vault secrets for the tasks webhook.** Run these once after each
-`db reset`, e.g. via `psql "$DB_URL"`. Postgres runs inside Docker, so the
+`db reset`, e.g. via `npm run db:psql -- -c "<sql>"`. Postgres runs inside Docker, so the
 function URL uses `host.docker.internal`, not `127.0.0.1`:
 
 ```sql
@@ -111,23 +112,23 @@ select vault.create_secret('<same value as CALENDAR_SYNC_WEBHOOK_SECRET>', 'cale
 ```
 
 **Angular environment** in `src/environments/environment.development.ts`:
-set `supabaseAnonKey` to the anon key printed by `supabase start`, and set
+set `supabaseAnonKey` to the anon key printed by `npx supabase start`, and set
 `googleClientId` to the Google client ID. The client ID is public; never put
 the client secret in the frontend.
 
 ```bash
-ng serve                # http://localhost:4200
+npx ng serve             # http://localhost:4200
 ```
 
 ### 4. Hosted Supabase (production)
 
 1. Create a Supabase project, then link and push:
    ```bash
-   supabase link --project-ref <project-ref>
-   supabase db push
-   supabase functions deploy connect-calendar
-   supabase functions deploy disconnect-calendar
-   supabase functions deploy calendar-sync --no-verify-jwt
+   npx supabase link --project-ref <project-ref>
+   npx supabase db push
+   npx supabase functions deploy connect-calendar
+   npx supabase functions deploy disconnect-calendar
+   npx supabase functions deploy calendar-sync --no-verify-jwt
    ```
 2. **Database → Extensions:** confirm `pg_cron`, `pg_net` and `supabase_vault`
    are enabled. The migrations create the first two, so this is a check.
@@ -137,7 +138,7 @@ ng serve                # http://localhost:4200
    `https://<your-domain>` and add it to the redirect allow-list.
 5. **Edge Function secrets:**
    ```bash
-   supabase secrets set \
+   npx supabase secrets set \
      GOOGLE_CLIENT_ID=<id> \
      GOOGLE_CLIENT_SECRET=<secret> \
      GOOGLE_REDIRECT_URI=https://<your-domain>/settings \
