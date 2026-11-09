@@ -8,7 +8,11 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "db:psql": "node scripts/psql.mjs",
-    "dev:user": "node scripts/create-dev-user.mjs"
+    "dev:user": "node scripts/create-dev-user.mjs",
+    "test:app": "ng test --watch=false --browsers=ChromeHeadless",
+    "test:functions": "node scripts/test-functions.mjs",
+    "test:sql": "node scripts/test-sql.mjs",
+    "test:all": "npm run test:app && npm run test:functions && npm run test:sql"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
