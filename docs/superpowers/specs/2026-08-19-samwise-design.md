@@ -40,9 +40,16 @@ transplanting, pruning, fertilizing, harvesting) that syncs to Google Calendar.
   - Supabase Auth with Google as the sole OAuth provider, requesting only
     basic profile scope at sign-in. Connecting Calendar sync later is a
     separate, incremental Google OAuth request (triggered from Settings),
-    not a reuse of the sign-in token.
-  - One Supabase Edge Function handles Google Calendar push, keeping the
-    stored Calendar refresh token server-side only.
+    not a reuse of the sign-in token. That request asks only for the
+    `calendar.app.created` scope, which lets Samwise create its own calendars
+    and manage events on them, with no access to the user's existing
+    calendars.
+  - Samwise writes tasks to a dedicated secondary calendar named "Samwise"
+    in the user's Google account, never to their primary calendar. The user
+    can hide, recolor or toggle it like any other calendar.
+  - Edge Functions handle all Google Calendar calls (`connect-calendar`,
+    `calendar-sync`, `disconnect-calendar`), keeping the stored Calendar
+    refresh token server-side only.
   - Task generation lives in a Postgres function + trigger, not client code,
     so it happens consistently regardless of which client creates the
     planting.
@@ -53,11 +60,11 @@ The domain (beds → cells → plantings; plants → care rules → generated ta
 is inherently relational, which Postgres/Supabase models directly (foreign
 keys, joins) versus Firestore's document/denormalization approach. RLS is
 also a clean, additive path from single-user to multi-user: add a `user_id`
-column and policy now, no schema rework later. Supabase Auth's Google OAuth
-integration is also what the app reuses for the incremental Calendar-scope
-request, surfacing a refresh token the app stores for background sync;
-Firebase Auth doesn't manage a Google refresh token for later reuse, which
-would require a separate OAuth flow bolted on regardless.
+column and policy now, no schema rework later. The Calendar connection is
+its own OAuth code exchange run by an Edge Function. Neither Supabase Auth
+nor Firebase Auth keeps a Google refresh token for later background reuse,
+so this part would look the same with either; Supabase Edge Functions plus
+`pg_net` triggers give it a server-side home next to the data.
 
 ## Data model
 
@@ -82,9 +89,14 @@ readable by all, writable by none from the client).
   added tasks), `task_type`, `due_date`, `completed_at`,
   `google_calendar_event_id` (nullable)
 - **`calendar_credentials`** — `user_id` (PK), `refresh_token`,
-  `access_token`, `expires_at`. Captured once when the user opts into
-  Calendar sync, since Supabase Auth surfaces the Google refresh token at
-  that OAuth exchange but doesn't persist it for later background reuse.
+  `access_token`, `expires_at`, `calendar_id` (the Samwise calendar's Google
+  ID). Captured once when the user opts into Calendar sync. The app runs its
+  own OAuth code exchange for this (Supabase Auth only handles sign-in) and
+  stores the refresh token here for background reuse. Exception to the RLS
+  rule above: the client has **no** access to this table. Edge Functions
+  read and write it with the service role, and the client learns whether a
+  connection exists through a `has_calendar_connection()` RPC that returns
+  only a boolean.
 
 ## Task generation & Calendar sync mechanics
 
@@ -93,13 +105,29 @@ readable by all, writable by none from the client).
   recurring rules produce a rolling **90-day window** of tasks.
 - A scheduled `pg_cron` job tops up the rolling window for active plantings
   and stops generating once a `planting.status = 'removed'`.
-- A DB webhook fires the Calendar Edge Function on `tasks`
-  insert/update/delete, which creates/updates/deletes the matching Google
-  Calendar event and stores the event ID back on the `tasks` row.
-- If the stored refresh token is invalid/revoked, that sync call fails
-  silently; the Settings page checks connection validity lazily (on visiting
-  Settings, not polled) and shows a "Calendar disconnected — reconnect"
-  banner if so.
+- **Connect:** the `connect-calendar` Edge Function exchanges the OAuth code,
+  creates the "Samwise" calendar (or reuses the stored one if it still
+  exists), saves the credentials, and backfills events for every
+  incomplete, not-yet-synced task due today or later. Without the backfill,
+  tasks created before connecting would never reach the calendar.
+- **Sync:** a DB trigger on `tasks` insert/update/delete calls the
+  `calendar-sync` Edge Function through `pg_net`. The function
+  creates/updates/deletes the matching event on the Samwise calendar and
+  stores the event ID back on the `tasks` row.
+  - The trigger reads the function URL and a shared webhook secret from
+    Supabase Vault and sends the secret in an `x-webhook-secret` header.
+  - `calendar-sync` runs without JWT verification and rejects any request
+    whose header doesn't match.
+- **Broken connection:** if Google rejects the refresh token
+  (`invalid_grant`) or the Samwise calendar no longer exists (the user
+  deleted it), `calendar-sync` deletes the `calendar_credentials` row. Other
+  sync failures are dropped silently. The Settings page checks
+  `has_calendar_connection()` lazily (on visiting Settings, not polled) and
+  shows a "Calendar disconnected — reconnect" banner when it returns false.
+- **Disconnect:** the `disconnect-calendar` Edge Function deletes the Samwise
+  calendar from the user's Google account, revokes the refresh token, deletes
+  the credentials row, and clears `google_calendar_event_id` on the user's
+  tasks so a later reconnect re-syncs them.
 - Manual tasks (no `planting_id`) sync through the same path.
 
 ## Screens
@@ -116,8 +144,9 @@ readable by all, writable by none from the client).
    bed, mark complete, add a manual task
 7. **Settings** — account info, Connect/Disconnect Google Calendar sync
    (opt-in, separate from sign-in — sign-in only requests basic profile
-   access; Calendar scope is requested only when the user clicks "Connect
-   Calendar")
+   access; the `calendar.app.created` scope is requested only when the user
+   clicks "Connect Calendar"). Disconnect removes the Samwise calendar from
+   the user's Google account.
 
 ## Testing approach
 
@@ -127,8 +156,10 @@ readable by all, writable by none from the client).
 - Postgres trigger/function logic (care-rule → task generation): exercised
   via SQL-level tests against a local Supabase instance rather than mocked
   client-side, since the logic lives in the DB.
-- Calendar Edge Function: tested against a mocked Google Calendar API
-  response; no live Calendar calls in automated tests.
+- Calendar Edge Functions: tested against mocked Google OAuth and Calendar
+  API responses; no live Calendar calls in automated tests. Testable logic
+  lives in modules separate from each function's `index.ts`, so tests don't
+  start an HTTP server just by importing the code.
 
 ## Suggested build order
 
