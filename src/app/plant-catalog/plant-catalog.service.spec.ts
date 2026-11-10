@@ -32,6 +32,16 @@ describe('PlantCatalogService', () => {
     await expectAsync(service.list()).toBeRejectedWithError('boom');
   });
 
+  it('get() fetches a single plant by id', async () => {
+    const plant = { id: 'p1', name: 'Basil' };
+    const single = jasmine.createSpy('single').and.resolveTo({ data: plant, error: null });
+    const eq = jasmine.createSpy('eq').and.returnValue({ single });
+    spyOn(supabase, 'from').and.returnValue({ select: () => ({ eq }) } as any);
+
+    expect(await service.get('p1')).toEqual(plant as any);
+    expect(eq).toHaveBeenCalledWith('id', 'p1');
+  });
+
   it('addCustom() inserts the plant owned by the current user', async () => {
     signedInAs('me');
     const created = { id: 'new-1', user_id: 'me', name: 'Kale' };

@@ -1,0 +1,53 @@
+<main>
+  <p><a routerLink="/">← Home</a></p>
+  <h1>Plant catalog</h1>
+
+  <label>
+    Search
+    <input type="search" [value]="query()" (input)="query.set($any($event.target).value)" placeholder="Search plants" />
+  </label>
+
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading plants…</p>
+  } @else {
+    <ul>
+      @for (plant of visiblePlants(); track plant.id) {
+        <li>
+          <a [routerLink]="['/plants', plant.id]">{{ plant.name }}</a>
+          @if (plant.user_id) {
+            <small>(yours)</small>
+          } @else {
+            <button type="button" (click)="cloneAndEdit(plant.id)">Clone to customize</button>
+          }
+        </li>
+      } @empty {
+        <p>No plants match “{{ query() }}”.</p>
+      }
+    </ul>
+  }
+
+  <form (submit)="addCustomPlant($event)">
+    <h2>Add a custom plant</h2>
+    <label>
+      Name
+      <input name="name" [value]="newPlantName()" (input)="newPlantName.set($any($event.target).value)" />
+    </label>
+    <label>
+      Sun
+      <select name="sun" (change)="onSunChange($any($event.target).value)">
+        <option value="" [selected]="!newPlantSun()">Select sun requirement</option>
+        @for (option of sunOptions; track option[0]) {
+          <option [value]="option[0]" [selected]="newPlantSun() === option[0]">{{ option[1] }}</option>
+        }
+      </select>
+    </label>
+    @if (newPlantError()) {
+      <p role="alert">{{ newPlantError() }}</p>
+    }
+    <button type="submit">Add plant</button>
+  </form>
+</main>

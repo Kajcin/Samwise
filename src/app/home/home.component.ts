@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
 // Placeholder landing page for signed-in users, so sign-in can be tried end to end
@@ -8,10 +8,12 @@ import { AuthService } from '../core/auth.service';
 @Component({
   selector: 'app-home',
   standalone: true,
+  imports: [RouterLink],
   template: `
     <main>
       <h1>Samwise</h1>
       <p>Signed in as {{ auth.currentUser()?.email }}</p>
+      <nav><a routerLink="/plants">Plant catalog</a></nav>
       <button (click)="signOut()">Sign out</button>
     </main>
   `,

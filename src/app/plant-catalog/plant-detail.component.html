@@ -1,0 +1,88 @@
+<main>
+  <p><a routerLink="/plants">← Plant catalog</a></p>
+
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+
+  @if (plant(); as p) {
+    <h1>{{ p.name }}</h1>
+    @if (p.species) {
+      <p><i>{{ p.species }}</i></p>
+    }
+    @if (p.sun_requirements) {
+      <p>Sun: {{ sunLabels[p.sun_requirements] }}</p>
+    }
+    @if (p.watering_frequency_days) {
+      <p>Watering: every {{ p.watering_frequency_days }} {{ p.watering_frequency_days === 1 ? 'day' : 'days' }}</p>
+    }
+    @if (p.flowering_start_month && p.flowering_end_month) {
+      <p>Flowering: {{ monthName(p.flowering_start_month) }} to {{ monthName(p.flowering_end_month) }}</p>
+    }
+    @if (p.notes) {
+      <p>{{ p.notes }}</p>
+    }
+
+    <h2>Care rules</h2>
+    <ul>
+      @for (rule of careRules(); track rule.id) {
+        <li>
+          {{ taskLabels[rule.task_type] }} — {{ describeTiming(rule) }}
+          @if (isEditable()) {
+            <input
+              [attr.aria-label]="taskLabels[rule.task_type] + ' notes'"
+              [value]="rule.notes ?? ''"
+              (change)="updateRuleNotes(rule.id, $any($event.target).value)"
+              placeholder="Notes"
+            />
+          } @else if (rule.notes) {
+            <small>({{ rule.notes }})</small>
+          }
+        </li>
+      } @empty {
+        <p>No care rules yet.</p>
+      }
+    </ul>
+
+    @if (isEditable()) {
+      <form (submit)="addCareRule($event)">
+        <h3>Add a care rule</h3>
+        <label>
+          Task
+          <select name="task" (change)="onTaskTypeChange($any($event.target).value)">
+            @for (type of taskTypes; track type) {
+              <option [value]="type" [selected]="newRuleTaskType() === type">{{ taskLabels[type] }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          When
+          <select name="timing" (change)="onTimingChange($any($event.target).value)">
+            <option value="offset_from_planting" [selected]="newRuleTimingType() === 'offset_from_planting'">Days after planting</option>
+            <option value="recurring" [selected]="newRuleTimingType() === 'recurring'">Repeats every N days</option>
+          </select>
+        </label>
+        @if (newRuleTimingType() === 'offset_from_planting') {
+          <label>
+            Days after planting
+            <input name="offset" type="number" min="0" step="1" [value]="newRuleOffsetDays() ?? ''" (input)="onDaysInput('offset', $any($event.target).value)" />
+          </label>
+        } @else {
+          <label>
+            Every N days
+            <input name="recurrence" type="number" min="1" step="1" [value]="newRuleRecurrenceDays() ?? ''" (input)="onDaysInput('recurrence', $any($event.target).value)" />
+          </label>
+        }
+        @if (newRuleError()) {
+          <p role="alert">{{ newRuleError() }}</p>
+        }
+        <button type="submit">Add rule</button>
+      </form>
+    } @else {
+      <p>This is a built-in plant, so its care rules are read-only.</p>
+      <button type="button" (click)="cloneAndEdit()">Clone to customize</button>
+    }
+  } @else if (!error()) {
+    <p>Loading…</p>
+  }
+</main>

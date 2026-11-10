@@ -39,6 +39,12 @@ export class PlantCatalogService {
     return data as Plant[];
   }
 
+  async get(plantId: string): Promise<Plant> {
+    const { data, error } = await supabase.from('plants_catalog').select('*').eq('id', plantId).single();
+    if (error) throw error;
+    return data as Plant;
+  }
+
   async addCustom(plant: NewPlant): Promise<Plant> {
     const userId = await this.currentUserId();
     const { data, error } = await supabase
