@@ -13,7 +13,7 @@ import { AuthService } from '../core/auth.service';
     <main>
       <h1>Samwise</h1>
       <p>Signed in as {{ auth.currentUser()?.email }}</p>
-      <nav><a routerLink="/plants">Plant catalog</a></nav>
+      <nav><a routerLink="/garden">Garden</a> · <a routerLink="/plants">Plant catalog</a></nav>
       <button (click)="signOut()">Sign out</button>
     </main>
   `,

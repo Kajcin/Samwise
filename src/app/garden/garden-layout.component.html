@@ -1,0 +1,73 @@
+<main>
+  <p><a routerLink="/">← Home</a></p>
+  <h1>Garden</h1>
+  <p><a routerLink="/garden/new">New bed</a></p>
+
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading your garden…</p>
+  } @else {
+    @for (bed of beds(); track bed.id) {
+      <section>
+        <h2>{{ bed.name }} <small>({{ bed.rows }} × {{ bed.cols }})</small></h2>
+        <table>
+          @for (row of grids()[bed.id] ?? []; track $index; let r = $index) {
+            <tr>
+              @for (cell of row; track $index; let c = $index) {
+                <td>
+                  <button
+                    type="button"
+                    [class.planted]="!!cell"
+                    [class.selected]="isSelected(bed, r, c)"
+                    [attr.aria-label]="'Row ' + (r + 1) + ', column ' + (c + 1) + ': ' + (cell ? plantLabel(cell.plant_id) : 'empty')"
+                    (click)="selectCell(bed, r, c, cell)"
+                  >
+                    {{ cell ? plantLabel(cell.plant_id) : '+' }}
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </table>
+
+        @if (selected(); as s) {
+          @if (s.bed.id === bed.id) {
+            <div>
+              <h3>Row {{ s.row + 1 }}, column {{ s.col + 1 }}</h3>
+              @if (s.planting; as p) {
+                <p>{{ plantLabel(p.plant_id) }} — Planted {{ p.planted_date }}</p>
+                <button type="button" [disabled]="busy()" (click)="remove()">Remove</button>
+              } @else {
+                <form (submit)="assign($event)">
+                  <label>
+                    Plant
+                    <select name="plant" (change)="newPlantId.set($any($event.target).value)">
+                      <option value="" [selected]="!newPlantId()">Choose a plant</option>
+                      @for (plant of plantOptions(); track plant.id) {
+                        <option [value]="plant.id" [selected]="newPlantId() === plant.id">{{ plantLabel(plant.id) }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label>
+                    Planted
+                    <input name="planted" type="date" [value]="newPlantedDate()" (input)="newPlantedDate.set($any($event.target).value)" />
+                  </label>
+                  <button type="submit" [disabled]="busy()">Plant</button>
+                </form>
+              }
+              @if (cellError()) {
+                <p role="alert">{{ cellError() }}</p>
+              }
+              <button type="button" (click)="closePanel()">Close</button>
+            </div>
+          }
+        }
+      </section>
+    } @empty {
+      <p>No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</p>
+    }
+  }
+</main>
