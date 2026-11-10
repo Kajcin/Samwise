@@ -45,6 +45,11 @@ One OAuth client covers both Google sign-in and the Calendar connection.
 2. **APIs & Services → Library:** enable the **Google Calendar API**.
 3. **OAuth consent screen:**
    - User type: External.
+   - Branding (required before publishing): app name `Samwise`; home page
+     `https://github.com/Kajcin/Samwise`; privacy policy
+     `https://github.com/Kajcin/Samwise/blob/main/PRIVACY.md`; authorized domain
+     `github.com`. Leave the logo empty, because uploading one triggers Google's brand
+     verification. Once the app has its own domain, use that domain instead.
    - Scopes: `email`, `profile`,
      `https://www.googleapis.com/auth/calendar.app.created`. That last one
      lets Samwise create its own "Samwise" calendar and manage events on it,
