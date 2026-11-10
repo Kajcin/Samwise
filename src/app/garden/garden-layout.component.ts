@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Bed, cellKey, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
 import { messageOf } from '../core/errors';
+import { toIsoDate } from '../core/dates';
 
 type Grid = (Planting | null)[][];
 
@@ -18,12 +19,6 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
   return Array.from({ length: rows }, (_, r) =>
     Array.from({ length: cols }, (_, c) => byCell.get(cellKey(r, c)) ?? null),
   );
-}
-
-/** Local calendar date as YYYY-MM-DD (toISOString() would shift to UTC and can be off by a day). */
-export function toIsoDate(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 @Component({

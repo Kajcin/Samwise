@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { buildGrid, GardenLayoutComponent, toIsoDate } from './garden-layout.component';
+import { buildGrid, GardenLayoutComponent } from './garden-layout.component';
 import { Bed, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
 
@@ -22,13 +22,6 @@ describe('buildGrid', () => {
     expect(grid[0][1]?.id).toBe('0-1');
     expect(grid[1][0]?.id).toBe('1-0');
     expect(grid[0][0]).toBeNull();
-  });
-});
-
-describe('toIsoDate', () => {
-  it('formats the local calendar date as YYYY-MM-DD', () => {
-    expect(toIsoDate(new Date(2026, 3, 5, 23, 30))).toBe('2026-04-05');
-    expect(toIsoDate(new Date(2026, 11, 31, 0, 5))).toBe('2026-12-31');
   });
 });
 
