@@ -6,6 +6,19 @@ care info, and auto-generate care tasks that sync to Google Calendar.
 - Design spec: [docs/superpowers/specs/2026-08-19-samwise-design.md](docs/superpowers/specs/2026-08-19-samwise-design.md)
 - Implementation plan: [docs/superpowers/plans/2026-08-19-samwise.md](docs/superpowers/plans/2026-08-19-samwise.md)
 
+## Cost
+
+Samwise is a personal project and runs on free tiers only; open source is not
+a requirement. What that means for each service:
+
+| Service | Free tier | Watch out for |
+| --- | --- | --- |
+| Supabase (hosted) | Free plan: 2 projects | Free projects **pause after about a week without activity**; while paused, the daily task top-up doesn't run. Handle this when deploying (e.g. a scheduled ping), or reopen the app to resume. |
+| Google sign-in + Calendar API | No charge within quotas | The app stays unverified, so at most 100 users and an "unverified app" warning at sign-in. |
+| GitHub + Actions | Free for public repos | Unauthenticated API calls are limited to 60 per hour. |
+| Docker Desktop | Free for personal use | Only needed for local development. |
+| Frontend hosting | Not chosen yet | Pick a static host with a free tier. |
+
 ## Setup
 
 ### 1. Prerequisites
@@ -169,7 +182,7 @@ locally too, once `supabase/.env` holds the OAuth client from step 2.
 
 ### 5. Frontend hosting
 
-Not decided yet. Any static host works: deploy the output of `ng build` and
+Not decided yet. Any static host with a free tier works: deploy the output of `ng build` and
 configure an SPA fallback so every route serves `index.html`. Once you have
 the domain, add it to the Google redirect URIs (step 2) and the Supabase URL
 configuration (step 4).
