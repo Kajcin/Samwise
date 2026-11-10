@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { supabase } from '../core/supabase-client';
+import { currentUserId } from '../core/current-user';
 
 export interface Plant {
   id: string;
@@ -46,7 +47,7 @@ export class PlantCatalogService {
   }
 
   async addCustom(plant: NewPlant): Promise<Plant> {
-    const userId = await this.currentUserId();
+    const userId = await currentUserId();
     const { data, error } = await supabase
       .from('plants_catalog')
       .insert({ ...plant, user_id: userId })
@@ -74,7 +75,7 @@ export class PlantCatalogService {
       .eq('plant_id', plantId);
     if (rulesError) throw rulesError;
 
-    const userId = await this.currentUserId();
+    const userId = await currentUserId();
     const { id: _id, user_id: _owner, ...fields } = source as Plant;
     const { data: clone, error: cloneError } = await supabase
       .from('plants_catalog')
@@ -112,12 +113,5 @@ export class PlantCatalogService {
   async updateCareRule(ruleId: string, changes: Partial<NewCareRule>): Promise<void> {
     const { error } = await supabase.from('care_rules').update(changes).eq('id', ruleId);
     if (error) throw error;
-  }
-
-  private async currentUserId(): Promise<string> {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    if (!data.user) throw new Error('Not signed in');
-    return data.user.id;
   }
 }
