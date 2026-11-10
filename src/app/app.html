@@ -1,1 +1,12 @@
+@if (auth.currentUser(); as user) {
+  <nav class="app-nav">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+    <a routerLink="/tasks" routerLinkActive="active">Tasks</a>
+    <a routerLink="/garden" routerLinkActive="active">Garden</a>
+    <a routerLink="/plants" routerLinkActive="active">Plant catalog</a>
+    <span class="spacer"></span>
+    <span class="user">{{ user.email }}</span>
+    <button type="button" (click)="signOut()">Sign out</button>
+  </nav>
+}
 <router-outlet />

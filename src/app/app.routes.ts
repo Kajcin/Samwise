@@ -8,6 +8,6 @@ export const routes: Routes = [
   { path: 'plants/:id', canActivate: [authGuard], loadComponent: () => import('./plant-catalog/plant-detail.component').then(m => m.PlantDetailComponent) },
   { path: 'garden', canActivate: [authGuard], loadComponent: () => import('./garden/garden-layout.component').then(m => m.GardenLayoutComponent) },
   { path: 'garden/new', canActivate: [authGuard], loadComponent: () => import('./garden/bed-editor.component').then(m => m.BedEditorComponent) },
-  // Placeholder until Task 13 replaces it with the Dashboard.
-  { path: '', canActivate: [authGuard], loadComponent: () => import('./home/home.component').then(m => m.HomeComponent) },
+  { path: 'tasks', canActivate: [authGuard], loadComponent: () => import('./tasks/task-agenda.component').then(m => m.TaskAgendaComponent) },
+  { path: '', canActivate: [authGuard], loadComponent: () => import('./tasks/dashboard.component').then(m => m.DashboardComponent) },
 ];

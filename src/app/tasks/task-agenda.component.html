@@ -1,0 +1,88 @@
+<main>
+  <h1>Tasks</h1>
+
+  <form class="filters" (submit)="$event.preventDefault()">
+    <label>
+      Type
+      <select name="type" (change)="onTypeFilter($any($event.target).value)">
+        <option value="" [selected]="!typeFilter()">All types</option>
+        @for (type of taskTypes; track type) {
+          <option [value]="type" [selected]="typeFilter() === type">{{ taskLabels[type] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Bed
+      <select name="bed" (change)="bedFilter.set($any($event.target).value)">
+        <option value="" [selected]="!bedFilter()">All beds</option>
+        @for (bed of beds(); track bed.id) {
+          <option [value]="bed.id" [selected]="bedFilter() === bed.id">{{ bed.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Show
+      <select name="status" (change)="onStatusFilter($any($event.target).value)">
+        <option value="todo" [selected]="statusFilter() === 'todo'">To do</option>
+        <option value="done" [selected]="statusFilter() === 'done'">Done</option>
+        <option value="all" [selected]="statusFilter() === 'all'">All</option>
+      </select>
+    </label>
+  </form>
+
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading tasks…</p>
+  } @else {
+    @for (day of days(); track day.date) {
+      <section class="day">
+        <h2>{{ formatDueDate(day.date) }}</h2>
+        <ul>
+          @for (task of day.tasks; track task.id) {
+            <li class="task" [attr.data-id]="task.id">
+              @if (task.completed_at) {
+                <s>{{ taskTitle(task) }}</s>
+              } @else {
+                {{ taskTitle(task) }}
+              }
+              @if (taskLocation(task); as where) {
+                <small>({{ where }})</small>
+              }
+              @if (isOverdue(task)) {
+                <em>Overdue</em>
+              }
+              <button type="button" [disabled]="busyTaskId() === task.id" (click)="toggleDone(task)">
+                {{ task.completed_at ? 'Undo' : 'Done' }}
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    } @empty {
+      <p>No tasks match these filters.</p>
+    }
+  }
+
+  <form class="add-task" (submit)="addManualTask($event)">
+    <h2>Add a task</h2>
+    <label>
+      Type
+      <select name="newType" (change)="newTaskType.set($any($event.target).value)">
+        @for (type of taskTypes; track type) {
+          <option [value]="type" [selected]="newTaskType() === type">{{ taskLabels[type] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Due
+      <input name="newDue" type="date" [value]="newTaskDue()" (input)="newTaskDue.set($any($event.target).value)" />
+    </label>
+    @if (newTaskError()) {
+      <p role="alert">{{ newTaskError() }}</p>
+    }
+    <button type="submit">Add task</button>
+  </form>
+</main>

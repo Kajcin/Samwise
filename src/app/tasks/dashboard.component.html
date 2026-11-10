@@ -1,0 +1,47 @@
+<main>
+  <h1>Dashboard</h1>
+
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading…</p>
+  } @else {
+    <section>
+      <h2>Coming up (next {{ days }} days)</h2>
+      <ul>
+        @for (task of upcoming(); track task.id) {
+          <li class="task">
+            <strong>{{ formatDueDate(task.due_date) }}</strong>
+            @if (isOverdue(task)) {
+              <em>Overdue</em>
+            }
+            — {{ taskTitle(task) }}
+            @if (taskLocation(task); as where) {
+              <small>({{ where }})</small>
+            }
+            <button type="button" [disabled]="busyTaskId() === task.id" (click)="markDone(task)">Done</button>
+          </li>
+        } @empty {
+          <p>Nothing to do in the next {{ days }} days.</p>
+        }
+      </ul>
+      <p><a routerLink="/tasks">All tasks</a></p>
+    </section>
+
+    <section>
+      <h2>Beds</h2>
+      <ul>
+        @for (summary of bedSummaries(); track summary.bed.id) {
+          <li class="bed">
+            <a routerLink="/garden">{{ summary.bed.name }}</a> — {{ summary.plantingCount }} of
+            {{ summary.bed.rows * summary.bed.cols }} cells planted
+          </li>
+        } @empty {
+          <p>No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</p>
+        }
+      </ul>
+    </section>
+  }
+</main>

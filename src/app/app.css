@@ -1,0 +1,13 @@
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #c8d5b0;
+  background: #f4f7ec;
+}
+.app-nav a { color: #2f5a1b; text-decoration: none; }
+.app-nav a.active { font-weight: 600; text-decoration: underline; }
+.app-nav .spacer { flex: 1; }
+.app-nav .user { color: #555; font-size: 0.9rem; }
