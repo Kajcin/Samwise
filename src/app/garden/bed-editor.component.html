@@ -1,0 +1,23 @@
+<main>
+  <p><a routerLink="/garden">← Garden</a></p>
+  <h1>New bed</h1>
+
+  <form (submit)="save($event)">
+    <label>
+      Name
+      <input name="name" [value]="name()" (input)="name.set($any($event.target).value)" placeholder="e.g. Herb bed" />
+    </label>
+    <label>
+      Rows
+      <input name="rows" type="number" min="1" [max]="maxSize" step="1" [value]="rows() ?? ''" (input)="setRows($any($event.target).value)" />
+    </label>
+    <label>
+      Columns
+      <input name="cols" type="number" min="1" [max]="maxSize" step="1" [value]="cols() ?? ''" (input)="setCols($any($event.target).value)" />
+    </label>
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+    <button type="submit" [disabled]="saving()">Save bed</button>
+  </form>
+</main>

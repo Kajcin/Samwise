@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CareRule, Plant, PlantCatalogService, TaskType } from './plant-catalog.service';
 import { describeRuleTiming, monthName, SUN_LABELS, TASK_TYPE_LABELS, TASK_TYPES } from './labels';
 import { messageOf } from '../core/errors';
+import { parseNumberInput } from '../core/number-input';
 
 type TimingType = CareRule['timing_type'];
 
@@ -20,11 +21,6 @@ export function validateCareRuleForm(
     if (!Number.isInteger(recurrenceDays) || recurrenceDays < 1) return 'Recurrence days must be a whole number of 1 or more.';
   }
   return null;
-}
-
-/** Number-input value → number, or null when the field is empty (unlike `+value`, which gives 0). */
-export function parseDays(value: string): number | null {
-  return value.trim() === '' ? null : Number(value);
 }
 
 /** Offset rules in timeline order first, then recurring rules by interval. */
@@ -145,6 +141,6 @@ export class PlantDetailComponent {
   }
 
   onDaysInput(field: 'offset' | 'recurrence', value: string): void {
-    (field === 'offset' ? this.newRuleOffsetDays : this.newRuleRecurrenceDays).set(parseDays(value));
+    (field === 'offset' ? this.newRuleOffsetDays : this.newRuleRecurrenceDays).set(parseNumberInput(value));
   }
 }

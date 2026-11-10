@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { parseDays, PlantDetailComponent, validateCareRuleForm } from './plant-detail.component';
+import { PlantDetailComponent, validateCareRuleForm } from './plant-detail.component';
+import { parseNumberInput } from '../core/number-input';
 import { CareRule, Plant, PlantCatalogService } from './plant-catalog.service';
 
 describe('validateCareRuleForm', () => {
@@ -32,15 +33,15 @@ describe('validateCareRuleForm', () => {
   });
 });
 
-describe('parseDays', () => {
+describe('parseNumberInput', () => {
   it('treats an empty field as no value (not 0)', () => {
-    expect(parseDays('')).toBeNull();
-    expect(parseDays('  ')).toBeNull();
+    expect(parseNumberInput('')).toBeNull();
+    expect(parseNumberInput('  ')).toBeNull();
   });
 
   it('parses numbers', () => {
-    expect(parseDays('14')).toBe(14);
-    expect(parseDays('0')).toBe(0);
+    expect(parseNumberInput('14')).toBe(14);
+    expect(parseNumberInput('0')).toBe(0);
   });
 });
 
