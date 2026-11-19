@@ -1,0 +1,36 @@
+<main>
+  <h1>Settings</h1>
+
+  <section>
+    <h2>Account</h2>
+    <p>Signed in as {{ auth.currentUser()?.email }}</p>
+  </section>
+
+  <section>
+    <h2>Google Calendar</h2>
+    <p>
+      Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see and
+      change that calendar, none of your others.
+    </p>
+
+    @if (status()) {
+      <p role="status">{{ status() }}</p>
+    }
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+
+    @switch (connected()) {
+      @case (null) {
+        <p>Checking…</p>
+      }
+      @case (true) {
+        <p><strong>Connected.</strong> New and changed tasks appear on your “Samwise” calendar.</p>
+      }
+      @default {
+        <p>Not connected.</p>
+        <button type="button" [disabled]="busy()" (click)="connectCalendar()">Connect Google Calendar</button>
+      }
+    }
+  </section>
+</main>

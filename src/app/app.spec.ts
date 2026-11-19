@@ -33,7 +33,7 @@ describe('App', () => {
     fixture.detectChanges();
     const nav = fixture.nativeElement.querySelector('nav') as HTMLElement;
 
-    expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent!.trim())).toEqual(['Dashboard', 'Tasks', 'Garden', 'Plant catalog']);
+    expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent!.trim())).toEqual(['Dashboard', 'Tasks', 'Garden', 'Plant catalog', 'Settings']);
     expect(nav.textContent).toContain('dev@samwise.local');
   });
 

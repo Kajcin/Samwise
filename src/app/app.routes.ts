@@ -9,5 +9,6 @@ export const routes: Routes = [
   { path: 'garden', canActivate: [authGuard], loadComponent: () => import('./garden/garden-layout.component').then(m => m.GardenLayoutComponent) },
   { path: 'garden/new', canActivate: [authGuard], loadComponent: () => import('./garden/bed-editor.component').then(m => m.BedEditorComponent) },
   { path: 'tasks', canActivate: [authGuard], loadComponent: () => import('./tasks/task-agenda.component').then(m => m.TaskAgendaComponent) },
+  { path: 'settings', canActivate: [authGuard], loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
   { path: '', canActivate: [authGuard], loadComponent: () => import('./tasks/dashboard.component').then(m => m.DashboardComponent) },
 ];
