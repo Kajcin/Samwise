@@ -11,7 +11,7 @@ const ICONS = [
   // navigation
   'flower3', 'house', 'list-check', 'grid-3x3', 'flower2', 'gear', 'box-arrow-right',
   // task types (see TASK_TYPE_ICONS in plant-catalog/labels.ts)
-  'flower1', 'bucket', 'scissors', 'droplet', 'basket',
+  'flower1', 'bucket', 'scissors', 'droplet', 'basket', 'grid-1x2', 'layers', 'snow', 'arrows-collapse-vertical',
   // actions
   'check-lg', 'arrow-counterclockwise', 'plus-lg', 'trash', 'copy', 'google',
   'calendar-plus', 'calendar-x', 'calendar-check', 'arrow-repeat', 'pencil', 'box-arrow-up-right', 'x-circle', 'search',

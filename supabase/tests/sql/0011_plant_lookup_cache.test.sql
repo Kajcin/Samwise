@@ -2,7 +2,7 @@
 -- The lookup cache is for the plant-lookup Edge Function (service role) only.
 begin;
 
-insert into plant_lookup_cache (key, candidates) values ('cs:santa', '[]');
+insert into plant_lookup_cache (key, candidates) values ('test:sql-test-only', '[]');
 
 do $$
 begin

@@ -21,6 +21,8 @@ export interface EventTask {
    */
   task_id?: string;
   due_date: string;
+  /** A task due during a period (a yearly rule's month) ends on this day; absent for one-day tasks. */
+  due_until?: string | null;
   task_type: string;
   completed_at?: string | null;
   google_calendar_event_id: string | null;
@@ -58,6 +60,10 @@ export const TASK_LABELS: Record<Language, Record<string, string>> = {
     prune: 'Prune',
     fertilize: 'Fertilize',
     harvest: 'Harvest',
+    divide: 'Divide',
+    mulch: 'Mulch',
+    winter_protection: 'Winter protection',
+    cut_back: 'Cut back',
   },
   cs: {
     seed_start: 'Výsev',
@@ -65,6 +71,10 @@ export const TASK_LABELS: Record<Language, Record<string, string>> = {
     prune: 'Zastřihávání',
     fertilize: 'Hnojení',
     harvest: 'Sklizeň',
+    divide: 'Dělení trsů',
+    mulch: 'Mulčování',
+    winter_protection: 'Zimní ochrana',
+    cut_back: 'Seříznutí',
   },
 };
 
@@ -187,7 +197,8 @@ export function eventBody(task: EventTask) {
     summary: task.completed_at ? `✓ ${title}` : title,
     description: task.location ?? undefined,
     start: { date: task.due_date },
-    end: { date: addOneDay(task.due_date) }, // all-day events use an exclusive end date
+    // All-day events use an exclusive end date; a month-long task spans its month.
+    end: { date: addOneDay(task.due_until ?? task.due_date) },
     transparency: 'transparent', // don't show garden chores as "busy"
     status: 'confirmed', // revives an event the user deleted in Google (deleted = "cancelled")
   };

@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
         check(
           await db.from('tasks').select(TASK_EVENT_SELECT)
             .eq('user_id', uid)
-            .gte('due_date', fromDate)
+            // Due today or later, or a month-long task whose month is still under way.
+            .or(`due_date.gte.${fromDate},due_until.gte.${fromDate}`)
             .order('due_date'),
         ) as unknown as TaskEventRow[],
       loadLanguage: async (uid) =>

@@ -12,6 +12,8 @@ export interface Task {
   task_type: TaskType;
   /** ISO date, YYYY-MM-DD. */
   due_date: string;
+  /** A task due during a period (a yearly rule's month) ends on this day; null for one-day tasks. */
+  due_until?: string | null;
   completed_at: string | null;
   google_calendar_event_id: string | null;
 }
@@ -46,8 +48,9 @@ export function filterTasks<T extends TaskWithContext>(tasks: T[], filter: TaskF
 }
 
 /** Unfinished and due before `today`'s calendar date (time of day is ignored). */
+/** Not done, and its day (or, for a month-long task, its whole month) is over. */
 export function isOverdue(task: Task, today: Date = new Date()): boolean {
-  return !task.completed_at && task.due_date < toIsoDate(today);
+  return !task.completed_at && (task.due_until ?? task.due_date) < toIsoDate(today);
 }
 
 @Injectable({ providedIn: 'root' })

@@ -28,12 +28,16 @@ draft plant to review and save, instead of typing everything in.
 
 ## Seasonal care rules for perennials
 
-Care rules currently count days from planting ("harvest 75 days after planting"), which
-suits annual vegetables. Perennials need yearly, month-based care ("cut back after the
-first bloom in July", "divide in early spring"), so a looked-up catmint gets facts but
-almost no tasks today. Needs a seasonal rule type, task generation that repeats every
-year (and the nightly top-up), and the rule form, the plant detail and the calendar
-sync to handle it.
+Done (migration 0012): yearly rules, "every year in July" / "každý rok v červenci". Each
+gives a task due during the whole month (`tasks.due_until`), created 12 months ahead and
+topped up nightly; it's overdue only after its month, shows as "This month" / "July 2027"
+in the app and as a month-long, non-blocking event in Google Calendar. New task types for
+perennials: divide, mulch, winter protection, cut back.
+
+Possible follow-ups:
+- "Every N years" (e.g. divide every 3 years), counted from the planting year.
+- Seasonal rules for the built-in plants (they're vegetables and an annual flower today).
+- A period other than a calendar month ("early spring", "after the first bloom").
 
 ## Flowering calendar
 

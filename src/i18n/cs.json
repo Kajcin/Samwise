@@ -31,7 +31,11 @@
     "transplant": "Přesazení",
     "prune": "Zastřihávání",
     "fertilize": "Hnojení",
-    "harvest": "Sklizeň"
+    "harvest": "Sklizeň",
+    "divide": "Dělení trsů",
+    "mulch": "Mulčování",
+    "winter_protection": "Zimní ochrana",
+    "cut_back": "Seříznutí"
   },
   "sun": {
     "full_sun": "Plné slunce",
@@ -46,6 +50,8 @@
     "today": "Dnes",
     "tomorrow": "Zítra",
     "yesterday": "Včera",
+    "thisMonth": "Tento měsíc",
+    "monthYear": "{month} {year}",
     "weekdays": { "0": "Ne", "1": "Po", "2": "Út", "3": "St", "4": "Čt", "5": "Pá", "6": "So" },
     "monthsInDate": {
       "1": "ledna", "2": "února", "3": "března", "4": "dubna", "5": "května", "6": "června",
@@ -56,7 +62,21 @@
   "rules": {
     "everyDays": "{days, plural, one {každý den} few {každé # dny} other {každých # dní}}",
     "onPlantingDay": "v den výsadby",
-    "daysAfterPlanting": "{days, plural, one {# den po výsadbě} few {# dny po výsadbě} other {# dní po výsadbě}}"
+    "daysAfterPlanting": "{days, plural, one {# den po výsadbě} few {# dny po výsadbě} other {# dní po výsadbě}}",
+    "yearly": {
+      "1": "každý rok v lednu",
+      "2": "každý rok v únoru",
+      "3": "každý rok v březnu",
+      "4": "každý rok v dubnu",
+      "5": "každý rok v květnu",
+      "6": "každý rok v červnu",
+      "7": "každý rok v červenci",
+      "8": "každý rok v srpnu",
+      "9": "každý rok v září",
+      "10": "každý rok v říjnu",
+      "11": "každý rok v listopadu",
+      "12": "každý rok v prosinci"
+    }
   },
   "tasks": {
     "title": "{type} — {plant}",
@@ -176,6 +196,8 @@
     "when": "Kdy",
     "timingOffset": "N dní po výsadbě",
     "timingRecurring": "Opakovat každých N dní",
+    "timingYearly": "Každý rok v určitém měsíci",
+    "month": "Měsíc",
     "offsetDays": "Dní po výsadbě",
     "recurrenceDays": "Každých N dní",
     "addRule": "Přidat pravidlo",
@@ -202,6 +224,7 @@
       "offsetInvalid": "Počet dní po výsadbě musí být celé číslo 0 nebo větší.",
       "recurrenceRequired": "U opakovaného pravidla vyplňte počet dní.",
       "recurrenceInvalid": "Počet dní opakování musí být celé číslo 1 nebo větší.",
+      "monthRequired": "U ročního pravidla vyberte měsíc.",
       "load": "Rostlinu se nepodařilo načíst: {detail}",
       "clone": "Rostlinu se nepodařilo zkopírovat: {detail}",
       "saveRule": "Pravidlo se nepodařilo uložit: {detail}",

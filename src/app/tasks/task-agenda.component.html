@@ -39,9 +39,9 @@
       @if (loading()) {
         <p class="text-body-secondary">{{ i18n.t('tasks.loading') }}</p>
       } @else {
-        @for (day of days(); track day.date) {
+        @for (day of days(); track day.date + (day.until ?? '')) {
           <section class="day card mb-3">
-            <h2 class="card-header h6 mb-0">{{ formatDueDate(day.date, i18n) }}</h2>
+            <h2 class="card-header h6 mb-0">{{ formatDue(day.date, day.until, i18n) }}</h2>
             <ul class="list-group list-group-flush">
               @for (task of day.tasks; track task.id) {
                 <li class="task list-group-item d-flex align-items-center gap-3" [attr.data-id]="task.id">

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { filterTasks, isOverdue, TaskService, TaskWithContext } from './task.service';
-import { formatDueDate, groupByDueDate, taskLocation, taskTitle } from './task-format';
+import { formatDue, groupByDueDate, taskLocation, taskTitle } from './task-format';
 import { Bed, GardenService } from '../garden/garden.service';
 import { TaskType } from '../plant-catalog/plant-catalog.service';
 import { TASK_TYPE_ICONS, TASK_TYPES, taskTypeKey } from '../plant-catalog/labels';
@@ -33,7 +33,7 @@ export class TaskAgendaComponent {
   protected readonly taskIcons = TASK_TYPE_ICONS;
   protected readonly taskTitle = taskTitle;
   protected readonly taskLocation = taskLocation;
-  protected readonly formatDueDate = formatDueDate;
+  protected readonly formatDue = formatDue;
   protected readonly isOverdue = isOverdue;
 
   loading = signal(true);

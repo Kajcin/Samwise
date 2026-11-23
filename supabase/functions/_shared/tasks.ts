@@ -3,13 +3,15 @@ import type { EventTask, Language } from './google.ts';
 
 /** PostgREST select for a task plus the plant/bed it belongs to (mirrors the app's TASK_SELECT). */
 export const TASK_EVENT_SELECT =
-  'id, user_id, due_date, task_type, completed_at, google_calendar_event_id, ' +
+  'id, user_id, due_date, due_until, task_type, completed_at, google_calendar_event_id, ' +
   'planting:plantings(cell_row, cell_col, bed:beds(name), plant:plants_catalog(name, name_cs))';
 
 export interface TaskEventRow {
   id: string;
   user_id: string;
   due_date: string;
+  /** Last day of a month-long task (yearly rules); null for one-day tasks. */
+  due_until?: string | null;
   task_type: string;
   completed_at: string | null;
   google_calendar_event_id: string | null;
@@ -37,6 +39,7 @@ export function toEventTask(row: TaskEventRow, language: Language = 'en'): Event
   return {
     task_id: row.id,
     due_date: row.due_date,
+    due_until: row.due_until ?? null,
     task_type: row.task_type,
     completed_at: row.completed_at,
     google_calendar_event_id: row.google_calendar_event_id,

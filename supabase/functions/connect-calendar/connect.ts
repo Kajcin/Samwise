@@ -22,7 +22,10 @@ export interface ConnectDeps {
   saveCredentials(credentials: Credentials): Promise<void>;
   /** Forget all of the user's event ids (they point into a calendar that's no longer used). */
   clearEventIds(userId: string): Promise<void>;
-  /** Every task due on or after `fromDate`, finished or not (finished ones show with a ✓). */
+  /**
+   * Every task due on or after `fromDate` (or, for a month-long task, whose month hasn't
+   * ended), finished or not (finished ones show with a ✓).
+   */
   listTasksToSync(userId: string, fromDate: string): Promise<TaskEventRow[]>;
   /** The user's language for event titles (English if they have none yet). */
   loadLanguage(userId: string): Promise<Language>;

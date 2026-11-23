@@ -9,6 +9,7 @@ export interface TaskRecord {
   id: string;
   user_id: string;
   due_date: string;
+  due_until?: string | null;
   task_type: string;
   completed_at: string | null;
   google_calendar_event_id: string | null;
@@ -81,6 +82,7 @@ export function isAuthorizedWebhook(header: string | null, secret: string | unde
 export function shouldSync(oldRecord: TaskRecord | null, newRecord: TaskRecord): boolean {
   if (!oldRecord) return true;
   return oldRecord.due_date !== newRecord.due_date ||
+    (oldRecord.due_until ?? null) !== (newRecord.due_until ?? null) ||
     oldRecord.task_type !== newRecord.task_type ||
     (oldRecord.completed_at ?? null) !== (newRecord.completed_at ?? null);
 }

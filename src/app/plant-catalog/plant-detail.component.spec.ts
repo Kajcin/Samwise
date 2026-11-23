@@ -32,6 +32,11 @@ describe('validateCareRuleForm', () => {
     expect(validateCareRuleForm('offset_from_planting', 0, null)).toBeNull();
   });
 
+  it('requires the month for a yearly rule (and nothing else)', () => {
+    expect(validateCareRuleForm('yearly', null, null, null)).toEqual(msg('plant.errors.monthRequired'));
+    expect(validateCareRuleForm('yearly', null, null, 7)).toBeNull();
+  });
+
   it('accepts a valid recurring rule', () => {
     expect(validateCareRuleForm('recurring', null, 14)).toBeNull();
   });
@@ -173,7 +178,7 @@ describe('PlantDetailComponent', () => {
     await fixture.whenStable();
 
     expect(service.addCareRule).toHaveBeenCalledWith('p2', {
-      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, notes: null,
+      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, month: null, notes: null,
     });
   });
 
@@ -327,5 +332,45 @@ describe('PlantDetailComponent', () => {
     expect(el.querySelectorAll('li').length).toBe(1);
     TestBed.resetTestingModule();
     expect((await render(seeded)).el.querySelector('button.delete-rule')).toBeNull();
+  });
+
+  it('adds a yearly rule for a month, with the new perennial task types', async () => {
+    service.addCareRule.and.resolveTo(rules[0]);
+    const { fixture, el } = await render(custom);
+    const set = (name: string, value: string) => {
+      const field = el.querySelector<HTMLSelectElement>(`select[name=${name}]`)!;
+      field.value = value;
+      field.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+
+    expect(Array.from(el.querySelectorAll<HTMLOptionElement>('select[name=task] option')).map((o) => o.textContent!.trim()))
+      .toEqual(['Seed start', 'Transplant', 'Prune', 'Cut back', 'Fertilize', 'Mulch', 'Divide', 'Winter protection', 'Harvest']);
+    set('task', 'cut_back');
+    set('timing', 'yearly');
+    expect(el.querySelector('input[name=offset]')).toBeNull();
+    set('month', '7');
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(service.addCareRule).toHaveBeenCalledWith('p2', {
+      task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, notes: null,
+    });
+  });
+
+  it('shows yearly rules last, by month, as "every year in …"', async () => {
+    service.listCareRules.and.resolveTo([
+      { id: 'y2', plant_id: 'p1', task_type: 'winter_protection', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 11, notes: null },
+      { id: 'y1', plant_id: 'p1', task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, notes: null },
+      ...rules,
+    ]);
+    const { el } = await render(seeded);
+
+    expect(Array.from(el.querySelectorAll('li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
+      'Harvest — 75 days after planting',
+      'Fertilize — every 14 days',
+      'Cut back — every year in July',
+      'Winter protection — every year in November',
+    ]);
   });
 });

@@ -170,6 +170,13 @@ Deno.test('eventBody titles events in the task’s language', () => {
   assertEquals(event.summary, '✓ Sklizeň — Rajče');
 });
 
+Deno.test('eventBody spans the whole month for a month-long task', () => {
+  const event = eventBody({ ...task, task_type: 'cut_back', due_date: '2027-07-01', due_until: '2027-07-31', language: 'cs' });
+  assertEquals(event.summary, 'Seříznutí');
+  assertEquals(event.start, { date: '2027-07-01' });
+  assertEquals(event.end, { date: '2027-08-01' }); // exclusive: through 31 July
+});
+
 Deno.test('eventBody marks completed tasks and handles month ends', () => {
   const event = eventBody({ ...task, due_date: '2026-12-31', completed_at: '2026-12-31T10:00:00Z' });
   assertEquals(event.summary, '✓ Harvest');

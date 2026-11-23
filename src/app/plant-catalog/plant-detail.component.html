@@ -242,6 +242,9 @@
                   <option value="recurring" [selected]="newRuleTimingType() === 'recurring'">
                     {{ i18n.t('plant.timingRecurring') }}
                   </option>
+                  <option value="yearly" [selected]="newRuleTimingType() === 'yearly'">
+                    {{ i18n.t('plant.timingYearly') }}
+                  </option>
                 </select>
               </div>
               @if (newRuleTimingType() === 'offset_from_planting') {
@@ -257,6 +260,16 @@
                     [value]="newRuleOffsetDays() ?? ''"
                     (input)="onDaysInput('offset', $any($event.target).value)"
                   />
+                </div>
+              } @else if (newRuleTimingType() === 'yearly') {
+                <div class="mb-3">
+                  <label class="form-label" for="rule-month">{{ i18n.t('plant.month') }}</label>
+                  <select id="rule-month" class="form-select" name="month" (change)="newRuleMonth.set(parseMonth($any($event.target).value))">
+                    <option value="" [selected]="newRuleMonth() == null">{{ i18n.t('plant.notSet') }}</option>
+                    @for (month of months; track month) {
+                      <option [value]="month" [selected]="newRuleMonth() === month">{{ i18n.t(monthKey(month)) }}</option>
+                    }
+                  </select>
                 </div>
               } @else {
                 <div class="mb-3">

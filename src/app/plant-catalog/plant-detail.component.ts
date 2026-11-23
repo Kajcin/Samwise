@@ -30,8 +30,11 @@ export function validateCareRuleForm(
   timingType: TimingType,
   offsetDays: number | null,
   recurrenceDays: number | null,
+  month: number | null = null,
 ): Message | null {
-  if (timingType === 'offset_from_planting') {
+  if (timingType === 'yearly') {
+    if (month == null) return msg('plant.errors.monthRequired');
+  } else if (timingType === 'offset_from_planting') {
     if (offsetDays == null) return msg('plant.errors.offsetRequired');
     if (!Number.isInteger(offsetDays) || offsetDays < 0) return msg('plant.errors.offsetInvalid');
   } else {
@@ -102,11 +105,14 @@ export function linkHost(url: string): string {
 export const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 /** Offset rules in timeline order first, then recurring rules by interval. */
+const TIMING_ORDER: Record<TimingType, number> = { offset_from_planting: 0, recurring: 1, yearly: 2 };
+
+/** Offset rules in timeline order, then recurring ones by interval, then yearly ones by month. */
 function ruleOrder(a: CareRule, b: CareRule): number {
-  if (a.timing_type !== b.timing_type) return a.timing_type === 'offset_from_planting' ? -1 : 1;
-  return a.timing_type === 'offset_from_planting'
-    ? (a.offset_days ?? 0) - (b.offset_days ?? 0)
-    : (a.recurrence_days ?? 0) - (b.recurrence_days ?? 0);
+  if (a.timing_type !== b.timing_type) return TIMING_ORDER[a.timing_type] - TIMING_ORDER[b.timing_type];
+  if (a.timing_type === 'offset_from_planting') return (a.offset_days ?? 0) - (b.offset_days ?? 0);
+  if (a.timing_type === 'recurring') return (a.recurrence_days ?? 0) - (b.recurrence_days ?? 0);
+  return (a.month ?? 0) - (b.month ?? 0);
 }
 
 @Component({
@@ -152,6 +158,7 @@ export class PlantDetailComponent {
   newRuleTimingType = signal<TimingType>('offset_from_planting');
   newRuleOffsetDays = signal<number | null>(null);
   newRuleRecurrenceDays = signal<number | null>(null);
+  newRuleMonth = signal<number | null>(null);
   newRuleError = signal<Message | null>(null);
 
   private plantId = '';
@@ -196,7 +203,8 @@ export class PlantDetailComponent {
     const timing = this.newRuleTimingType();
     const offset = timing === 'offset_from_planting' ? this.newRuleOffsetDays() : null;
     const recurrence = timing === 'recurring' ? this.newRuleRecurrenceDays() : null;
-    const validation = validateCareRuleForm(timing, offset, recurrence);
+    const month = timing === 'yearly' ? this.newRuleMonth() : null;
+    const validation = validateCareRuleForm(timing, offset, recurrence, month);
     this.newRuleError.set(validation);
     if (validation) return;
     try {
@@ -205,10 +213,12 @@ export class PlantDetailComponent {
         timing_type: timing,
         offset_days: offset,
         recurrence_days: recurrence,
+        month,
         notes: null,
       });
       this.newRuleOffsetDays.set(null);
       this.newRuleRecurrenceDays.set(null);
+      this.newRuleMonth.set(null);
       await this.refreshCareRules();
     } catch (e) {
       this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));
@@ -290,6 +300,10 @@ export class PlantDetailComponent {
     } catch (e) {
       this.error.set(msg('plant.errors.saveNotes', { detail: messageOf(e) }));
     }
+  }
+
+  parseMonth(value: string): number | null {
+    return parseNumberInput(value);
   }
 
   onTimingChange(value: string): void {

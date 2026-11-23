@@ -12,7 +12,7 @@ Deno.test('toEventTask adds the plant and its place for generated tasks', () => 
     planting: { cell_row: 0, cell_col: 1, bed: { name: 'Herbs' }, plant: { name: 'Tomato' } },
   });
   assertEquals(task, {
-    task_id: 't1', due_date: '2026-11-20', task_type: 'harvest', completed_at: null, google_calendar_event_id: 'evt-1',
+    task_id: 't1', due_date: '2026-11-20', due_until: null, task_type: 'harvest', completed_at: null, google_calendar_event_id: 'evt-1',
     plant_name: 'Tomato', location: 'Herbs, row 1 col 2', language: 'en',
   });
 });

@@ -51,15 +51,27 @@ export class PlantInUseError extends Error {
 /** Postgres foreign_key_violation. */
 const FOREIGN_KEY_VIOLATION = '23503';
 
-export type TaskType = 'seed_start' | 'transplant' | 'prune' | 'fertilize' | 'harvest';
+export type TaskType =
+  | 'seed_start'
+  | 'transplant'
+  | 'prune'
+  | 'fertilize'
+  | 'harvest'
+  | 'divide'
+  | 'mulch'
+  | 'winter_protection'
+  | 'cut_back';
 
 export interface CareRule {
   id: string;
   plant_id: string;
   task_type: TaskType;
-  timing_type: 'offset_from_planting' | 'recurring';
+  /** yearly: every year during `month` (perennials); a month-long task (migration 0012). */
+  timing_type: 'offset_from_planting' | 'recurring' | 'yearly';
   offset_days: number | null;
   recurrence_days: number | null;
+  /** 1-12, yearly rules only. */
+  month?: number | null;
   notes: string | null;
   /** Czech notes; rules of built-in plants only. */
   notes_cs?: string | null;

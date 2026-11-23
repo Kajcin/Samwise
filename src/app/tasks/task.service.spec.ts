@@ -52,6 +52,12 @@ describe('isOverdue', () => {
     expect(isOverdue(task({ due_date: '2026-08-18' }), today)).toBeTrue();
   });
 
+  it('counts a month-long task as overdue only after its month', () => {
+    const july = { due_date: '2026-08-01', due_until: '2026-08-31' };
+    expect(isOverdue(task(july), today)).toBeFalse(); // 19 August: still under way
+    expect(isOverdue(task(july), new Date(2026, 8, 1))).toBeTrue();
+  });
+
   it('is false for a task due today or later', () => {
     expect(isOverdue(task({ due_date: '2026-08-19' }), today)).toBeFalse();
     expect(isOverdue(task({ due_date: '2026-08-25' }), today)).toBeFalse();

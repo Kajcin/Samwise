@@ -3,7 +3,7 @@ import { IconComponent } from '../core/icons/icon.component';
 import { TASK_TYPE_ICONS } from '../plant-catalog/labels';
 import { RouterLink } from '@angular/router';
 import { isOverdue, TaskService, TaskWithContext } from './task.service';
-import { formatDueDate, taskLocation, taskTitle } from './task-format';
+import { formatDue, taskLocation, taskTitle } from './task-format';
 import { Bed, GardenService } from '../garden/garden.service';
 import { messageOf } from '../core/errors';
 import { Message, msg } from '../core/i18n/i18n';
@@ -36,7 +36,7 @@ export class DashboardComponent {
   protected readonly taskTitle = taskTitle;
   protected readonly taskIcons = TASK_TYPE_ICONS;
   protected readonly taskLocation = taskLocation;
-  protected readonly formatDueDate = formatDueDate;
+  protected readonly formatDue = formatDue;
   protected readonly isOverdue = isOverdue;
 
   loading = signal(true);

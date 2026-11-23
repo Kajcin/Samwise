@@ -34,18 +34,40 @@ export function formatDueDate(isoDate: string, i18n: Translator, today: Date = n
   });
 }
 
+/**
+ * When a task is due: a day as formatDueDate() gives it, or for a month-long task
+ * "This month" (while it runs) or e.g. "July 2027" / "Červenec 2027".
+ */
+export function formatDue(
+  dueDate: string,
+  dueUntil: string | null | undefined,
+  i18n: Translator,
+  today: Date = new Date(),
+): string {
+  if (!dueUntil) return formatDueDate(dueDate, i18n, today);
+  const todayIso = toIsoDate(today);
+  if (dueDate <= todayIso && todayIso <= dueUntil) return i18n.t('dates.thisMonth');
+  const [y, m] = dueDate.split('-').map(Number);
+  const text = i18n.t('dates.monthYear', { month: i18n.t(`months.${m}`), year: String(y) });
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+}
+
+/** Tasks due on the same day, or during the same month (month-long tasks are their own group). */
 export interface TaskDay<T> {
   date: string;
+  /** Set for a group of month-long tasks: the month's last day. */
+  until: string | null;
   tasks: T[];
 }
 
-/** Groups tasks by due date, keeping the input order (callers pass tasks sorted by due date). */
-export function groupByDueDate<T extends { due_date: string }>(tasks: T[]): TaskDay<T>[] {
+/** Groups tasks by when they're due, keeping the input order (callers pass tasks sorted by due date). */
+export function groupByDueDate<T extends { due_date: string; due_until?: string | null }>(tasks: T[]): TaskDay<T>[] {
   const days: TaskDay<T>[] = [];
   for (const task of tasks) {
+    const until = task.due_until ?? null;
     const last = days[days.length - 1];
-    if (last && last.date === task.due_date) last.tasks.push(task);
-    else days.push({ date: task.due_date, tasks: [task] });
+    if (last && last.date === task.due_date && last.until === until) last.tasks.push(task);
+    else days.push({ date: task.due_date, until, tasks: [task] });
   }
   return days;
 }

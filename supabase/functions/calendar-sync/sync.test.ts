@@ -76,6 +76,7 @@ Deno.test('shouldSync ignores an id-only change but not date, type or completion
   assertEquals(shouldSync(record, { ...record, google_calendar_event_id: 'evt-1' }), false);
   assertEquals(shouldSync(record, { ...record, due_date: '2026-11-26' }), true);
   assertEquals(shouldSync(record, { ...record, task_type: 'prune' }), true);
+  assertEquals(shouldSync(record, { ...record, due_until: '2026-11-30' }), true);
   assertEquals(shouldSync(record, { ...record, completed_at: '2026-11-23T10:00:00Z' }), true);
 });
 

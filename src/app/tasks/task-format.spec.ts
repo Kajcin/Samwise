@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { formatDueDate, groupByDueDate, taskLocation, taskTitle } from './task-format';
+import { formatDue, formatDueDate, groupByDueDate, taskLocation, taskTitle } from './task-format';
 import { TaskWithContext } from './task.service';
 import { provideI18n } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
@@ -63,6 +63,23 @@ describe('formatDueDate', () => {
   });
 });
 
+describe('formatDue', () => {
+  const today = new Date(2026, 10, 24);
+
+  it('names the month of a month-long task, or "this month" while it runs', () => {
+    const en = i18nIn('en');
+    expect(formatDue('2027-07-01', '2027-07-31', en, today)).toBe('July 2027');
+    expect(formatDue('2026-11-01', '2026-11-30', en, today)).toBe('This month');
+    expect(formatDue('2026-11-25', null, en, today)).toBe('Tomorrow'); // one-day tasks as before
+  });
+
+  it('in Czech too', () => {
+    const cs = i18nIn('cs');
+    expect(formatDue('2027-07-01', '2027-07-31', cs, today)).toBe('Červenec 2027');
+    expect(formatDue('2026-11-01', '2026-11-30', cs, today)).toBe('Tento měsíc');
+  });
+});
+
 describe('groupByDueDate', () => {
   it('groups consecutive tasks with the same due date', () => {
     const tasks = [
@@ -71,8 +88,20 @@ describe('groupByDueDate', () => {
       { id: 'c', due_date: '2026-11-12' },
     ];
     expect(groupByDueDate(tasks)).toEqual([
-      { date: '2026-11-10', tasks: [tasks[0], tasks[1]] },
-      { date: '2026-11-12', tasks: [tasks[2]] },
+      { date: '2026-11-10', until: null, tasks: [tasks[0], tasks[1]] },
+      { date: '2026-11-12', until: null, tasks: [tasks[2]] },
+    ]);
+  });
+
+  it('keeps month-long tasks apart from one-day tasks on the 1st', () => {
+    const tasks = [
+      { id: 'a', due_date: '2027-07-01' },
+      { id: 'b', due_date: '2027-07-01', due_until: '2027-07-31' },
+      { id: 'c', due_date: '2027-07-01', due_until: '2027-07-31' },
+    ];
+    expect(groupByDueDate(tasks)).toEqual([
+      { date: '2027-07-01', until: null, tasks: [tasks[0]] },
+      { date: '2027-07-01', until: '2027-07-31', tasks: [tasks[1], tasks[2]] },
     ]);
   });
 
