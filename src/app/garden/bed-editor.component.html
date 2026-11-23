@@ -1,23 +1,59 @@
-<main>
+<main class="container pb-5">
   <p><a routerLink="/garden">← Garden</a></p>
-  <h1>New bed</h1>
+  <h1 class="mb-4">New bed</h1>
 
-  <form (submit)="save($event)">
-    <label>
-      Name
-      <input name="name" [value]="name()" (input)="name.set($any($event.target).value)" placeholder="e.g. Herb bed" />
-    </label>
-    <label>
-      Rows
-      <input name="rows" type="number" min="1" [max]="maxSize" step="1" [value]="rows() ?? ''" (input)="setRows($any($event.target).value)" />
-    </label>
-    <label>
-      Columns
-      <input name="cols" type="number" min="1" [max]="maxSize" step="1" [value]="cols() ?? ''" (input)="setCols($any($event.target).value)" />
-    </label>
-    @if (error()) {
-      <p role="alert">{{ error() }}</p>
-    }
-    <button type="submit" [disabled]="saving()">Save bed</button>
-  </form>
+  <div class="row">
+    <div class="col-md-8 col-lg-6">
+      <form class="card" (submit)="save($event)">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label" for="bed-name">Name</label>
+            <input
+              id="bed-name"
+              class="form-control"
+              name="name"
+              [value]="name()"
+              (input)="name.set($any($event.target).value)"
+              placeholder="e.g. Herb bed"
+            />
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label" for="bed-rows">Rows</label>
+              <input
+                id="bed-rows"
+                class="form-control"
+                name="rows"
+                type="number"
+                min="1"
+                [max]="maxSize"
+                step="1"
+                [value]="rows() ?? ''"
+                (input)="setRows($any($event.target).value)"
+              />
+            </div>
+            <div class="col-6">
+              <label class="form-label" for="bed-cols">Columns</label>
+              <input
+                id="bed-cols"
+                class="form-control"
+                name="cols"
+                type="number"
+                min="1"
+                [max]="maxSize"
+                step="1"
+                [value]="cols() ?? ''"
+                (input)="setCols($any($event.target).value)"
+              />
+            </div>
+            <div class="form-text mt-1">Each cell holds one plant; up to {{ maxSize }} × {{ maxSize }}.</div>
+          </div>
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">Save bed</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </main>

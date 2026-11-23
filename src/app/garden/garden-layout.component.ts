@@ -27,11 +27,25 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
   imports: [RouterLink],
   templateUrl: './garden-layout.component.html',
   styles: `
-    table { border-collapse: collapse; }
-    td { padding: 0; }
-    td button { width: 5.5rem; height: 3.5rem; border: 1px solid #8a9a5b; background: #f4f7ec; cursor: pointer; overflow: hidden; }
-    td button.planted { background: #cfe3b0; }
-    td button.selected { outline: 3px solid #3b6e22; outline-offset: -3px; }
+    .bed-grid { border-collapse: separate; border-spacing: 4px; }
+    .bed-grid td { padding: 0; }
+    .bed-grid button {
+      width: 5.5rem;
+      height: 3.5rem;
+      padding: 0.25rem;
+      border: 1px solid #b5c79a;
+      border-radius: 0.5rem;
+      background: #f4f7ec;
+      color: #6c7a5a;
+      font-size: 0.85rem;
+      line-height: 1.1;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .bed-grid button:hover { border-color: #3b6e22; }
+    .bed-grid button.planted { background: #cfe3b0; color: #2f5a1b; font-weight: 600; }
+    .bed-grid button.selected { outline: 3px solid #3b6e22; outline-offset: 1px; }
+    .bed-grid button:focus-visible { outline: 3px solid #3b6e22; outline-offset: 1px; }
   `,
 })
 export class GardenLayoutComponent {

@@ -1,88 +1,136 @@
-<main>
+<main class="container pb-5">
   <p><a routerLink="/plants">← Plant catalog</a></p>
 
   @if (error()) {
-    <p role="alert">{{ error() }}</p>
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
   }
 
   @if (plant(); as p) {
-    <h1>{{ p.name }}</h1>
+    <h1 class="mb-1">{{ p.name }}</h1>
     @if (p.species) {
-      <p><i>{{ p.species }}</i></p>
-    }
-    @if (p.sun_requirements) {
-      <p>Sun: {{ sunLabels[p.sun_requirements] }}</p>
-    }
-    @if (p.watering_frequency_days) {
-      <p>Watering: every {{ p.watering_frequency_days }} {{ p.watering_frequency_days === 1 ? 'day' : 'days' }}</p>
-    }
-    @if (p.flowering_start_month && p.flowering_end_month) {
-      <p>Flowering: {{ monthName(p.flowering_start_month) }} to {{ monthName(p.flowering_end_month) }}</p>
-    }
-    @if (p.notes) {
-      <p>{{ p.notes }}</p>
+      <p class="text-body-secondary"><i>{{ p.species }}</i></p>
     }
 
-    <h2>Care rules</h2>
-    <ul>
-      @for (rule of careRules(); track rule.id) {
-        <li>
-          {{ taskLabels[rule.task_type] }} — {{ describeTiming(rule) }}
-          @if (isEditable()) {
-            <input
-              [attr.aria-label]="taskLabels[rule.task_type] + ' notes'"
-              [value]="rule.notes ?? ''"
-              (change)="updateRuleNotes(rule.id, $any($event.target).value)"
-              placeholder="Notes"
-            />
-          } @else if (rule.notes) {
-            <small>({{ rule.notes }})</small>
-          }
-        </li>
-      } @empty {
-        <p>No care rules yet.</p>
-      }
-    </ul>
-
-    @if (isEditable()) {
-      <form (submit)="addCareRule($event)">
-        <h3>Add a care rule</h3>
-        <label>
-          Task
-          <select name="task" (change)="onTaskTypeChange($any($event.target).value)">
-            @for (type of taskTypes; track type) {
-              <option [value]="type" [selected]="newRuleTaskType() === type">{{ taskLabels[type] }}</option>
+    <div class="row g-4 mt-1">
+      <div class="col-lg-8">
+        <section class="card mb-4">
+          <div class="card-body">
+            <h2 class="h5 card-title">About</h2>
+            <dl class="row mb-0">
+              @if (p.sun_requirements) {
+                <dt class="col-sm-4">Sun</dt>
+                <dd class="col-sm-8">{{ sunLabels[p.sun_requirements] }}</dd>
+              }
+              @if (p.watering_frequency_days) {
+                <dt class="col-sm-4">Watering</dt>
+                <dd class="col-sm-8">
+                  every {{ p.watering_frequency_days }} {{ p.watering_frequency_days === 1 ? 'day' : 'days' }}
+                </dd>
+              }
+              @if (p.flowering_start_month && p.flowering_end_month) {
+                <dt class="col-sm-4">Flowering</dt>
+                <dd class="col-sm-8">{{ monthName(p.flowering_start_month) }} to {{ monthName(p.flowering_end_month) }}</dd>
+              }
+            </dl>
+            @if (p.notes) {
+              <p class="mt-3 mb-0">{{ p.notes }}</p>
             }
-          </select>
-        </label>
-        <label>
-          When
-          <select name="timing" (change)="onTimingChange($any($event.target).value)">
-            <option value="offset_from_planting" [selected]="newRuleTimingType() === 'offset_from_planting'">Days after planting</option>
-            <option value="recurring" [selected]="newRuleTimingType() === 'recurring'">Repeats every N days</option>
-          </select>
-        </label>
-        @if (newRuleTimingType() === 'offset_from_planting') {
-          <label>
-            Days after planting
-            <input name="offset" type="number" min="0" step="1" [value]="newRuleOffsetDays() ?? ''" (input)="onDaysInput('offset', $any($event.target).value)" />
-          </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Care rules</h2>
+          </div>
+          <ul class="list-group list-group-flush">
+            @for (rule of careRules(); track rule.id) {
+              <li class="list-group-item">
+                {{ taskLabels[rule.task_type] }} — {{ describeTiming(rule) }}
+                @if (isEditable()) {
+                  <input
+                    class="form-control form-control-sm mt-2"
+                    [attr.aria-label]="taskLabels[rule.task_type] + ' notes'"
+                    [value]="rule.notes ?? ''"
+                    (change)="updateRuleNotes(rule.id, $any($event.target).value)"
+                    placeholder="Notes"
+                  />
+                } @else if (rule.notes) {
+                  <small class="text-body-secondary">({{ rule.notes }})</small>
+                }
+              </li>
+            } @empty {
+              <p class="list-group-item text-body-secondary mb-0">No care rules yet.</p>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <div class="col-lg-4">
+        @if (isEditable()) {
+          <form class="card" (submit)="addCareRule($event)">
+            <div class="card-body">
+              <h3 class="h5 card-title">Add a care rule</h3>
+              <div class="mb-3">
+                <label class="form-label" for="rule-task">Task</label>
+                <select id="rule-task" class="form-select" name="task" (change)="onTaskTypeChange($any($event.target).value)">
+                  @for (type of taskTypes; track type) {
+                    <option [value]="type" [selected]="newRuleTaskType() === type">{{ taskLabels[type] }}</option>
+                  }
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="rule-timing">When</label>
+                <select id="rule-timing" class="form-select" name="timing" (change)="onTimingChange($any($event.target).value)">
+                  <option value="offset_from_planting" [selected]="newRuleTimingType() === 'offset_from_planting'">Days after planting</option>
+                  <option value="recurring" [selected]="newRuleTimingType() === 'recurring'">Repeats every N days</option>
+                </select>
+              </div>
+              @if (newRuleTimingType() === 'offset_from_planting') {
+                <div class="mb-3">
+                  <label class="form-label" for="rule-offset">Days after planting</label>
+                  <input
+                    id="rule-offset"
+                    class="form-control"
+                    name="offset"
+                    type="number"
+                    min="0"
+                    step="1"
+                    [value]="newRuleOffsetDays() ?? ''"
+                    (input)="onDaysInput('offset', $any($event.target).value)"
+                  />
+                </div>
+              } @else {
+                <div class="mb-3">
+                  <label class="form-label" for="rule-recurrence">Every N days</label>
+                  <input
+                    id="rule-recurrence"
+                    class="form-control"
+                    name="recurrence"
+                    type="number"
+                    min="1"
+                    step="1"
+                    [value]="newRuleRecurrenceDays() ?? ''"
+                    (input)="onDaysInput('recurrence', $any($event.target).value)"
+                  />
+                </div>
+              }
+              @if (newRuleError()) {
+                <div class="alert alert-danger" role="alert">{{ newRuleError() }}</div>
+              }
+              <button type="submit" class="btn btn-primary">Add rule</button>
+            </div>
+          </form>
         } @else {
-          <label>
-            Every N days
-            <input name="recurrence" type="number" min="1" step="1" [value]="newRuleRecurrenceDays() ?? ''" (input)="onDaysInput('recurrence', $any($event.target).value)" />
-          </label>
+          <div class="card">
+            <div class="card-body">
+              <p>This is a built-in plant, so its care rules are read-only.</p>
+              <button type="button" class="btn btn-outline-primary" (click)="cloneAndEdit()">Clone to customize</button>
+            </div>
+          </div>
         }
-        @if (newRuleError()) {
-          <p role="alert">{{ newRuleError() }}</p>
-        }
-        <button type="submit">Add rule</button>
-      </form>
-    } @else {
-      <p>This is a built-in plant, so its care rules are read-only.</p>
-      <button type="button" (click)="cloneAndEdit()">Clone to customize</button>
-    }
+      </div>
+    </div>
   } @else if (!error()) {
-    <p>Loading…</p>
+    <p class="text-body-secondary">Loading…</p>
   }
 </main>

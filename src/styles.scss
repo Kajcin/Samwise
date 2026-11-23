@@ -1,0 +1,61 @@
+// Samwise theme: Bootstrap 5.3 with garden greens instead of Bootstrap blue.
+// Variables must come before the Bootstrap import to take effect.
+
+$green-700: #2f5a1b; // the original nav link colour
+$green-600: #3b6e22; // white text on it passes WCAG AA (about 6:1)
+$green-50: #f4f7ec; // the original nav background
+
+$primary: $green-600;
+$link-color: $green-700;
+$link-hover-color: darken($green-700, 8%);
+$body-bg: #fbfcf8;
+$border-radius: 0.5rem;
+$border-radius-lg: 0.75rem;
+
+// Only the parts Samwise uses (the full bundle is ~230 kB of CSS). Order as in
+// bootstrap/scss/bootstrap.scss; add a module here before using its classes.
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/type';
+@import 'bootstrap/scss/containers';
+@import 'bootstrap/scss/grid';
+@import 'bootstrap/scss/tables';
+@import 'bootstrap/scss/forms';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/nav';
+@import 'bootstrap/scss/navbar';
+@import 'bootstrap/scss/card';
+@import 'bootstrap/scss/badge';
+@import 'bootstrap/scss/alert';
+@import 'bootstrap/scss/list-group';
+@import 'bootstrap/scss/close';
+@import 'bootstrap/scss/helpers';
+@import 'bootstrap/scss/utilities/api';
+
+// --- App-wide additions -------------------------------------------------------
+
+.app-navbar {
+  background: $green-50;
+  border-bottom: 1px solid #c8d5b0;
+
+  .navbar-brand {
+    color: $green-700;
+    font-weight: 600;
+  }
+}
+
+// Page titles a bit smaller than Bootstrap's default h1 on phones.
+main h1 {
+  font-size: calc(1.4rem + 1vw);
+  @include media-breakpoint-up(lg) {
+    font-size: 2.1rem;
+  }
+}

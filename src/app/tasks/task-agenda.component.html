@@ -1,88 +1,112 @@
-<main>
-  <h1>Tasks</h1>
+<main class="container pb-5">
+  <h1 class="mb-4">Tasks</h1>
 
-  <form class="filters" (submit)="$event.preventDefault()">
-    <label>
-      Type
-      <select name="type" (change)="onTypeFilter($any($event.target).value)">
+  <form class="filters row g-2 mb-4" (submit)="$event.preventDefault()">
+    <div class="col-sm-4">
+      <label class="form-label small text-body-secondary mb-1" for="filter-type">Type</label>
+      <select id="filter-type" class="form-select" name="type" (change)="onTypeFilter($any($event.target).value)">
         <option value="" [selected]="!typeFilter()">All types</option>
         @for (type of taskTypes; track type) {
           <option [value]="type" [selected]="typeFilter() === type">{{ taskLabels[type] }}</option>
         }
       </select>
-    </label>
-    <label>
-      Bed
-      <select name="bed" (change)="bedFilter.set($any($event.target).value)">
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label small text-body-secondary mb-1" for="filter-bed">Bed</label>
+      <select id="filter-bed" class="form-select" name="bed" (change)="bedFilter.set($any($event.target).value)">
         <option value="" [selected]="!bedFilter()">All beds</option>
         @for (bed of beds(); track bed.id) {
           <option [value]="bed.id" [selected]="bedFilter() === bed.id">{{ bed.name }}</option>
         }
       </select>
-    </label>
-    <label>
-      Show
-      <select name="status" (change)="onStatusFilter($any($event.target).value)">
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label small text-body-secondary mb-1" for="filter-status">Show</label>
+      <select id="filter-status" class="form-select" name="status" (change)="onStatusFilter($any($event.target).value)">
         <option value="todo" [selected]="statusFilter() === 'todo'">To do</option>
         <option value="done" [selected]="statusFilter() === 'done'">Done</option>
         <option value="all" [selected]="statusFilter() === 'all'">All</option>
       </select>
-    </label>
+    </div>
   </form>
 
   @if (error()) {
-    <p role="alert">{{ error() }}</p>
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
   }
 
-  @if (loading()) {
-    <p>Loading tasks…</p>
-  } @else {
-    @for (day of days(); track day.date) {
-      <section class="day">
-        <h2>{{ formatDueDate(day.date) }}</h2>
-        <ul>
-          @for (task of day.tasks; track task.id) {
-            <li class="task" [attr.data-id]="task.id">
-              @if (task.completed_at) {
-                <s>{{ taskTitle(task) }}</s>
-              } @else {
-                {{ taskTitle(task) }}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      @if (loading()) {
+        <p class="text-body-secondary">Loading tasks…</p>
+      } @else {
+        @for (day of days(); track day.date) {
+          <section class="day card mb-3">
+            <h2 class="card-header h6 mb-0">{{ formatDueDate(day.date) }}</h2>
+            <ul class="list-group list-group-flush">
+              @for (task of day.tasks; track task.id) {
+                <li class="task list-group-item d-flex align-items-center gap-3" [attr.data-id]="task.id">
+                  <div class="flex-grow-1">
+                    @if (task.completed_at) {
+                      <s class="text-body-secondary">{{ taskTitle(task) }}</s>
+                    } @else {
+                      {{ taskTitle(task) }}
+                    }
+                    @if (taskLocation(task); as where) {
+                      <small class="text-body-secondary">({{ where }})</small>
+                    }
+                    @if (isOverdue(task)) {
+                      <span class="badge text-bg-danger ms-1">Overdue</span>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-outline-primary]="!task.completed_at"
+                    [class.btn-outline-secondary]="!!task.completed_at"
+                    [disabled]="busyTaskId() === task.id"
+                    (click)="toggleDone(task)"
+                  >
+                    {{ task.completed_at ? 'Undo' : 'Done' }}
+                  </button>
+                </li>
               }
-              @if (taskLocation(task); as where) {
-                <small>({{ where }})</small>
-              }
-              @if (isOverdue(task)) {
-                <em>Overdue</em>
-              }
-              <button type="button" [disabled]="busyTaskId() === task.id" (click)="toggleDone(task)">
-                {{ task.completed_at ? 'Undo' : 'Done' }}
-              </button>
-            </li>
-          }
-        </ul>
-      </section>
-    } @empty {
-      <p>No tasks match these filters.</p>
-    }
-  }
-
-  <form class="add-task" (submit)="addManualTask($event)">
-    <h2>Add a task</h2>
-    <label>
-      Type
-      <select name="newType" (change)="newTaskType.set($any($event.target).value)">
-        @for (type of taskTypes; track type) {
-          <option [value]="type" [selected]="newTaskType() === type">{{ taskLabels[type] }}</option>
+            </ul>
+          </section>
+        } @empty {
+          <p class="text-body-secondary">No tasks match these filters.</p>
         }
-      </select>
-    </label>
-    <label>
-      Due
-      <input name="newDue" type="date" [value]="newTaskDue()" (input)="newTaskDue.set($any($event.target).value)" />
-    </label>
-    @if (newTaskError()) {
-      <p role="alert">{{ newTaskError() }}</p>
-    }
-    <button type="submit">Add task</button>
-  </form>
+      }
+    </div>
+
+    <div class="col-lg-4">
+      <form class="add-task card" (submit)="addManualTask($event)">
+        <div class="card-body">
+          <h2 class="h5 card-title">Add a task</h2>
+          <div class="mb-3">
+            <label class="form-label" for="new-task-type">Type</label>
+            <select id="new-task-type" class="form-select" name="newType" (change)="newTaskType.set($any($event.target).value)">
+              @for (type of taskTypes; track type) {
+                <option [value]="type" [selected]="newTaskType() === type">{{ taskLabels[type] }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="new-task-due">Due</label>
+            <input
+              id="new-task-due"
+              class="form-control"
+              name="newDue"
+              type="date"
+              [value]="newTaskDue()"
+              (input)="newTaskDue.set($any($event.target).value)"
+            />
+          </div>
+          @if (newTaskError()) {
+            <div class="alert alert-danger" role="alert">{{ newTaskError() }}</div>
+          }
+          <button type="submit" class="btn btn-primary">Add task</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </main>

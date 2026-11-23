@@ -37,6 +37,26 @@ describe('App', () => {
     expect(nav.textContent).toContain('dev@samwise.local');
   });
 
+  it('opens and closes the menu on narrow screens', async () => {
+    user.set({ email: 'dev@samwise.local' } as User);
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggler = el.querySelector('.navbar-toggler') as HTMLButtonElement;
+    const menu = el.querySelector('#app-menu')!;
+
+    expect(menu.classList).not.toContain('show');
+    toggler.click();
+    fixture.detectChanges();
+    expect(menu.classList).toContain('show');
+    expect(toggler.getAttribute('aria-expanded')).toBe('true');
+
+    (menu.querySelector('a') as HTMLAnchorElement).click(); // picking a page closes it
+    fixture.detectChanges();
+    expect(menu.classList).not.toContain('show');
+  });
+
   it('signs out and returns to the login page', async () => {
     user.set({ email: 'dev@samwise.local' } as User);
     const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
@@ -44,7 +64,7 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('nav button') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('nav button.sign-out') as HTMLButtonElement).click();
     await fixture.whenStable();
 
     expect(auth.signOut).toHaveBeenCalled();

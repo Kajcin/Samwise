@@ -90,7 +90,7 @@ describe('DashboardComponent', () => {
     const { el } = await render();
     const beds = Array.from(el.querySelectorAll('.bed')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim());
 
-    expect(beds).toEqual(['Herbs — 2 of 4 cells planted', 'Veg — 0 of 3 cells planted']);
+    expect(beds).toEqual(['Herbs 2 of 4 cells planted', 'Veg 0 of 3 cells planted']);
   });
 
   it('has friendly empty states', async () => {

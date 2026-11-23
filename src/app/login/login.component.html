@@ -1,22 +1,49 @@
-<main>
-  <h1>Samwise</h1>
-  <button (click)="signIn()">Sign in with Google</button>
+<main class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-sm-10 col-md-7 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4 text-center">
+          <h1 class="mb-2">Samwise</h1>
+          <p class="text-body-secondary mb-4">Your garden’s care schedule, on your calendar.</p>
+          <button type="button" class="btn btn-primary btn-lg w-100" (click)="signIn()">Sign in with Google</button>
+        </div>
+      </div>
 
-  @if (devEmailLogin) {
-    <form (submit)="devSignIn($event)">
-      <h2>Local development sign-in</h2>
-      <label>
-        Email
-        <input type="email" autocomplete="username" [value]="email()" (input)="email.set($any($event.target).value)" />
-      </label>
-      <label>
-        Password
-        <input type="password" autocomplete="current-password" [value]="password()" (input)="password.set($any($event.target).value)" />
-      </label>
-      <button type="submit">Sign in</button>
-      @if (error()) {
-        <p role="alert">{{ error() }}</p>
+      @if (devEmailLogin) {
+        <div class="card mt-4 border-warning-subtle">
+          <div class="card-body p-4">
+            <form (submit)="devSignIn($event)">
+              <h2 class="h6 text-body-secondary mb-3">Local development sign-in</h2>
+              <div class="mb-3">
+                <label class="form-label" for="dev-email">Email</label>
+                <input
+                  id="dev-email"
+                  class="form-control"
+                  type="email"
+                  autocomplete="username"
+                  [value]="email()"
+                  (input)="email.set($any($event.target).value)"
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="dev-password">Password</label>
+                <input
+                  id="dev-password"
+                  class="form-control"
+                  type="password"
+                  autocomplete="current-password"
+                  [value]="password()"
+                  (input)="password.set($any($event.target).value)"
+                />
+              </div>
+              <button type="submit" class="btn btn-outline-secondary">Sign in</button>
+              @if (error()) {
+                <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error() }}</div>
+              }
+            </form>
+          </div>
+        </div>
       }
-    </form>
-  }
+    </div>
+  </div>
 </main>

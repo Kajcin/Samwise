@@ -82,7 +82,7 @@ describe('SettingsComponent', () => {
     calendar.status.and.resolveTo('connected');
     const { el } = await render();
 
-    expect(el.textContent).toContain('Connected.');
+    expect(el.textContent).toContain('New and changed tasks appear');
     expect(el.querySelector('button.connect')).toBeNull();
     expect(el.querySelector('button.disconnect')!.textContent).toContain('Disconnect');
   });
@@ -178,7 +178,7 @@ describe('SettingsComponent', () => {
     fixture.detectChanges();
 
     expect(el.querySelector('[role=alert]')!.textContent).toContain('Couldn’t disconnect');
-    expect(el.textContent).toContain('Connected.');
+    expect(el.textContent).toContain('New and changed tasks appear');
   });
 
   it('sends the user to Google with a fresh state remembered for the return', async () => {

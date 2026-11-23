@@ -1,47 +1,70 @@
-<main>
-  <h1>Dashboard</h1>
+<main class="container pb-5">
+  <h1 class="mb-4">Dashboard</h1>
 
   @if (error()) {
-    <p role="alert">{{ error() }}</p>
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
   }
 
   @if (loading()) {
-    <p>Loading…</p>
+    <p class="text-body-secondary">Loading…</p>
   } @else {
-    <section>
-      <h2>Coming up (next {{ days }} days)</h2>
-      <ul>
-        @for (task of upcoming(); track task.id) {
-          <li class="task">
-            <strong>{{ formatDueDate(task.due_date) }}</strong>
-            @if (isOverdue(task)) {
-              <em>Overdue</em>
+    <div class="row g-4">
+      <section class="col-lg-8">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Coming up <span class="text-body-secondary fw-normal">(next {{ days }} days)</span></h2>
+            <a class="small" routerLink="/tasks">All tasks</a>
+          </div>
+          <ul class="list-group list-group-flush">
+            @for (task of upcoming(); track task.id) {
+              <li class="task list-group-item d-flex align-items-center gap-3">
+                <div class="flex-grow-1">
+                  <div>
+                    <strong>{{ formatDueDate(task.due_date) }}</strong>
+                    @if (isOverdue(task)) {
+                      <span class="badge text-bg-danger ms-1">Overdue</span>
+                    }
+                  </div>
+                  <div>
+                    {{ taskTitle(task) }}
+                    @if (taskLocation(task); as where) {
+                      <small class="text-body-secondary">({{ where }})</small>
+                    }
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  [disabled]="busyTaskId() === task.id"
+                  (click)="markDone(task)"
+                >Done</button>
+              </li>
+            } @empty {
+              <li class="list-group-item text-body-secondary">Nothing to do in the next {{ days }} days.</li>
             }
-            — {{ taskTitle(task) }}
-            @if (taskLocation(task); as where) {
-              <small>({{ where }})</small>
-            }
-            <button type="button" [disabled]="busyTaskId() === task.id" (click)="markDone(task)">Done</button>
-          </li>
-        } @empty {
-          <p>Nothing to do in the next {{ days }} days.</p>
-        }
-      </ul>
-      <p><a routerLink="/tasks">All tasks</a></p>
-    </section>
+          </ul>
+        </div>
+      </section>
 
-    <section>
-      <h2>Beds</h2>
-      <ul>
-        @for (summary of bedSummaries(); track summary.bed.id) {
-          <li class="bed">
-            <a routerLink="/garden">{{ summary.bed.name }}</a> — {{ summary.plantingCount }} of
-            {{ summary.bed.rows * summary.bed.cols }} cells planted
-          </li>
-        } @empty {
-          <p>No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</p>
-        }
-      </ul>
-    </section>
+      <section class="col-lg-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Beds</h2>
+          </div>
+          <ul class="list-group list-group-flush">
+            @for (summary of bedSummaries(); track summary.bed.id) {
+              <li class="bed list-group-item">
+                <a routerLink="/garden">{{ summary.bed.name }}</a>
+                <div class="small text-body-secondary">
+                  {{ summary.plantingCount }} of {{ summary.bed.rows * summary.bed.cols }} cells planted
+                </div>
+              </li>
+            } @empty {
+              <li class="list-group-item">No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</li>
+            }
+          </ul>
+        </div>
+      </section>
+    </div>
   }
 </main>

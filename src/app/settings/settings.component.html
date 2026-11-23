@@ -1,51 +1,66 @@
-<main>
-  <h1>Settings</h1>
+<main class="container pb-5">
+  <h1 class="mb-4">Settings</h1>
 
-  <section>
-    <h2>Account</h2>
-    <p>Signed in as {{ auth.currentUser()?.email }}</p>
-  </section>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section class="card mb-4">
+        <div class="card-body">
+          <h2 class="h5 card-title">Account</h2>
+          <p class="mb-0">Signed in as <strong>{{ auth.currentUser()?.email }}</strong></p>
+        </div>
+      </section>
 
-  <section>
-    <h2>Google Calendar</h2>
-    <p>
-      Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see and
-      change that calendar, none of your others.
-    </p>
+      <section class="card">
+        <div class="card-body">
+          <h2 class="h5 card-title">Google Calendar</h2>
+          <p class="text-body-secondary">
+            Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see
+            and change that calendar, none of your others.
+          </p>
 
-    @if (status()) {
-      <p role="status">{{ status() }}</p>
-    }
-    @if (error()) {
-      <p role="alert">{{ error() }}</p>
-    }
+          @if (status()) {
+            <div class="alert alert-success" role="status">{{ status() }}</div>
+          }
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
 
-    @switch (connection()) {
-      @case (null) {
-        <p>Checking…</p>
-      }
-      @case ('connected') {
-        <p><strong>Connected.</strong> New and changed tasks appear on your “Samwise” calendar.</p>
-        <button type="button" class="disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-          Disconnect
-        </button>
-        <p><small>Disconnecting deletes the “Samwise” calendar from Google Calendar.</small></p>
-      }
-      @case ('not_connected') {
-        <p>Not connected.</p>
-        <button type="button" class="connect" [disabled]="busy()" (click)="connectCalendar()">
-          Connect Google Calendar
-        </button>
-      }
-      @default {
-        <p class="reconnect" role="alert"><strong>Calendar sync stopped.</strong> {{ reconnectMessage() }}</p>
-        <button type="button" class="connect" [disabled]="busy()" (click)="connectCalendar()">
-          Reconnect Google Calendar
-        </button>
-        <button type="button" class="disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-          Disconnect
-        </button>
-      }
-    }
-  </section>
+          @switch (connection()) {
+            @case (null) {
+              <p class="text-body-secondary mb-0">Checking…</p>
+            }
+            @case ('connected') {
+              <p>
+                <span class="badge text-bg-success me-1">Connected</span>
+                New and changed tasks appear on your “Samwise” calendar.
+              </p>
+              <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
+                Disconnect
+              </button>
+              <p class="form-text mb-0">Disconnecting deletes the “Samwise” calendar from Google Calendar.</p>
+            }
+            @case ('not_connected') {
+              <p><span class="badge text-bg-secondary">Not connected</span></p>
+              <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
+                Connect Google Calendar
+              </button>
+            }
+            @default {
+              <div class="alert alert-warning reconnect" role="alert">
+                <strong>Calendar sync stopped.</strong> {{ reconnectMessage() }}
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
+                  Reconnect Google Calendar
+                </button>
+                <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
+                  Disconnect
+                </button>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    </div>
+  </div>
 </main>
