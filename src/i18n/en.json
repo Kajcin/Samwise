@@ -215,6 +215,32 @@
       "deleteRule": "Could not delete the rule: {detail}"
     }
   },
+  "lookup": {
+    "button": "Search “{query}” on the web",
+    "searching": "Searching Wikipedia…",
+    "heading": "On Wikipedia for “{query}”",
+    "use": "Use",
+    "source": "Wikipedia: {title}",
+    "cultivarNote": "“{cultivar}” itself isn’t on Wikipedia; the details are for {plant}.",
+    "none": "Nothing found on Wikipedia for “{query}”.",
+    "license": "Texts from Wikipedia, licence",
+    "prefilled": "Pre-filled from Wikipedia: check the details and choose the sun requirement.",
+    "clearPrefill": "Clear",
+    "attribution": "(Source: Wikipedia, CC BY-SA 4.0)",
+    "rank": {
+      "family": "family",
+      "genus": "genus",
+      "species": "species",
+      "hybrid": "hybrid",
+      "subspecies": "subspecies",
+      "variety": "variety",
+      "cultivar": "cultivar"
+    },
+    "errors": {
+      "unreachable": "Samwise’s server couldn’t be reached, so nothing was searched. Please try again in a moment.",
+      "failed": "The search on Wikipedia failed. Please try again later."
+    }
+  },
   "settings": {
     "heading": "Settings",
     "account": "Account",

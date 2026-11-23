@@ -164,6 +164,7 @@ locally too, once `supabase/.env` holds the OAuth client from step 2.
    npx supabase functions deploy connect-calendar
    npx supabase functions deploy disconnect-calendar
    npx supabase functions deploy calendar-sync --no-verify-jwt
+   npx supabase functions deploy plant-lookup
    ```
 2. **Database → Extensions:** confirm `pg_cron`, `pg_net` and `supabase_vault`
    are enabled. The migrations create the first two, so this is a check.
@@ -217,6 +218,24 @@ Samwise speaks English (the default) and Czech.
   placeholders, if a message doesn't parse, or if the code uses a key that doesn't exist.
   Task names and the place format also live in `supabase/functions/_shared/` for the
   calendar events; a Deno test checks they match the JSON.
+
+## Plant lookup
+
+In the plant catalog, a search can be looked up on the web ("Hledat … na webu"): the
+`plant-lookup` Edge Function searches Wikipedia (the user's language first, then the
+other) and keeps the results that Wikidata says are plants. Picking one pre-fills the
+"Add a custom plant" form with its name, Latin name, a short description credited to
+Wikipedia (CC BY-SA 4.0) and a link to the article; the user chooses the sun
+requirement and saves. Nothing is saved without that.
+
+- A cultivar Wikipedia doesn't know ("šanta walker's low") is matched to its species or
+  genus, and the extra words become the cultivar: *Nepeta racemosa 'Walker's Low'*.
+- No API key is needed. Results are cached for 30 days (`plant_lookup_cache`, shared,
+  closed to clients). Wikimedia asks API clients for a descriptive User-Agent with a way
+  to contact them: set `WIKIMEDIA_USER_AGENT` in `supabase/functions/.env` (and with
+  `npx supabase secrets set` when hosted), e.g. `my-garden/1.0 (https://example.com; me@example.com)`.
+  Without it, a generic one is sent.
+- Samwise never reads other sites (e.g. nursery shops); see `docs/ROADMAP.md`.
 
 ## Security decisions
 

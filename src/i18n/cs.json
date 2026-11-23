@@ -215,6 +215,32 @@
       "deleteRule": "Pravidlo se nepodařilo smazat: {detail}"
     }
   },
+  "lookup": {
+    "button": "Hledat „{query}“ na webu",
+    "searching": "Hledám na Wikipedii…",
+    "heading": "Na Wikipedii pro „{query}“",
+    "use": "Použít",
+    "source": "Wikipedie: {title}",
+    "cultivarNote": "Samotný kultivar „{cultivar}“ na Wikipedii není; údaje jsou pro {plant}.",
+    "none": "Na Wikipedii se pro „{query}“ nic nenašlo.",
+    "license": "Texty z Wikipedie, licence",
+    "prefilled": "Předvyplněno z Wikipedie: zkontrolujte údaje a vyberte nároky na slunce.",
+    "clearPrefill": "Vymazat",
+    "attribution": "(Zdroj: Wikipedie, CC BY-SA 4.0)",
+    "rank": {
+      "family": "čeleď",
+      "genus": "rod",
+      "species": "druh",
+      "hybrid": "kříženec",
+      "subspecies": "poddruh",
+      "variety": "varieta",
+      "cultivar": "kultivar"
+    },
+    "errors": {
+      "unreachable": "Server Samwise není dostupný, takže se nic nehledalo. Zkuste to prosím za chvíli znovu.",
+      "failed": "Hledání na Wikipedii selhalo. Zkuste to prosím později."
+    }
+  },
   "settings": {
     "heading": "Nastavení",
     "account": "Účet",

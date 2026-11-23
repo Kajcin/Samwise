@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { Router, RouterLink } from '@angular/router';
 import { Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
@@ -8,6 +8,10 @@ import { plantName, SUN_REQUIREMENTS, SunRequirement, sunKey } from './labels';
 import { messageOf } from '../core/errors';
 import { Lang, Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
+import { FunctionError } from '../core/edge-functions';
+import { isWebAddress } from '../core/web-address';
+import { environment } from '../../environments/environment';
+import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
 
 /** Matches the English and the Czech name, so "tomato" finds Rajče too. */
 export function filterPlants(plants: Plant[], query: string): Plant[] {
@@ -16,11 +20,24 @@ export function filterPlants(plants: Plant[], query: string): Plant[] {
   return plants.filter((p) => [p.name, p.name_cs].some((name) => name?.toLowerCase().includes(q)));
 }
 
-export function validateNewPlantForm(name: string, sunRequirements: Plant['sun_requirements']): Message | null {
+export function validateNewPlantForm(
+  name: string,
+  sunRequirements: Plant['sun_requirements'],
+  sourceUrl = '',
+): Message | null {
   if (!name.trim()) return msg('catalog.errors.nameRequired');
   if (!sunRequirements) return msg('catalog.errors.sunRequired');
+  if (sourceUrl.trim() && !isWebAddress(sourceUrl.trim())) return msg('plant.errors.sourceUrlInvalid');
   return null;
 }
+
+/** The notes for a plant pre-filled from Wikipedia: its intro, credited (CC BY-SA). */
+export function lookupNotes(candidate: PlantCandidate, attribution: string): string {
+  return `${candidate.description} ${attribution}`.trim();
+}
+
+/** Searches shorter than this aren't offered for a web lookup. */
+export const MIN_LOOKUP_LENGTH = 2;
 
 /** Sorted by the name shown in `lang`. */
 export function sortByName(plants: Plant[], lang: Lang): Plant[] {
@@ -47,6 +64,7 @@ export class PlantCatalogListComponent {
   private router = inject(Router);
   protected i18n = inject(LanguageService);
   private confirmDialog = inject(ConfirmDialogService);
+  private lookupService = inject(PlantLookupService);
 
   protected readonly sunOptions = SUN_REQUIREMENTS;
   protected readonly sunKey = sunKey;
@@ -62,6 +80,20 @@ export class PlantCatalogListComponent {
   newPlantName = signal('');
   newPlantSun = signal<SunRequirement | null>(null);
   newPlantError = signal<Message | null>(null);
+  // Filled in from a web lookup (and then editable); empty otherwise.
+  newPlantSpecies = signal('');
+  newPlantNotes = signal('');
+  newPlantSourceUrl = signal('');
+  /** The lookup result the form was pre-filled from. */
+  prefilledFrom = signal<PlantCandidate | null>(null);
+  private nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+
+  /** The web lookup: the search it ran, its results (null until run), its state. */
+  canLookUp = computed(() => this.query().trim().length >= MIN_LOOKUP_LENGTH);
+  lookupQuery = signal('');
+  lookupResults = signal<PlantCandidate[] | null>(null);
+  lookupLoading = signal(false);
+  lookupError = signal<Message[] | null>(null);
 
   constructor() {
     this.service
@@ -103,20 +135,68 @@ export class PlantCatalogListComponent {
     }
   }
 
+  /** Looks the current search up on Wikipedia (via the plant-lookup Edge Function). */
+  async searchWeb(): Promise<void> {
+    const query = this.query().trim();
+    if (query.length < MIN_LOOKUP_LENGTH) return;
+    this.lookupQuery.set(query);
+    this.lookupResults.set(null);
+    this.lookupError.set(null);
+    this.lookupLoading.set(true);
+    try {
+      this.lookupResults.set(await this.lookupService.lookup(query, this.i18n.lang()));
+    } catch (e) {
+      const unreachable = e instanceof FunctionError && e.code === 'unreachable';
+      this.lookupError.set(
+        unreachable
+          ? [msg('lookup.errors.unreachable'), ...(environment.production ? [] : [msg('settings.calendar.errors.devHint')])]
+          : [msg('lookup.errors.failed')],
+      );
+    } finally {
+      this.lookupLoading.set(false);
+    }
+  }
+
+  closeLookup(): void {
+    this.lookupResults.set(null);
+    this.lookupError.set(null);
+  }
+
+  /** Pre-fills the "Add a custom plant" form; the user checks it, picks the sun, and saves. */
+  applyCandidate(candidate: PlantCandidate): void {
+    this.newPlantName.set(candidate.name);
+    this.newPlantSpecies.set(candidate.latinName);
+    this.newPlantNotes.set(lookupNotes(candidate, this.i18n.t('lookup.attribution')));
+    this.newPlantSourceUrl.set(candidate.url);
+    this.newPlantError.set(null);
+    this.prefilledFrom.set(candidate);
+    const input = this.nameInput()?.nativeElement;
+    input?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    input?.focus({ preventScroll: true });
+  }
+
+  clearPrefill(): void {
+    this.newPlantSpecies.set('');
+    this.newPlantNotes.set('');
+    this.newPlantSourceUrl.set('');
+    this.prefilledFrom.set(null);
+  }
+
   async addCustomPlant(event: Event): Promise<void> {
     event.preventDefault();
-    const validation = validateNewPlantForm(this.newPlantName(), this.newPlantSun());
+    const validation = validateNewPlantForm(this.newPlantName(), this.newPlantSun(), this.newPlantSourceUrl());
     this.newPlantError.set(validation);
     if (validation) return;
     try {
       const plant = await this.service.addCustom({
         name: this.newPlantName().trim(),
-        species: null,
+        species: this.newPlantSpecies().trim() || null,
         sun_requirements: this.newPlantSun(),
         watering_frequency_days: null,
         flowering_start_month: null,
         flowering_end_month: null,
-        notes: null,
+        notes: this.newPlantNotes().trim() || null,
+        source_url: this.newPlantSourceUrl().trim() || null,
       });
       this.plants.update((list) => [...list, plant]);
       await this.router.navigate(['/plants', plant.id]);

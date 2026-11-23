@@ -10,8 +10,62 @@
         type="search"
         [value]="query()"
         (input)="query.set($any($event.target).value)"
+        (keydown.enter)="searchWeb()"
         [placeholder]="i18n.t('catalog.searchPlaceholder')"
       />
+
+      @if (canLookUp()) {
+        <button type="button" class="btn btn-sm btn-outline-primary mb-3 lookup" [disabled]="lookupLoading()" (click)="searchWeb()">
+          <app-icon name="search" class="me-1" />{{ i18n.t('lookup.button', { query: query().trim() }) }}
+        </button>
+      }
+      @if (lookupLoading()) {
+        <p class="text-body-secondary" role="status">{{ i18n.t('lookup.searching') }}</p>
+      }
+      @if (lookupError()) {
+        <div class="alert alert-danger lookup-error" role="alert">{{ i18n.text(lookupError()) }}</div>
+      }
+      @if (lookupResults(); as results) {
+        <section class="card mb-3 lookup-results">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">{{ i18n.t('lookup.heading', { query: lookupQuery() }) }}</h2>
+            <button type="button" class="btn-close" [attr.aria-label]="i18n.t('common.close')" (click)="closeLookup()"></button>
+          </div>
+          <ul class="list-group list-group-flush">
+            @for (candidate of results; track candidate.wikidataId) {
+              <li class="list-group-item candidate">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <strong>{{ candidate.name }}</strong>
+                    <i class="text-body-secondary ms-1">{{ candidate.latinName }}</i>
+                    @if (candidate.rank) {
+                      <span class="badge text-bg-light border ms-1">{{ i18n.t('lookup.rank.' + candidate.rank) }}</span>
+                    }
+                    <p class="small mb-1 mt-1">{{ candidate.description }}</p>
+                    @if (candidate.cultivar) {
+                      <p class="small text-body-secondary mb-1 cultivar-note">
+                        {{ i18n.t('lookup.cultivarNote', { cultivar: candidate.cultivar, plant: candidate.articleTitle }) }}
+                      </p>
+                    }
+                    <a class="small" [href]="candidate.url" target="_blank" rel="noopener noreferrer">
+                      <app-icon name="box-arrow-up-right" class="me-1" />{{ i18n.t('lookup.source', { title: candidate.articleTitle }) }}
+                    </a>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-primary use flex-shrink-0" (click)="applyCandidate(candidate)">
+                    {{ i18n.t('lookup.use') }}
+                  </button>
+                </div>
+              </li>
+            } @empty {
+              <li class="list-group-item text-body-secondary no-results">{{ i18n.t('lookup.none', { query: lookupQuery() }) }}</li>
+            }
+          </ul>
+          <div class="card-footer small text-body-secondary">
+            {{ i18n.t('lookup.license') }}
+            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>
+          </div>
+        </section>
+      }
 
       @if (error()) {
         <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
@@ -55,12 +109,13 @@
     </div>
 
     <div class="col-lg-4">
-      <form class="card" (submit)="addCustomPlant($event)">
+      <form class="card" novalidate (submit)="addCustomPlant($event)">
         <div class="card-body">
           <h2 class="h5 card-title">{{ i18n.t('catalog.addHeading') }}</h2>
           <div class="mb-3">
             <label class="form-label" for="new-plant-name">{{ i18n.t('common.name') }}</label>
             <input
+              #nameInput
               id="new-plant-name"
               class="form-control"
               name="name"
@@ -77,6 +132,46 @@
               }
             </select>
           </div>
+          @if (prefilledFrom()) {
+            <div class="alert alert-info small py-2 prefill-notice" role="status">
+              {{ i18n.t('lookup.prefilled') }}
+              <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="clearPrefill()">
+                {{ i18n.t('lookup.clearPrefill') }}
+              </button>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="new-plant-species">{{ i18n.t('plant.latinName') }}</label>
+              <input
+                id="new-plant-species"
+                class="form-control fst-italic"
+                name="species"
+                [value]="newPlantSpecies()"
+                (input)="newPlantSpecies.set($any($event.target).value)"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="new-plant-notes">{{ i18n.t('plant.notes') }}</label>
+              <textarea
+                id="new-plant-notes"
+                class="form-control"
+                name="notes"
+                rows="4"
+                [value]="newPlantNotes()"
+                (input)="newPlantNotes.set($any($event.target).value)"
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="new-plant-source">{{ i18n.t('plant.sourceUrl') }}</label>
+              <input
+                id="new-plant-source"
+                class="form-control"
+                name="sourceUrl"
+                type="url"
+                [value]="newPlantSourceUrl()"
+                (input)="newPlantSourceUrl.set($any($event.target).value)"
+              />
+            </div>
+          }
           @if (newPlantError()) {
             <div class="alert alert-danger" role="alert">{{ i18n.text(newPlantError()) }}</div>
           }

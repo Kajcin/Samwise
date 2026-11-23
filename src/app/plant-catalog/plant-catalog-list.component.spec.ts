@@ -2,6 +2,8 @@ import { provideI18n } from '../core/i18n/i18n';
 import { msg } from '../core/i18n/i18n';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 import { PlantInUseError } from './plant-catalog.service';
+import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
+import { FunctionError } from '../core/edge-functions';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { filterPlants, PlantCatalogListComponent, validateNewPlantForm } from './plant-catalog-list.component';
@@ -55,6 +57,7 @@ describe('validateNewPlantForm', () => {
 describe('PlantCatalogListComponent', () => {
   let service: jasmine.SpyObj<PlantCatalogService>;
   let dialog: jasmine.SpyObj<ConfirmDialogService>;
+  let lookup: jasmine.SpyObj<PlantLookupService>;
 
   async function render() {
     const fixture = TestBed.createComponent(PlantCatalogListComponent);
@@ -68,6 +71,7 @@ describe('PlantCatalogListComponent', () => {
     service.list.and.resolveTo(plants);
     dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
     dialog.ask.and.resolveTo(true);
+    lookup = jasmine.createSpyObj<PlantLookupService>('PlantLookupService', ['lookup']);
     TestBed.configureTestingModule({
       imports: [PlantCatalogListComponent],
       providers: [
@@ -75,6 +79,7 @@ describe('PlantCatalogListComponent', () => {
         provideRouter([]),
         { provide: PlantCatalogService, useValue: service },
         { provide: ConfirmDialogService, useValue: dialog },
+        { provide: PlantLookupService, useValue: lookup },
       ],
     });
   });
@@ -174,5 +179,136 @@ describe('PlantCatalogListComponent', () => {
     const { el } = await render();
 
     expect(el.querySelector('[role=alert]')!.textContent).toContain('offline');
+  });
+
+  const catmint: PlantCandidate = {
+    wikidataId: 'Q2319755',
+    name: "Šanta Walker's Low",
+    latinName: "Nepeta racemosa 'Walker's Low'",
+    rank: 'species',
+    cultivar: "Walker's Low",
+    articleTitle: 'Šanta hroznovitá',
+    description: 'Šanta hroznovitá (Nepeta racemosa) je středně vysoká, modrofialově kvetoucí vytrvalá květina.',
+    url: 'https://cs.wikipedia.org/wiki/%C5%A0anta_hroznovit%C3%A1',
+    language: 'cs',
+  };
+
+  async function search(fixture: { whenStable(): Promise<unknown>; detectChanges(): void }, el: HTMLElement, query: string) {
+    const input = el.querySelector<HTMLInputElement>('input[type=search]')!;
+    input.value = query;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  it('offers a web lookup once at least two letters are typed', async () => {
+    const { fixture, el } = await render();
+    expect(el.querySelector('button.lookup')).toBeNull();
+
+    await search(fixture, el, 's');
+    expect(el.querySelector('button.lookup')).toBeNull();
+    await search(fixture, el, "  šanta walker's low ");
+    expect(el.querySelector('button.lookup')!.textContent).toContain("Search “šanta walker's low” on the web");
+  });
+
+  it('shows what Wikipedia has, with the rank, the cultivar note and the source', async () => {
+    lookup.lookup.and.resolveTo([catmint]);
+    const { fixture, el } = await render();
+    await search(fixture, el, "šanta walker's low");
+
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(lookup.lookup).toHaveBeenCalledWith("šanta walker's low", 'en');
+    const result = el.querySelector('.lookup-results .candidate')!;
+    expect(result.textContent).toContain("Nepeta racemosa 'Walker's Low'");
+    expect(result.textContent).toContain('species');
+    expect(result.querySelector('.cultivar-note')!.textContent).toContain('“Walker\'s Low” itself isn’t on Wikipedia; the details are for Šanta hroznovitá.');
+    const link = result.querySelector<HTMLAnchorElement>('a')!;
+    expect([link.href, link.rel, link.target]).toEqual([catmint.url, 'noopener noreferrer', '_blank']);
+    expect(el.querySelector('.lookup-results .card-footer')!.textContent).toContain('CC BY-SA 4.0');
+  });
+
+  it('looks up on Enter in the search box too', async () => {
+    lookup.lookup.and.resolveTo([]);
+    const { fixture, el } = await render();
+    await search(fixture, el, 'zzz');
+
+    el.querySelector('input[type=search]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(lookup.lookup).toHaveBeenCalledWith('zzz', 'en');
+    expect(el.querySelector('.no-results')!.textContent).toContain('Nothing found on Wikipedia for “zzz”.');
+  });
+
+  it('pre-fills the form from a result, and saves only after the user picks the sun', async () => {
+    lookup.lookup.and.resolveTo([catmint]);
+    service.addCustom.and.resolveTo({ id: 'new' } as Plant);
+    const { fixture, el } = await render();
+    await search(fixture, el, "šanta walker's low");
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.candidate button.use')!.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector<HTMLInputElement>('input[name=name]')!.value).toBe("Šanta Walker's Low");
+    expect(el.querySelector<HTMLInputElement>('input[name=species]')!.value).toBe("Nepeta racemosa 'Walker's Low'");
+    expect(el.querySelector<HTMLTextAreaElement>('textarea[name=notes]')!.value).toBe(
+      `${catmint.description} (Source: Wikipedia, CC BY-SA 4.0)`,
+    );
+    expect(el.querySelector<HTMLInputElement>('input[name=sourceUrl]')!.value).toBe(catmint.url);
+    expect(el.querySelector('.prefill-notice')!.textContent).toContain('choose the sun requirement');
+
+    const form = el.querySelector<HTMLFormElement>('form')!;
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(service.addCustom).not.toHaveBeenCalled(); // the sun is still missing
+
+    const sun = el.querySelector<HTMLSelectElement>('select[name=sun]')!;
+    sun.value = 'full_sun';
+    sun.dispatchEvent(new Event('change'));
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(service.addCustom).toHaveBeenCalledWith(jasmine.objectContaining({
+      name: "Šanta Walker's Low",
+      species: "Nepeta racemosa 'Walker's Low'",
+      sun_requirements: 'full_sun',
+      notes: `${catmint.description} (Source: Wikipedia, CC BY-SA 4.0)`,
+      source_url: catmint.url,
+    }));
+  });
+
+  it('clears the pre-filled fields on request', async () => {
+    lookup.lookup.and.resolveTo([catmint]);
+    const { fixture, el } = await render();
+    await search(fixture, el, 'šanta');
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    el.querySelector<HTMLButtonElement>('.candidate button.use')!.click();
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.prefill-notice button')!.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.prefill-notice')).toBeNull();
+    expect(el.querySelector('input[name=species]')).toBeNull();
+  });
+
+  it("says when Samwise's server can't be reached", async () => {
+    lookup.lookup.and.rejectWith(new FunctionError('unreachable'));
+    const { fixture, el } = await render();
+    await search(fixture, el, 'šanta');
+
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.lookup-error')!.textContent).toContain('couldn’t be reached, so nothing was searched');
   });
 });

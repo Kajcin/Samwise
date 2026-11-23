@@ -17,6 +17,7 @@ import {
   taskTypeKey,
 } from './labels';
 import { messageOf } from '../core/errors';
+import { isWebAddress } from '../core/web-address';
 import { Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
@@ -63,15 +64,6 @@ export function plantToForm(plant: Plant): PlantForm {
     notes: plant.notes ?? '',
     sourceUrl: plant.source_url ?? '',
   };
-}
-
-function isWebAddress(text: string): boolean {
-  try {
-    const url = new URL(text);
-    return (url.protocol === 'http:' || url.protocol === 'https:') && !/\s/.test(text);
-  } catch {
-    return false;
-  }
 }
 
 /** Mirrors the database's checks (migration 0010), with messages people understand. */

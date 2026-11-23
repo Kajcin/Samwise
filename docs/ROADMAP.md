@@ -9,7 +9,7 @@ here is scheduled.
 Search the catalog for a plant you don't have yet (e.g. "šanta walker's low") and get a
 draft plant to review and save, instead of typing everything in.
 
-1. **Identify and pre-fill** (agreed): a `plant-lookup` Edge Function finds the plant in
+1. **Identify and pre-fill** (done, see the README's "Plant lookup"): a `plant-lookup` Edge Function finds the plant in
    Wikidata / Wikipedia (Czech and English, no API key), returns Czech, English and Latin
    names and a short description with a credit link (CC BY-SA), and pre-fills the
    "Add a custom plant" form. Nothing is saved without the user reviewing it. Results
