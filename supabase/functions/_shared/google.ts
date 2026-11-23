@@ -12,6 +12,11 @@ export interface GoogleOAuthConfig {
 }
 
 export interface EventTask {
+  /**
+   * The Samwise task's id. When set, a new event gets an id derived from it, so
+   * syncing the same task twice (retries, concurrent webhooks) can't duplicate it.
+   */
+  task_id?: string;
   due_date: string;
   task_type: string;
   completed_at?: string | null;
@@ -25,6 +30,14 @@ export interface EventTask {
 /** Google rejected the refresh token (revoked, expired, or the user removed app access). */
 export class InvalidGrantError extends Error {
   override name = 'InvalidGrantError';
+}
+
+/** A Google API call failed; `status` is the HTTP status (401 = access token rejected). */
+export class GoogleApiError extends Error {
+  override name = 'GoogleApiError';
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
 }
 
 /** The Samwise calendar no longer exists (the user deleted it in Google Calendar). */
@@ -46,8 +59,8 @@ function isGone(response: Response): boolean {
   return response.status === 404 || response.status === 410;
 }
 
-async function failure(what: string, response: Response): Promise<Error> {
-  return new Error(`${what} failed: ${response.status} ${await response.text()}`);
+async function failure(what: string, response: Response): Promise<GoogleApiError> {
+  return new GoogleApiError(`${what} failed: ${response.status} ${await response.text()}`, response.status);
 }
 
 function addOneDay(date: string): string {
@@ -166,23 +179,48 @@ export function eventBody(task: EventTask) {
   };
 }
 
+/**
+ * Google event ids allow only the characters a-v and 0-9 (base32hex); a UUID
+ * without dashes is lowercase hex, which fits.
+ */
+export function eventIdForTask(taskId: string): string {
+  return taskId.replaceAll('-', '').toLowerCase();
+}
+
 /** Creates or updates the task's event on the Samwise calendar; returns the event id. */
 export async function upsertEvent(accessToken: string, calendarId: string, task: EventTask): Promise<string> {
   const events = `${calendarUrl(calendarId)}/events`;
-  const eventId = task.google_calendar_event_id;
-  const response = await fetch(eventId ? `${events}/${encodeURIComponent(eventId)}` : events, {
-    method: eventId ? 'PATCH' : 'POST',
-    headers: authHeaders(accessToken),
-    body: JSON.stringify(eventBody(task)),
-  });
-  if (isGone(response)) {
-    // Creating failed: the calendar itself is gone. Updating failed: the event (or the
-    // calendar) is gone; recreate the event, which tells the two apart.
-    if (!eventId) throw new CalendarGoneError(calendarId);
-    return upsertEvent(accessToken, calendarId, { ...task, google_calendar_event_id: null });
+  const body = eventBody(task);
+  const patch = (eventId: string) =>
+    fetch(`${events}/${encodeURIComponent(eventId)}`, {
+      method: 'PATCH',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify(body),
+    });
+
+  if (task.google_calendar_event_id) {
+    const updated = await patch(task.google_calendar_event_id);
+    if (updated.ok) return (await updated.json()).id as string;
+    // The event (or the whole calendar) is gone: create it again below, which tells the two apart.
+    if (!isGone(updated)) throw await failure('event update', updated);
   }
-  if (!response.ok) throw await failure('event upsert', response);
-  return (await response.json()).id as string;
+
+  const eventId = task.task_id ? eventIdForTask(task.task_id) : undefined;
+  const created = await fetch(events, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(eventId ? { ...body, id: eventId } : body),
+  });
+  if (created.ok) return (await created.json()).id as string;
+  if (isGone(created)) throw new CalendarGoneError(calendarId);
+  if (created.status === 409 && eventId) {
+    // The event already exists: created by a concurrent sync, or a copy deleted in
+    // Google (Google keeps those, cancelled). Update it, which also revives it.
+    const updated = await patch(eventId);
+    if (updated.ok) return (await updated.json()).id as string;
+    throw await failure('event update', updated);
+  }
+  throw await failure('event create', created);
 }
 
 /** Deletes a task's event; an already-deleted event counts as deleted. */

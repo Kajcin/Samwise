@@ -25,6 +25,7 @@ export interface TaskEventRow {
 export function toEventTask(row: TaskEventRow): EventTask {
   const p = row.planting;
   return {
+    task_id: row.id,
     due_date: row.due_date,
     task_type: row.task_type,
     completed_at: row.completed_at,

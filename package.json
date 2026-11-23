@@ -9,6 +9,7 @@
     "test": "ng test",
     "db:psql": "node scripts/psql.mjs",
     "dev:user": "node scripts/create-dev-user.mjs",
+    "dev:calendar-sync": "node scripts/configure-calendar-sync.mjs",
     "test:app": "ng test --watch=false --browsers=ChromeHeadless",
     "test:functions": "node scripts/test-functions.mjs",
     "test:sql": "node scripts/test-sql.mjs",

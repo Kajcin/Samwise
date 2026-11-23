@@ -120,14 +120,20 @@ npx supabase db reset       # applies migrations + seed data
 npx supabase functions serve
 ```
 
-**Vault secrets for the tasks webhook.** Run these once after each
-`db reset`, e.g. via `npm run db:psql -- -c "<sql>"`. Postgres runs inside Docker, so the
-function URL uses `host.docker.internal`, not `127.0.0.1`:
+**Point the tasks webhook at the local function.** Run once after
+`npx supabase start`, and again after every `db reset`, which wipes Vault:
 
-```sql
-select vault.create_secret('http://host.docker.internal:54321/functions/v1/calendar-sync', 'calendar_sync_url');
-select vault.create_secret('<same value as CALENDAR_SYNC_WEBHOOK_SECRET>', 'calendar_sync_webhook_secret');
+```bash
+npm run dev:calendar-sync
 ```
+
+This stores the `calendar-sync` URL and `CALENDAR_SYNC_WEBHOOK_SECRET` (read from
+`supabase/functions/.env`) as the Vault secrets `calendar_sync_url` and
+`calendar_sync_webhook_secret`. Without them, task changes simply aren't synced.
+
+A `db reset` also deletes your calendar connection, while the "Samwise" calendar
+stays in your Google account. Connecting again creates a new one, so delete the old
+calendar in Google Calendar.
 
 **Angular environment** in `src/environments/environment.development.ts`:
 set `supabaseAnonKey` to the anon key printed by `npx supabase start`, and set
@@ -199,6 +205,8 @@ configuration (step 4).
   primary calendar. You can hide or recolor it like any other calendar.
   Disconnecting deletes it. If you delete it yourself in Google Calendar,
   Samwise treats that as a disconnect, and Settings offers to reconnect.
+  If you remove Samwise's access in your Google account instead, Samwise
+  forgets the tokens but remembers the calendar, so reconnecting reuses it.
 - **The Calendar refresh token never reaches the browser.** The client has
   no direct access to `calendar_credentials`.
   - `connect-calendar` writes the row with the service role.
@@ -210,6 +218,8 @@ configuration (step 4).
   - The `tasks` trigger sends an `x-webhook-secret` header read from Vault.
   - The function rejects any request whose header doesn't match
     `CALENDAR_SYNC_WEBHOOK_SECRET`.
+  - The trigger only fires for users with a working connection, and only
+    for changes the event shows (not when the event id is written back).
 - **Per-environment DB settings live in Supabase Vault**
   (`calendar_sync_url`, `calendar_sync_webhook_secret`), not in database
   settings (GUCs).

@@ -5,7 +5,9 @@ import {
   deleteEvent,
   ensureSamwiseCalendar,
   eventBody,
+  eventIdForTask,
   exchangeCodeForTokens,
+  GoogleApiError,
   InvalidGrantError,
   refreshAccessToken,
   revokeToken,
@@ -194,6 +196,41 @@ Deno.test('upsertEvent recreates an event that no longer exists', async () => {
   try {
     assertEquals(await upsertEvent('tok', 'cal-1', { ...task, google_calendar_event_id: 'evt-1' }), 'evt-2');
     assertEquals(f.calls[1].init!.method, 'POST');
+  } finally { f.restore(); }
+});
+
+const taskId = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b';
+
+Deno.test('eventIdForTask turns a task id into a valid Google event id', () => {
+  assertEquals(eventIdForTask(taskId), '6f1c2a3b4d5e4f608a7b9c0d1e2f3a4b');
+  assertEquals(/^[a-v0-9]{5,1024}$/.test(eventIdForTask(taskId)), true);
+});
+
+Deno.test('upsertEvent creates the event under an id derived from the task', async () => {
+  const f = stubFetch([json({ id: eventIdForTask(taskId) })]);
+  try {
+    assertEquals(await upsertEvent('tok', 'cal-1', { ...task, task_id: taskId }), eventIdForTask(taskId));
+    assertEquals(f.calls[0].init!.method, 'POST');
+    assertEquals(body(f.calls[0]).id, eventIdForTask(taskId));
+  } finally { f.restore(); }
+});
+
+Deno.test('upsertEvent updates instead of duplicating when the event already exists', async () => {
+  const id = eventIdForTask(taskId);
+  const f = stubFetch([json({ error: { code: 409 } }, 409), json({ id })]);
+  try {
+    assertEquals(await upsertEvent('tok', 'cal-1', { ...task, task_id: taskId }), id);
+    assertEquals(f.calls[1].url, `https://www.googleapis.com/calendar/v3/calendars/cal-1/events/${id}`);
+    assertEquals(f.calls[1].init!.method, 'PATCH');
+    assertEquals(body(f.calls[1]).status, 'confirmed');
+  } finally { f.restore(); }
+});
+
+Deno.test('upsertEvent reports a rejected access token as a GoogleApiError with status 401', async () => {
+  const f = stubFetch([json({ error: { code: 401 } }, 401)]);
+  try {
+    const error = await assertRejects(() => upsertEvent('tok', 'cal-1', task), GoogleApiError);
+    assertEquals(error.status, 401);
   } finally { f.restore(); }
 });
 

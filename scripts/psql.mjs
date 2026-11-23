@@ -42,10 +42,13 @@ function dbContainerName() {
   return `supabase_db_${match[1]}`;
 }
 
-/** Runs psql with the given args; returns its exit code. `-f <file>` is supported in both modes. */
-export function runPsql(args) {
+/**
+ * Runs psql with the given args; returns its exit code. `-f <file>` is supported in both modes.
+ * `options.input` is SQL to run from stdin instead (keeps secrets off the command line).
+ */
+export function runPsql(args, options = {}) {
   const rest = [];
-  let input;
+  let input = options.input;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '-f') {
       input = readFileSync(args[++i]);
