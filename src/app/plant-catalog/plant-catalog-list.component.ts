@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { Router, RouterLink } from '@angular/router';
-import { Plant, PlantCatalogService } from './plant-catalog.service';
+import { Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
+import { askToDeletePlant } from './delete-plant';
 import { plantName, SUN_REQUIREMENTS, SunRequirement, sunKey } from './labels';
 import { messageOf } from '../core/errors';
 import { Lang, Message, msg } from '../core/i18n/i18n';
@@ -30,11 +32,21 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
   standalone: true,
   imports: [RouterLink, IconComponent],
   templateUrl: './plant-catalog-list.component.html',
+  styles: `
+    .delete-slot {
+      display: inline-flex;
+      justify-content: center;
+      width: 1.5rem;
+      flex-shrink: 0;
+      font-size: 1.15rem;
+    }
+  `,
 })
 export class PlantCatalogListComponent {
   private service = inject(PlantCatalogService);
   private router = inject(Router);
   protected i18n = inject(LanguageService);
+  private confirmDialog = inject(ConfirmDialogService);
 
   protected readonly sunOptions = SUN_REQUIREMENTS;
   protected readonly sunKey = sunKey;
@@ -43,6 +55,7 @@ export class PlantCatalogListComponent {
   private plants = signal<Plant[]>([]);
   loading = signal(true);
   error = signal<Message | null>(null);
+  deletingId = signal<string | null>(null);
   query = signal('');
   visiblePlants = computed(() => sortByName(filterPlants(this.plants(), this.query()), this.i18n.lang()));
 
@@ -70,6 +83,23 @@ export class PlantCatalogListComponent {
       await this.router.navigate(['/plants', clone.id]);
     } catch (e) {
       this.error.set(msg('catalog.errors.clone', { detail: messageOf(e) }));
+    }
+  }
+
+  /** Your own plants only (built-in ones have no ✕); refused if the plant is or was planted. */
+  async deletePlant(plant: Plant): Promise<void> {
+    if (!(await askToDeletePlant(this.confirmDialog, this.i18n, plantName(plant, this.i18n.lang())))) return;
+    this.error.set(null);
+    this.deletingId.set(plant.id);
+    try {
+      await this.service.deletePlant(plant.id);
+      this.plants.update((list) => list.filter((p) => p.id !== plant.id));
+    } catch (e) {
+      this.error.set(
+        e instanceof PlantInUseError ? msg('plant.errors.inUse') : msg('plant.errors.delete', { detail: messageOf(e) }),
+      );
+    } finally {
+      this.deletingId.set(null);
     }
   }
 

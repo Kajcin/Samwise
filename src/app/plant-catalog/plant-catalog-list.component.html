@@ -27,10 +27,25 @@
               @if (plant.user_id) {
                 <span class="badge text-bg-success">{{ i18n.t('catalog.yours') }}</span>
               } @else {
-                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cloneAndEdit(plant.id)">
+                <button type="button" class="btn btn-sm btn-outline-secondary clone" (click)="cloneAndEdit(plant.id)">
                   <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
                 </button>
               }
+              <!-- Same width on every row, so the buttons and badges above line up. -->
+              <span class="delete-slot">
+                @if (plant.user_id) {
+                  <button
+                    type="button"
+                    class="btn btn-link p-0 text-danger delete-plant"
+                    [disabled]="deletingId() === plant.id"
+                    [attr.aria-label]="i18n.t('catalog.deleteLabel', { name: plantName(plant, i18n.lang()) })"
+                    [title]="i18n.t('catalog.deleteLabel', { name: plantName(plant, i18n.lang()) })"
+                    (click)="deletePlant(plant)"
+                  >
+                    <app-icon name="x-circle" />
+                  </button>
+                }
+              </span>
             </li>
           } @empty {
             <p class="text-body-secondary">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>

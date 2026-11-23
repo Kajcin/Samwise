@@ -19,6 +19,8 @@ import {
 import { messageOf } from '../core/errors';
 import { Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
+import { askToDeletePlant } from './delete-plant';
 import { parseNumberInput } from '../core/number-input';
 
 type TimingType = CareRule['timing_type'];
@@ -126,6 +128,7 @@ export class PlantDetailComponent {
   private router = inject(Router);
   private catalog = inject(PlantCatalogService);
   protected i18n = inject(LanguageService);
+  private confirmDialog = inject(ConfirmDialogService);
 
   protected readonly taskTypes = TASK_TYPES;
   protected readonly taskTypeKey = taskTypeKey;
@@ -143,6 +146,7 @@ export class PlantDetailComponent {
   /** The edit form's draft; null when not editing. */
   draft = signal<PlantForm | null>(null);
   saving = signal(false);
+  deleting = signal(false);
   editError = signal<Message | null>(null);
 
   plant = signal<Plant | null>(null);
@@ -260,18 +264,18 @@ export class PlantDetailComponent {
 
   async deletePlant(): Promise<void> {
     const plant = this.plant();
-    if (!plant || !this.confirm(this.i18n.t('plant.confirmDelete', { name: plant.name }))) return;
-    this.saving.set(true);
-    this.editError.set(null);
+    if (!plant || !(await askToDeletePlant(this.confirmDialog, this.i18n, plant.name))) return;
+    this.deleting.set(true);
+    this.error.set(null);
     try {
       await this.catalog.deletePlant(this.plantId);
       await this.router.navigate(['/plants']);
     } catch (e) {
-      this.editError.set(
+      this.error.set(
         e instanceof PlantInUseError ? msg('plant.errors.inUse') : msg('plant.errors.delete', { detail: messageOf(e) }),
       );
     } finally {
-      this.saving.set(false);
+      this.deleting.set(false);
     }
   }
 
@@ -285,10 +289,6 @@ export class PlantDetailComponent {
     }
   }
 
-  /** Separate so tests can answer the confirmation dialog. */
-  protected confirm(question: string): boolean {
-    return window.confirm(question);
-  }
 
   async updateRuleNotes(ruleId: string, notes: string): Promise<void> {
     this.error.set(null);

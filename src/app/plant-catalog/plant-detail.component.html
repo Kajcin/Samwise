@@ -6,7 +6,21 @@
   }
 
   @if (plant(); as p) {
-    <h1 class="mb-1">{{ plantName(p, i18n.lang()) }}</h1>
+    <div class="d-flex justify-content-between align-items-start gap-3">
+      <h1 class="mb-1">{{ plantName(p, i18n.lang()) }}</h1>
+      @if (isEditable()) {
+        <button
+          type="button"
+          class="btn btn-outline-danger delete-plant"
+          [disabled]="deleting()"
+          [attr.aria-label]="i18n.t('plant.deletePlant')"
+          [title]="i18n.t('plant.deletePlant')"
+          (click)="deletePlant()"
+        >
+          <app-icon name="trash" />
+        </button>
+      }
+    </div>
     @if (p.species) {
       <p class="text-body-secondary"><i>{{ p.species }}</i></p>
     }
@@ -117,9 +131,6 @@
                 </button>
                 <button type="button" class="btn btn-outline-secondary cancel" [disabled]="saving()" (click)="cancelEditing()">
                   {{ i18n.t('plant.cancel') }}
-                </button>
-                <button type="button" class="btn btn-outline-danger ms-auto delete-plant" [disabled]="saving()" (click)="deletePlant()">
-                  <app-icon name="trash" class="me-1" />{{ i18n.t('plant.deletePlant') }}
                 </button>
               </div>
             </form>

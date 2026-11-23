@@ -8,6 +8,7 @@ import { messageOf } from '../core/errors';
 import { Lang, LANG_NAMES, LANGS, Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
 import { UserLanguageService } from '../core/i18n/user-language.service';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 
 /** Lets Samwise create its own calendars and manage their events, nothing else. */
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.app.created';
@@ -73,6 +74,7 @@ export class SettingsComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private userLanguage = inject(UserLanguageService);
+  private confirmDialog = inject(ConfirmDialogService);
   protected i18n = inject(LanguageService);
 
   protected readonly languages = LANGS;
@@ -150,10 +152,17 @@ export class SettingsComponent {
 
   async disconnectCalendar(): Promise<void> {
     const deletesCalendar = this.connection() === 'connected';
-    const question = this.i18n.t(
-      deletesCalendar ? 'settings.calendar.confirmDisconnect' : 'settings.calendar.confirmDisconnectBroken',
-    );
-    if (!this.confirm(question)) return;
+    const confirmed = await this.confirmDialog.ask({
+      title: this.i18n.t('settings.calendar.disconnectTitle'),
+      message: this.i18n.t(
+        deletesCalendar ? 'settings.calendar.confirmDisconnect' : 'settings.calendar.confirmDisconnectBroken',
+      ),
+      confirmLabel: this.i18n.t('settings.calendar.disconnect'),
+      cancelLabel: this.i18n.t('common.cancel'),
+      danger: deletesCalendar,
+      confirmIcon: 'calendar-x',
+    });
+    if (!confirmed) return;
 
     this.status.set(null);
     this.error.set(null);
@@ -175,10 +184,6 @@ export class SettingsComponent {
     await this.refreshStatus();
   }
 
-  /** Separate so tests can answer the confirmation dialog. */
-  protected confirm(question: string): boolean {
-    return window.confirm(question);
-  }
 
   private async finishConnect(code: string): Promise<void> {
     this.busy.set(true);

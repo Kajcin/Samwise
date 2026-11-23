@@ -14,7 +14,7 @@ const ICONS = [
   'flower1', 'bucket', 'scissors', 'droplet', 'basket',
   // actions
   'check-lg', 'arrow-counterclockwise', 'plus-lg', 'trash', 'copy', 'google',
-  'calendar-plus', 'calendar-x', 'calendar-check', 'arrow-repeat', 'pencil', 'box-arrow-up-right',
+  'calendar-plus', 'calendar-x', 'calendar-check', 'arrow-repeat', 'pencil', 'box-arrow-up-right', 'x-circle',
   // status and plant facts
   'exclamation-triangle', 'sun',
 ];

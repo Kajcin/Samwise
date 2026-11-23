@@ -1,5 +1,7 @@
 import { provideI18n } from '../core/i18n/i18n';
 import { msg } from '../core/i18n/i18n';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
+import { PlantInUseError } from './plant-catalog.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { filterPlants, PlantCatalogListComponent, validateNewPlantForm } from './plant-catalog-list.component';
@@ -52,6 +54,7 @@ describe('validateNewPlantForm', () => {
 
 describe('PlantCatalogListComponent', () => {
   let service: jasmine.SpyObj<PlantCatalogService>;
+  let dialog: jasmine.SpyObj<ConfirmDialogService>;
 
   async function render() {
     const fixture = TestBed.createComponent(PlantCatalogListComponent);
@@ -61,11 +64,18 @@ describe('PlantCatalogListComponent', () => {
   }
 
   beforeEach(() => {
-    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['list', 'addCustom', 'cloneToCustom']);
+    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['list', 'addCustom', 'cloneToCustom', 'deletePlant']);
     service.list.and.resolveTo(plants);
+    dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
+    dialog.ask.and.resolveTo(true);
     TestBed.configureTestingModule({
       imports: [PlantCatalogListComponent],
-      providers: [provideI18n(), provideRouter([]), { provide: PlantCatalogService, useValue: service }],
+      providers: [
+        provideI18n(),
+        provideRouter([]),
+        { provide: PlantCatalogService, useValue: service },
+        { provide: ConfirmDialogService, useValue: dialog },
+      ],
     });
   });
 
@@ -74,8 +84,10 @@ describe('PlantCatalogListComponent', () => {
     const items = Array.from(el.querySelectorAll('li'));
 
     expect(items.map((li) => li.querySelector('a')!.textContent!.trim())).toEqual(['Basil', 'My Chili', 'Tomato']);
-    const clonable = items.filter((li) => li.querySelector('button')).map((li) => li.querySelector('a')!.textContent!.trim());
+    const clonable = items.filter((li) => li.querySelector('button.clone')).map((li) => li.querySelector('a')!.textContent!.trim());
     expect(clonable).toEqual(['Basil', 'Tomato']);
+    const deletable = items.filter((li) => li.querySelector('button.delete-plant')).map((li) => li.querySelector('a')!.textContent!.trim());
+    expect(deletable).toEqual(['My Chili']);
   });
 
   it('filters the list as the user types', async () => {
@@ -118,6 +130,43 @@ describe('PlantCatalogListComponent', () => {
 
     expect(service.addCustom).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Kale', sun_requirements: 'partial_shade' }));
     expect(navigate).toHaveBeenCalledWith(['/plants', 'new-1']);
+  });
+
+  it('deletes your own plant with the ✕, after confirmation', async () => {
+    service.deletePlant.and.resolveTo();
+    const { fixture, el } = await render();
+    const remove = el.querySelector<HTMLButtonElement>('button.delete-plant')!;
+    expect(remove.getAttribute('aria-label')).toBe('Delete My Chili');
+
+    remove.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(dialog.ask.calls.mostRecent().args[0].message).toContain('My Chili');
+    expect(service.deletePlant).toHaveBeenCalledWith('3');
+    expect(Array.from(el.querySelectorAll('li a')).map((a) => a.textContent!.trim())).toEqual(['Basil', 'Tomato']);
+  });
+
+  it('keeps the plant when the deletion is cancelled', async () => {
+    dialog.ask.and.resolveTo(false);
+    const { fixture, el } = await render();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+
+    expect(service.deletePlant).not.toHaveBeenCalled();
+  });
+
+  it('explains why a planted plant can’t be deleted', async () => {
+    service.deletePlant.and.rejectWith(new PlantInUseError());
+    const { fixture, el } = await render();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('planted in your garden');
+    expect(el.querySelectorAll('li').length).toBe(3);
   });
 
   it('shows an error when the catalog fails to load', async () => {

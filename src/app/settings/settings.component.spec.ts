@@ -8,6 +8,7 @@ import { CalendarError, CalendarService } from './calendar.service';
 import { AuthService } from '../core/auth.service';
 import { UserLanguageService } from '../core/i18n/user-language.service';
 import { LanguageService } from '../core/i18n/language.service';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 
 describe('parseOAuthRedirect', () => {
   it('returns null when the URL has no OAuth params', () => {
@@ -48,6 +49,7 @@ describe('SettingsComponent', () => {
   let calendar: jasmine.SpyObj<CalendarService>;
   let navigate: jasmine.Spy;
   let userLanguage: jasmine.SpyObj<UserLanguageService>;
+  let dialog: jasmine.SpyObj<ConfirmDialogService>;
 
   async function render(queryParams: Record<string, string> = {}) {
     TestBed.configureTestingModule({
@@ -55,6 +57,7 @@ describe('SettingsComponent', () => {
       providers: [
         provideI18n(),
         { provide: UserLanguageService, useValue: userLanguage },
+        { provide: ConfirmDialogService, useValue: dialog },
         provideRouter([]),
         { provide: CalendarService, useValue: calendar },
         { provide: AuthService, useValue: { currentUser: signal({ email: 'me@example.com' } as User) } },
@@ -73,6 +76,8 @@ describe('SettingsComponent', () => {
     calendar = jasmine.createSpyObj<CalendarService>('CalendarService', ['status', 'connect', 'disconnect']);
     calendar.status.and.resolveTo('not_connected');
     userLanguage = jasmine.createSpyObj<UserLanguageService>('UserLanguageService', ['save']);
+    dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
+    dialog.ask.and.resolveTo(true);
     // Like the real service: saving switches the app's language.
     userLanguage.save.and.callFake(async (lang) => TestBed.inject(LanguageService).use(lang));
   });
@@ -166,14 +171,16 @@ describe('SettingsComponent', () => {
     calendar.status.and.resolveTo('connected');
     calendar.disconnect.and.resolveTo({ calendarDeleted: true });
     const { fixture, component, el } = await render();
-    const confirm = spyOn(component as any, 'confirm').and.returnValue(true);
     calendar.status.and.resolveTo('not_connected');
 
     (el.querySelector('button.disconnect') as HTMLButtonElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(confirm.calls.mostRecent().args[0]).toContain('deletes your “Samwise” calendar');
+    const asked = dialog.ask.calls.mostRecent().args[0];
+    expect(asked.title).toBe('Disconnect Google Calendar?');
+    expect(asked.message).toContain('deletes your “Samwise” calendar');
+    expect(asked.danger).toBeTrue();
     expect(calendar.disconnect).toHaveBeenCalled();
     expect(el.querySelector('[role=status]')!.textContent).toContain('your “Samwise” calendar was deleted');
     expect(el.textContent).toContain('Not connected');
@@ -183,7 +190,6 @@ describe('SettingsComponent', () => {
     calendar.status.and.resolveTo('revoked');
     calendar.disconnect.and.resolveTo({ calendarDeleted: false });
     const { fixture, component, el } = await render();
-    spyOn(component as any, 'confirm').and.returnValue(true);
 
     (el.querySelector('button.disconnect') as HTMLButtonElement).click();
     await fixture.whenStable();
@@ -195,7 +201,7 @@ describe('SettingsComponent', () => {
   it('does nothing when the confirmation is cancelled', async () => {
     calendar.status.and.resolveTo('connected');
     const { component, el } = await render();
-    spyOn(component as any, 'confirm').and.returnValue(false);
+    dialog.ask.and.resolveTo(false);
 
     (el.querySelector('button.disconnect') as HTMLButtonElement).click();
 
@@ -206,7 +212,6 @@ describe('SettingsComponent', () => {
     calendar.status.and.resolveTo('connected');
     calendar.disconnect.and.rejectWith(new CalendarError('unreachable'));
     const { fixture, component, el } = await render();
-    spyOn(component as any, 'confirm').and.returnValue(true);
 
     (el.querySelector('button.disconnect') as HTMLButtonElement).click();
     await fixture.whenStable();
@@ -229,7 +234,6 @@ describe('SettingsComponent', () => {
     calendar.status.and.resolveTo('connected');
     calendar.disconnect.and.rejectWith(new CalendarError('disconnect_failed'));
     const { fixture, component, el } = await render();
-    spyOn(component as any, 'confirm').and.returnValue(true);
 
     (el.querySelector('button.disconnect') as HTMLButtonElement).click();
     await fixture.whenStable();

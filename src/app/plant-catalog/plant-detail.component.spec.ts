@@ -7,6 +7,7 @@ import { formToChanges, linkHost, PlantDetailComponent, PlantForm, validateCareR
 import { parseNumberInput } from '../core/number-input';
 import { CareRule, Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
 import { Router } from '@angular/router';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 
 describe('validateCareRuleForm', () => {
   it('requires offset_days when timing_type is offset_from_planting', () => {
@@ -106,6 +107,7 @@ describe('parseNumberInput', () => {
 
 describe('PlantDetailComponent', () => {
   let service: jasmine.SpyObj<PlantCatalogService>;
+  let dialog: jasmine.SpyObj<ConfirmDialogService>;
 
   const seeded: Plant = {
     id: 'p1', user_id: null, name: 'Tomato', species: 'Solanum lycopersicum', sun_requirements: 'full_sun',
@@ -124,6 +126,7 @@ describe('PlantDetailComponent', () => {
       providers: [provideI18n(), 
         provideRouter([]),
         { provide: PlantCatalogService, useValue: service },
+        { provide: ConfirmDialogService, useValue: dialog },
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: plant.id })) } },
       ],
     });
@@ -138,6 +141,8 @@ describe('PlantDetailComponent', () => {
       'get', 'listCareRules', 'addCareRule', 'updateCareRule', 'cloneToCustom', 'updatePlant', 'deletePlant', 'deleteCareRule',
     ]);
     service.listCareRules.and.resolveTo(rules);
+    dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
+    dialog.ask.and.resolveTo(true);
   });
 
   it('shows a built-in plant read-only, with its rules in timeline order', async () => {
@@ -262,34 +267,50 @@ describe('PlantDetailComponent', () => {
     expect(el.querySelector('h1')!.textContent).toContain('My Tomato');
   });
 
-  it('deletes a plant after confirmation and returns to the catalog', async () => {
+  it('deletes a plant from the trash icon, after confirmation, and returns to the catalog', async () => {
     service.deletePlant.and.resolveTo();
     const { fixture, el } = await render(custom);
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    const confirm = spyOn(fixture.componentInstance as any, 'confirm').and.returnValue(true);
-    el.querySelector<HTMLButtonElement>('button.edit')!.click();
-    fixture.detectChanges();
 
     el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
     await fixture.whenStable();
 
-    expect(confirm.calls.mostRecent().args[0]).toContain('My Tomato');
+    const asked = dialog.ask.calls.mostRecent().args[0];
+    expect(asked.title).toBe('Delete plant?');
+    expect(asked.message).toContain('My Tomato');
+    expect(asked.danger).toBeTrue();
     expect(service.deletePlant).toHaveBeenCalledWith('p2');
     expect(navigate).toHaveBeenCalledWith(['/plants']);
+  });
+
+  it('keeps the plant when the deletion is cancelled', async () => {
+    dialog.ask.and.resolveTo(false);
+    const { fixture, el } = await render(custom);
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+
+    expect(service.deletePlant).not.toHaveBeenCalled();
   });
 
   it('explains why a planted plant can’t be deleted', async () => {
     service.deletePlant.and.rejectWith(new PlantInUseError());
     const { fixture, el } = await render(custom);
-    spyOn(fixture.componentInstance as any, 'confirm').and.returnValue(true);
-    el.querySelector<HTMLButtonElement>('button.edit')!.click();
-    fixture.detectChanges();
 
     el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(el.querySelector('form.plant-form [role=alert]')!.textContent).toContain('planted in your garden');
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('planted in your garden');
+  });
+
+  it('has no trash icon for built-in plants, and none in the edit form', async () => {
+    expect((await render(seeded)).el.querySelector('button.delete-plant')).toBeNull();
+    TestBed.resetTestingModule();
+    const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('form.plant-form button.delete-plant')).toBeNull();
   });
 
   it('deletes a care rule of your own plant (only there)', async () => {
