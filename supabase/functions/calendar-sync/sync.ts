@@ -23,11 +23,13 @@ export interface WebhookPayload {
 }
 
 export interface StoredCredentials {
-  /** null: Google revoked access; the user has to reconnect. */
+  /** null once Google revoked access. */
   refresh_token: string | null;
   access_token: string | null;
   expires_at: string | null;
   calendar_id: string;
+  /** Set when the connection broke; the user has to reconnect (migration 0008). */
+  disconnected_reason: 'revoked' | 'calendar_deleted' | null;
 }
 
 export interface AccessToken {
@@ -41,8 +43,8 @@ export interface SyncDeps {
   saveAccessToken(userId: string, refreshToken: string, token: AccessToken): Promise<void>;
   /** Google rejected the refresh token: forget the tokens, keep the calendar id for reconnecting. */
   markRevoked(userId: string, refreshToken: string): Promise<void>;
-  /** The Samwise calendar was deleted in Google: drop the connection. */
-  markCalendarGone(userId: string, calendarId: string): Promise<void>;
+  /** The Samwise calendar was deleted in Google: stop syncing until the user reconnects. */
+  markCalendarDeleted(userId: string, calendarId: string): Promise<void>;
   /** The task as it is now, with its plant and bed; null if it no longer exists. */
   loadTask(taskId: string): Promise<TaskEventRow | null>;
   setEventId(taskId: string, eventId: string): Promise<void>;
@@ -88,7 +90,7 @@ export async function handleTaskChange(deps: SyncDeps, payload: WebhookPayload):
 
   const userId = changed.user_id;
   const credentials = await deps.loadCredentials(userId);
-  if (!credentials?.refresh_token) return 'not_connected';
+  if (!credentials?.refresh_token || credentials.disconnected_reason) return 'not_connected';
   const refreshToken = credentials.refresh_token;
 
   const freshToken = async (): Promise<string> => {
@@ -135,7 +137,7 @@ export async function handleTaskChange(deps: SyncDeps, payload: WebhookPayload):
       return 'disconnected';
     }
     if (e instanceof CalendarGoneError) {
-      await deps.markCalendarGone(userId, credentials.calendar_id);
+      await deps.markCalendarDeleted(userId, credentials.calendar_id);
       return 'disconnected';
     }
     console.error(`calendar-sync failed for task ${changed.id}:`, e instanceof Error ? e.message : e);

@@ -27,7 +27,7 @@ function fakes(opts: { storedCalendarId?: string | null; calendarId?: string; ta
     ensureCalendar: (_token, existing) => Promise.resolve(opts.calendarId ?? existing ?? 'cal-new'),
     saveCredentials: (credentials) => { log.saved.push(credentials); return Promise.resolve(); },
     clearEventIds: (userId) => { log.cleared.push(userId); return Promise.resolve(); },
-    listUnsyncedTasks: (_userId, fromDate) => { log.listedFrom.push(fromDate); return Promise.resolve(opts.tasks ?? []); },
+    listTasksToSync: (_userId, fromDate) => { log.listedFrom.push(fromDate); return Promise.resolve(opts.tasks ?? []); },
     upsertEvent: (_token, _calendarId, task) => {
       log.upserted.push(task);
       if (task.due_date === opts.failUpsertFor) return Promise.reject(new Error('event upsert failed: 403'));
@@ -47,6 +47,7 @@ Deno.test('first connect creates the calendar, stores credentials and backfills 
   assertEquals(result, { calendarId: 'cal-new', backfilled: 2, failed: 0 });
   assertEquals(log.saved, [{
     user_id: 'u1', refresh_token: 'r-1', access_token: 'a-1', expires_at: '2026-11-19T13:00:00.000Z', calendar_id: 'cal-new',
+    disconnected_reason: null,
   }]);
   assertEquals(log.listedFrom, ['2026-11-19']);
   assertEquals(log.upserted[0].plant_name, 'Tomato');
@@ -70,6 +71,21 @@ Deno.test('reconnecting to the same calendar keeps existing event ids', async ()
 
   assertEquals(result.calendarId, 'cal-1');
   assertEquals(log.cleared, []);
+});
+
+Deno.test('reconnecting updates events that already exist, without rewriting their ids', async () => {
+  const done = row('t2', { completed_at: '2026-11-20T08:00:00Z', google_calendar_event_id: 'evt-t2' });
+  const { deps, log } = fakes({ storedCalendarId: 'cal-1', tasks: [row('t1'), done] });
+  deps.upsertEvent = (_token, _calendarId, task) => {
+    log.upserted.push(task);
+    return Promise.resolve(task.google_calendar_event_id ?? 'evt-t1');
+  };
+
+  const result = await connectCalendar(deps, 'u1', 'code-1');
+
+  assertEquals(result.backfilled, 2);
+  assertEquals(log.upserted[1].completed_at, '2026-11-20T08:00:00Z');
+  assertEquals([...log.eventIds], [['t1', 'evt-t1']]);
 });
 
 Deno.test('a recreated calendar (the old one was deleted) clears old event ids', async () => {

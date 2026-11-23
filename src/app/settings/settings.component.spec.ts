@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { User } from '@supabase/supabase-js';
 import { googleAuthUrl, OAUTH_STATE_KEY, parseOAuthRedirect, SettingsComponent } from './settings.component';
-import { CalendarConnectError, CalendarService } from './calendar.service';
+import { CalendarError, CalendarService } from './calendar.service';
 import { AuthService } from '../core/auth.service';
 
 describe('parseOAuthRedirect', () => {
@@ -64,8 +64,8 @@ describe('SettingsComponent', () => {
 
   beforeEach(() => {
     sessionStorage.removeItem(OAUTH_STATE_KEY);
-    calendar = jasmine.createSpyObj<CalendarService>('CalendarService', ['isConnected', 'connect']);
-    calendar.isConnected.and.resolveTo(false);
+    calendar = jasmine.createSpyObj<CalendarService>('CalendarService', ['status', 'connect', 'disconnect']);
+    calendar.status.and.resolveTo('not_connected');
   });
 
   afterEach(() => sessionStorage.removeItem(OAUTH_STATE_KEY));
@@ -78,12 +78,84 @@ describe('SettingsComponent', () => {
     expect(el.querySelector('button')!.textContent).toContain('Connect Google Calendar');
   });
 
-  it('shows the connection when connected', async () => {
-    calendar.isConnected.and.resolveTo(true);
+  it('shows the connection and a Disconnect button when connected', async () => {
+    calendar.status.and.resolveTo('connected');
     const { el } = await render();
 
-    expect(el.textContent).toContain('Connected');
-    expect(el.querySelector('button')).toBeNull();
+    expect(el.textContent).toContain('Connected.');
+    expect(el.querySelector('button.connect')).toBeNull();
+    expect(el.querySelector('button.disconnect')!.textContent).toContain('Disconnect');
+  });
+
+  it('explains a revoked connection and offers to reconnect', async () => {
+    calendar.status.and.resolveTo('revoked');
+    const { el } = await render();
+
+    expect(el.querySelector('.reconnect')!.textContent).toContain('access to your Google Calendar was removed');
+    expect(el.querySelector('button.connect')!.textContent).toContain('Reconnect Google Calendar');
+    expect(el.querySelector('button.disconnect')).not.toBeNull();
+  });
+
+  it('explains a deleted calendar and offers to reconnect', async () => {
+    calendar.status.and.resolveTo('calendar_deleted');
+    const { el } = await render();
+
+    expect(el.querySelector('.reconnect')!.textContent).toContain('calendar was deleted in Google Calendar');
+    expect(el.querySelector('button.connect')!.textContent).toContain('Reconnect Google Calendar');
+  });
+
+  it('disconnects after confirmation and shows the result', async () => {
+    calendar.status.and.resolveTo('connected');
+    calendar.disconnect.and.resolveTo({ calendarDeleted: true });
+    const { fixture, component, el } = await render();
+    const confirm = spyOn(component as any, 'confirm').and.returnValue(true);
+    calendar.status.and.resolveTo('not_connected');
+
+    (el.querySelector('button.disconnect') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(confirm.calls.mostRecent().args[0]).toContain('deletes your “Samwise” calendar');
+    expect(calendar.disconnect).toHaveBeenCalled();
+    expect(el.querySelector('[role=status]')!.textContent).toContain('your “Samwise” calendar was deleted');
+    expect(el.textContent).toContain('Not connected');
+  });
+
+  it('says so when the calendar could not be deleted', async () => {
+    calendar.status.and.resolveTo('revoked');
+    calendar.disconnect.and.resolveTo({ calendarDeleted: false });
+    const { fixture, component, el } = await render();
+    spyOn(component as any, 'confirm').and.returnValue(true);
+
+    (el.querySelector('button.disconnect') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role=status]')!.textContent).toContain('delete it in Google Calendar');
+  });
+
+  it('does nothing when the confirmation is cancelled', async () => {
+    calendar.status.and.resolveTo('connected');
+    const { component, el } = await render();
+    spyOn(component as any, 'confirm').and.returnValue(false);
+
+    (el.querySelector('button.disconnect') as HTMLButtonElement).click();
+
+    expect(calendar.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('shows an error when disconnecting fails, and stays connected', async () => {
+    calendar.status.and.resolveTo('connected');
+    calendar.disconnect.and.rejectWith(new CalendarError('disconnect_failed'));
+    const { fixture, component, el } = await render();
+    spyOn(component as any, 'confirm').and.returnValue(true);
+
+    (el.querySelector('button.disconnect') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('Couldn’t disconnect');
+    expect(el.textContent).toContain('Connected.');
   });
 
   it('sends the user to Google with a fresh state remembered for the return', async () => {
@@ -101,12 +173,12 @@ describe('SettingsComponent', () => {
   it('finishes connecting when Google returns a code, then cleans the URL', async () => {
     sessionStorage.setItem(OAUTH_STATE_KEY, 'state-1');
     calendar.connect.and.resolveTo({ backfilled: 5, failed: 0 });
-    calendar.isConnected.and.resolveTo(true);
+    calendar.status.and.resolveTo('connected');
     const { el } = await render({ code: 'c-1', state: 'state-1' });
 
     expect(calendar.connect).toHaveBeenCalledWith('c-1');
     // The status is checked once, after connecting finished.
-    expect(calendar.isConnected).toHaveBeenCalledTimes(1);
+    expect(calendar.status).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith([], { queryParams: {}, replaceUrl: true });
     expect(sessionStorage.getItem(OAUTH_STATE_KEY)).toBeNull();
     expect(el.querySelector('[role=status]')!.textContent).toContain('5 upcoming tasks');
@@ -131,7 +203,7 @@ describe('SettingsComponent', () => {
 
   it('shows a friendly message when connecting fails', async () => {
     sessionStorage.setItem(OAUTH_STATE_KEY, 'state-1');
-    calendar.connect.and.rejectWith(new CalendarConnectError('google_rejected_code'));
+    calendar.connect.and.rejectWith(new CalendarError('google_rejected_code'));
     const { el } = await render({ code: 'c-1', state: 'state-1' });
 
     expect(el.querySelector('[role=alert]')!.textContent).toContain('Google didn’t accept');

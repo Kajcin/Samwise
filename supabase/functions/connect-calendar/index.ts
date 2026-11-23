@@ -47,12 +47,11 @@ Deno.serve(async (req) => {
       clearEventIds: async (uid) => {
         check(await db.from('tasks').update({ google_calendar_event_id: null }).eq('user_id', uid).not('google_calendar_event_id', 'is', null));
       },
-      listUnsyncedTasks: async (uid, fromDate) =>
+      listTasksToSync: async (uid, fromDate) =>
         check(
           await db.from('tasks').select(TASK_EVENT_SELECT)
             .eq('user_id', uid)
-            .is('completed_at', null)
-            .is('google_calendar_event_id', null)
+            .or('completed_at.is.null,google_calendar_event_id.not.is.null')
             .gte('due_date', fromDate)
             .order('due_date'),
         ) as unknown as TaskEventRow[],

@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       loadCredentials: async (userId) =>
         check(
           await db.from('calendar_credentials')
-            .select('refresh_token, access_token, expires_at, calendar_id')
+            .select('refresh_token, access_token, expires_at, calendar_id, disconnected_reason')
             .eq('user_id', userId)
             .maybeSingle(),
         ) as StoredCredentials | null,
@@ -43,13 +43,18 @@ Deno.serve(async (req) => {
       markRevoked: async (userId, refreshToken) => {
         check(
           await db.from('calendar_credentials')
-            .update({ refresh_token: null, access_token: null, expires_at: null })
+            .update({ refresh_token: null, access_token: null, expires_at: null, disconnected_reason: 'revoked' })
             .eq('user_id', userId)
             .eq('refresh_token', refreshToken),
         );
       },
-      markCalendarGone: async (userId, calendarId) => {
-        check(await db.from('calendar_credentials').delete().eq('user_id', userId).eq('calendar_id', calendarId));
+      markCalendarDeleted: async (userId, calendarId) => {
+        check(
+          await db.from('calendar_credentials')
+            .update({ disconnected_reason: 'calendar_deleted' })
+            .eq('user_id', userId)
+            .eq('calendar_id', calendarId),
+        );
       },
       loadTask: async (taskId) =>
         check(await db.from('tasks').select(TASK_EVENT_SELECT).eq('id', taskId).maybeSingle()) as unknown as

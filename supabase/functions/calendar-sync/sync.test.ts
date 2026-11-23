@@ -16,6 +16,7 @@ const row = (overrides: Partial<TaskEventRow> = {}): TaskEventRow => ({
 });
 const connected: StoredCredentials = {
   refresh_token: 'r-1', access_token: 'cached', expires_at: '2026-11-23T12:30:00Z', calendar_id: 'cal-1',
+  disconnected_reason: null,
 };
 
 const insert = (r = record): WebhookPayload => ({ type: 'INSERT', table: 'tasks', record: r, old_record: null });
@@ -42,7 +43,7 @@ function fakes(opts: {
     loadCredentials: () => Promise.resolve(opts.credentials === undefined ? connected : opts.credentials),
     saveAccessToken: (userId, refreshToken, token) => { log.savedTokens.push([userId, refreshToken, token]); return Promise.resolve(); },
     markRevoked: (userId, refreshToken) => { log.revoked.push([userId, refreshToken]); return Promise.resolve(); },
-    markCalendarGone: (userId, calendarId) => { log.gone.push([userId, calendarId]); return Promise.resolve(); },
+    markCalendarDeleted: (userId, calendarId) => { log.gone.push([userId, calendarId]); return Promise.resolve(); },
     loadTask: () => Promise.resolve(opts.task === undefined ? row() : opts.task),
     setEventId: (taskId, eventId) => { log.eventIds.push([taskId, eventId]); return Promise.resolve(); },
     refreshAccessToken: () => {
@@ -119,7 +120,11 @@ Deno.test('completing a task updates its event', async () => {
 });
 
 Deno.test('nothing happens for users without a working connection', async () => {
-  for (const credentials of [null, { ...connected, refresh_token: null }]) {
+  const broken: StoredCredentials[] = [
+    { ...connected, refresh_token: null, disconnected_reason: 'revoked' },
+    { ...connected, disconnected_reason: 'calendar_deleted' },
+  ];
+  for (const credentials of [null, ...broken]) {
     const { deps, log } = fakes({ credentials });
     assertEquals(await handleTaskChange(deps, insert()), 'not_connected');
     assertEquals(log.upserts.length + log.deletes.length + log.refreshed, 0);
@@ -173,7 +178,7 @@ Deno.test('a revoked refresh token marks the connection revoked', async () => {
   assertEquals(log.gone, []);
 });
 
-Deno.test('a deleted Samwise calendar drops the connection', async () => {
+Deno.test('a deleted Samwise calendar marks the connection broken', async () => {
   const { deps, log } = fakes({ upsert: () => Promise.reject(new CalendarGoneError('cal-1')) });
 
   assertEquals(await handleTaskChange(deps, insert()), 'disconnected');

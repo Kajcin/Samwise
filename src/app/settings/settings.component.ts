@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
-import { CalendarConnectError, CalendarService } from './calendar.service';
+import { CalendarError, CalendarService, CalendarStatus } from './calendar.service';
 import { messageOf } from '../core/errors';
 
 /** Lets Samwise create its own calendars and manage their events, nothing else. */
@@ -47,6 +47,15 @@ function connectErrorMessage(code: string): string {
   return ERROR_MESSAGES[code] ?? 'Couldn’t connect Google Calendar. Please try again.';
 }
 
+/** Why syncing stopped, for a connection that broke on Google's side. */
+export const RECONNECT_MESSAGES: Partial<Record<CalendarStatus, string>> = {
+  revoked:
+    'Samwise’s access to your Google Calendar was removed in your Google account, so tasks aren’t syncing. ' +
+    'Reconnect to resume; your “Samwise” calendar will be reused.',
+  calendar_deleted:
+    'Your “Samwise” calendar was deleted in Google Calendar, so tasks aren’t syncing. Reconnect to create it again.',
+};
+
 @Component({
   selector: 'app-settings',
   standalone: true,
@@ -59,7 +68,8 @@ export class SettingsComponent {
   private router = inject(Router);
 
   /** null while checking. */
-  connected = signal<boolean | null>(null);
+  connection = signal<CalendarStatus | null>(null);
+  reconnectMessage = computed(() => RECONNECT_MESSAGES[this.connection() ?? 'connected'] ?? '');
   busy = signal(false);
   status = signal<string | null>(null);
   error = signal<string | null>(null);
@@ -82,13 +92,15 @@ export class SettingsComponent {
 
   private async refreshStatus(): Promise<void> {
     try {
-      this.connected.set(await this.calendar.isConnected());
+      this.connection.set(await this.calendar.status());
     } catch (e) {
       this.error.set(`Couldn’t check the calendar connection: ${messageOf(e)}`);
     }
   }
 
   connectCalendar(): void {
+    this.status.set(null);
+    this.error.set(null);
     this.busy.set(true);
     const state = crypto.randomUUID();
     sessionStorage.setItem(OAUTH_STATE_KEY, state);
@@ -100,17 +112,48 @@ export class SettingsComponent {
     window.location.assign(url);
   }
 
+  async disconnectCalendar(): Promise<void> {
+    const deletesCalendar = this.connection() === 'connected';
+    const question = deletesCalendar
+      ? 'Disconnect Google Calendar? This deletes your “Samwise” calendar and all its events from Google Calendar.'
+      : 'Disconnect Google Calendar?';
+    if (!this.confirm(question)) return;
+
+    this.status.set(null);
+    this.error.set(null);
+    this.busy.set(true);
+    try {
+      const { calendarDeleted } = await this.calendar.disconnect();
+      this.status.set(
+        calendarDeleted
+          ? 'Google Calendar disconnected, and your “Samwise” calendar was deleted.'
+          : 'Google Calendar disconnected. Samwise no longer had access to delete your “Samwise” calendar, ' +
+              'so delete it in Google Calendar if you don’t want it.',
+      );
+    } catch {
+      this.error.set('Couldn’t disconnect Google Calendar. Please try again.');
+    } finally {
+      this.busy.set(false);
+    }
+    await this.refreshStatus();
+  }
+
+  /** Separate so tests can answer the confirmation dialog. */
+  protected confirm(question: string): boolean {
+    return window.confirm(question);
+  }
+
   private async finishConnect(code: string): Promise<void> {
     this.busy.set(true);
     try {
       const { backfilled, failed } = await this.calendar.connect(code);
-      const added = backfilled === 1 ? '1 upcoming task was' : `${backfilled} upcoming tasks were`;
+      const synced = backfilled === 1 ? '1 upcoming task is' : `${backfilled} upcoming tasks are`;
       this.status.set(
-        `Google Calendar connected. ${added} added to your “Samwise” calendar.` +
+        `Google Calendar connected. ${synced} on your “Samwise” calendar.` +
           (failed ? ` ${failed} couldn’t be added yet and will sync when they next change.` : ''),
       );
     } catch (e) {
-      this.error.set(connectErrorMessage(e instanceof CalendarConnectError ? e.code : 'connect_failed'));
+      this.error.set(connectErrorMessage(e instanceof CalendarError ? e.code : 'connect_failed'));
     } finally {
       this.busy.set(false);
     }

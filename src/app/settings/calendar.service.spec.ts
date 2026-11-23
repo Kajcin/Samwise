@@ -1,4 +1,4 @@
-import { CalendarConnectError, CalendarService } from './calendar.service';
+import { CalendarError, CalendarService } from './calendar.service';
 import { supabase } from '../core/supabase-client';
 
 describe('CalendarService', () => {
@@ -8,17 +8,28 @@ describe('CalendarService', () => {
     service = new CalendarService();
   });
 
-  it('isConnected() asks the has_calendar_connection RPC', async () => {
-    spyOn(supabase, 'rpc').and.resolveTo({ data: true, error: null } as any);
+  /** supabase.functions is a getter that builds a new client each time. */
+  function stubInvoke(result: { data: unknown; error: unknown }): jasmine.Spy {
+    const invoke = jasmine.createSpy('invoke').and.resolveTo(result);
+    spyOnProperty(supabase, 'functions', 'get').and.returnValue({ invoke } as any);
+    return invoke;
+  }
 
-    expect(await service.isConnected()).toBeTrue();
-    expect(supabase.rpc).toHaveBeenCalledWith('has_calendar_connection');
+  it('status() asks the calendar_connection_status RPC', async () => {
+    spyOn(supabase, 'rpc').and.resolveTo({ data: 'revoked', error: null } as any);
+
+    expect(await service.status()).toBe('revoked');
+    expect(supabase.rpc).toHaveBeenCalledWith('calendar_connection_status');
+  });
+
+  it('status() rejects a value it does not know', async () => {
+    spyOn(supabase, 'rpc').and.resolveTo({ data: 'maybe', error: null } as any);
+
+    await expectAsync(service.status()).toBeRejectedWithError(/Unexpected calendar status/);
   });
 
   it('connect() posts the code to the connect-calendar function', async () => {
-    const invoke = jasmine.createSpy('invoke').and.resolveTo({ data: { connected: true, backfilled: 4, failed: 1 }, error: null });
-    // supabase.functions is a getter that builds a new client each time.
-    spyOnProperty(supabase, 'functions', 'get').and.returnValue({ invoke } as any);
+    const invoke = stubInvoke({ data: { connected: true, backfilled: 4, failed: 1 }, error: null });
 
     expect(await service.connect('code-1')).toEqual({ backfilled: 4, failed: 1 });
     expect(invoke).toHaveBeenCalledWith('connect-calendar', { body: { code: 'code-1' } });
@@ -26,16 +37,27 @@ describe('CalendarService', () => {
 
   it("connect() throws the function's error code", async () => {
     const context = new Response(JSON.stringify({ error: 'google_rejected_code' }), { status: 400 });
-    const invoke = jasmine.createSpy('invoke').and.resolveTo({ data: null, error: { message: 'non-2xx', context } });
-    spyOnProperty(supabase, 'functions', 'get').and.returnValue({ invoke } as any);
+    stubInvoke({ data: null, error: { message: 'non-2xx', context } });
 
-    await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarConnectError('google_rejected_code'));
+    await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarError('google_rejected_code'));
   });
 
   it('connect() falls back to a generic code when the response has no body', async () => {
-    const invoke = jasmine.createSpy('invoke').and.resolveTo({ data: null, error: { message: 'network' } });
-    spyOnProperty(supabase, 'functions', 'get').and.returnValue({ invoke } as any);
+    stubInvoke({ data: null, error: { message: 'network' } });
 
-    await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarConnectError('connect_failed'));
+    await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarError('connect_failed'));
+  });
+
+  it('disconnect() calls the disconnect-calendar function', async () => {
+    const invoke = stubInvoke({ data: { connected: false, calendarDeleted: true }, error: null });
+
+    expect(await service.disconnect()).toEqual({ calendarDeleted: true });
+    expect(invoke).toHaveBeenCalledWith('disconnect-calendar', { body: {} });
+  });
+
+  it('disconnect() throws the error code when it fails', async () => {
+    stubInvoke({ data: null, error: { message: 'network' } });
+
+    await expectAsync(service.disconnect()).toBeRejectedWith(new CalendarError('disconnect_failed'));
   });
 });

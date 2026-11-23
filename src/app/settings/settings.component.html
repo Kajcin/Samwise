@@ -20,16 +20,31 @@
       <p role="alert">{{ error() }}</p>
     }
 
-    @switch (connected()) {
+    @switch (connection()) {
       @case (null) {
         <p>Checking…</p>
       }
-      @case (true) {
+      @case ('connected') {
         <p><strong>Connected.</strong> New and changed tasks appear on your “Samwise” calendar.</p>
+        <button type="button" class="disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
+          Disconnect
+        </button>
+        <p><small>Disconnecting deletes the “Samwise” calendar from Google Calendar.</small></p>
+      }
+      @case ('not_connected') {
+        <p>Not connected.</p>
+        <button type="button" class="connect" [disabled]="busy()" (click)="connectCalendar()">
+          Connect Google Calendar
+        </button>
       }
       @default {
-        <p>Not connected.</p>
-        <button type="button" [disabled]="busy()" (click)="connectCalendar()">Connect Google Calendar</button>
+        <p class="reconnect" role="alert"><strong>Calendar sync stopped.</strong> {{ reconnectMessage() }}</p>
+        <button type="button" class="connect" [disabled]="busy()" (click)="connectCalendar()">
+          Reconnect Google Calendar
+        </button>
+        <button type="button" class="disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
+          Disconnect
+        </button>
       }
     }
   </section>

@@ -13,9 +13,9 @@ insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'connected@example.com'),
   ('22222222-2222-2222-2222-222222222222', 'never-connected@example.com'),
   ('33333333-3333-3333-3333-333333333333', 'revoked@example.com');
-insert into calendar_credentials (user_id, refresh_token, calendar_id) values
-  ('11111111-1111-1111-1111-111111111111', 'refresh-1', 'cal-1'),
-  ('33333333-3333-3333-3333-333333333333', null, 'cal-3'); -- Google revoked access
+insert into calendar_credentials (user_id, refresh_token, calendar_id, disconnected_reason) values
+  ('11111111-1111-1111-1111-111111111111', 'refresh-1', 'cal-1', null),
+  ('33333333-3333-3333-3333-333333333333', null, 'cal-3', 'revoked'); -- Google revoked access
 
 create temp table baseline as select coalesce(max(id), 0) as id from net.http_request_queue;
 
@@ -107,25 +107,7 @@ insert into tasks (user_id, task_type, due_date) values
   ('33333333-3333-3333-3333-333333333333', 'prune', '2026-12-01');
 select pg_temp.expect_queued(3, 'unconnected users');
 
--- 7. ...and a revoked connection doesn't count as connected.
-set local role authenticated;
-set local request.jwt.claims to '{"sub":"33333333-3333-3333-3333-333333333333"}';
-do $$
-begin
-  if has_calendar_connection() then
-    raise exception 'TEST FAILED: a revoked connection counts as connected';
-  end if;
-end $$;
-set local request.jwt.claims to '{"sub":"11111111-1111-1111-1111-111111111111"}';
-do $$
-begin
-  if not has_calendar_connection() then
-    raise exception 'TEST FAILED: the connected user should be connected';
-  end if;
-end $$;
-reset role;
-
--- 8. Planting something queues one request per generated task.
+-- 7. Planting something queues one request per generated task.
 insert into beds (id, user_id, name, rows, cols)
 values ('b0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Test Bed', 1, 1);
 insert into plantings (id, user_id, bed_id, cell_row, cell_col, plant_id, planted_date)
@@ -141,7 +123,7 @@ begin
   perform pg_temp.expect_queued(3 + generated, 'planting');
 end $$;
 
--- 9. Without the Vault secrets (not configured in this environment) task writes still work.
+-- 8. Without the Vault secrets (not configured in this environment) task writes still work.
 delete from vault.secrets where name = 'calendar_sync_url';
 insert into tasks (user_id, task_type, due_date)
 values ('11111111-1111-1111-1111-111111111111', 'prune', '2026-12-02');

@@ -203,16 +203,19 @@ configuration (step 4).
 - **Samwise uses its own calendar.** Connecting creates a "Samwise"
   calendar in your Google account and puts every task there, never in your
   primary calendar. You can hide or recolor it like any other calendar.
-  Disconnecting deletes it. If you delete it yourself in Google Calendar,
-  Samwise treats that as a disconnect, and Settings offers to reconnect.
+  Disconnecting (Settings, after a confirmation) deletes it and revokes
+  Samwise's access. If you delete the calendar yourself in Google Calendar,
+  syncing stops and Settings offers to reconnect, which creates a new one.
   If you remove Samwise's access in your Google account instead, Samwise
-  forgets the tokens but remembers the calendar, so reconnecting reuses it.
+  forgets the tokens but remembers the calendar, so reconnecting reuses it
+  and brings its upcoming events up to date.
 - **The Calendar refresh token never reaches the browser.** The client has
   no direct access to `calendar_credentials`.
   - `connect-calendar` writes the row with the service role.
   - `disconnect-calendar` deletes the row and revokes the token with Google.
   - The Settings page asks for status through the
-    `has_calendar_connection()` RPC (security definer, returns a boolean only).
+    `calendar_connection_status()` RPC (security definer; returns only
+    `connected`, `not_connected`, `revoked` or `calendar_deleted`).
 - **The tasks webhook authenticates with a shared secret.**
   - `calendar-sync` runs with `verify_jwt = false`.
   - The `tasks` trigger sends an `x-webhook-secret` header read from Vault.
