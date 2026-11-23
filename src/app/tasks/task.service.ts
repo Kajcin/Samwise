@@ -21,7 +21,8 @@ export interface TaskPlanting {
   cell_row: number;
   cell_col: number;
   bed: { id: string; name: string };
-  plant: { name: string };
+  /** name_cs: Czech name of a built-in plant. */
+  plant: { name: string; name_cs?: string | null };
 }
 
 export interface TaskWithContext extends Task {
@@ -29,7 +30,7 @@ export interface TaskWithContext extends Task {
 }
 
 /** PostgREST select that embeds the planting's bed and plant (follows the FKs, RLS applies). */
-export const TASK_SELECT = '*, planting:plantings(cell_row, cell_col, bed:beds(id, name), plant:plants_catalog(name))';
+export const TASK_SELECT = '*, planting:plantings(cell_row, cell_col, bed:beds(id, name), plant:plants_catalog(name, name_cs))';
 
 export interface TaskFilter {
   taskType?: TaskType;

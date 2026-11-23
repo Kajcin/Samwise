@@ -1,3 +1,5 @@
+import { provideI18n } from '../core/i18n/i18n';
+import { msg } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { filterPlants, PlantCatalogListComponent, validateNewPlantForm } from './plant-catalog-list.component';
@@ -36,11 +38,11 @@ describe('filterPlants', () => {
 
 describe('validateNewPlantForm', () => {
   it('requires a name', () => {
-    expect(validateNewPlantForm('  ', 'full_sun')).toBe('Name is required.');
+    expect(validateNewPlantForm('  ', 'full_sun')).toEqual(msg('catalog.errors.nameRequired'));
   });
 
   it('requires a sun requirement', () => {
-    expect(validateNewPlantForm('Kale', null)).toBe('Sun requirement is required.');
+    expect(validateNewPlantForm('Kale', null)).toEqual(msg('catalog.errors.sunRequired'));
   });
 
   it('accepts a valid form', () => {
@@ -63,7 +65,7 @@ describe('PlantCatalogListComponent', () => {
     service.list.and.resolveTo(plants);
     TestBed.configureTestingModule({
       imports: [PlantCatalogListComponent],
-      providers: [provideRouter([]), { provide: PlantCatalogService, useValue: service }],
+      providers: [provideI18n(), provideRouter([]), { provide: PlantCatalogService, useValue: service }],
     });
   });
 

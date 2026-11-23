@@ -1,3 +1,4 @@
+import { provideI18n } from './core/i18n/i18n';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -14,7 +15,7 @@ describe('App', () => {
     auth = { currentUser: user, signOut: jasmine.createSpy('signOut').and.resolveTo() };
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
+      providers: [provideI18n(), provideRouter([]), { provide: AuthService, useValue: auth }],
     }).compileComponents();
   });
 

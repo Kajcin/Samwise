@@ -1,3 +1,5 @@
+import { provideI18n } from '../core/i18n/i18n';
+import { msg } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { BedEditorComponent, MAX_BED_SIZE, validateBedForm } from './bed-editor.component';
@@ -5,21 +7,21 @@ import { GardenService } from './garden.service';
 
 describe('validateBedForm', () => {
   it('rejects an empty name', () => {
-    expect(validateBedForm('  ', 3, 3)).toBe('Name is required.');
+    expect(validateBedForm('  ', 3, 3)).toEqual(msg('bedEditor.errors.nameRequired'));
   });
 
   it('rejects missing or non-positive dimensions', () => {
-    expect(validateBedForm('Bed 1', 0, 3)).toBe('Rows and columns must be at least 1.');
-    expect(validateBedForm('Bed 1', 3, -1)).toBe('Rows and columns must be at least 1.');
-    expect(validateBedForm('Bed 1', null, 3)).toBe('Rows and columns must be at least 1.');
+    expect(validateBedForm('Bed 1', 0, 3)).toEqual(msg('bedEditor.errors.sizeAtLeastOne'));
+    expect(validateBedForm('Bed 1', 3, -1)).toEqual(msg('bedEditor.errors.sizeAtLeastOne'));
+    expect(validateBedForm('Bed 1', null, 3)).toEqual(msg('bedEditor.errors.sizeAtLeastOne'));
   });
 
   it('rejects fractional dimensions', () => {
-    expect(validateBedForm('Bed 1', 2.5, 3)).toBe('Rows and columns must be whole numbers.');
+    expect(validateBedForm('Bed 1', 2.5, 3)).toEqual(msg('bedEditor.errors.sizeWhole'));
   });
 
   it(`rejects dimensions above ${MAX_BED_SIZE}`, () => {
-    expect(validateBedForm('Bed 1', MAX_BED_SIZE + 1, 3)).toBe(`Rows and columns can be at most ${MAX_BED_SIZE}.`);
+    expect(validateBedForm('Bed 1', MAX_BED_SIZE + 1, 3)).toEqual(msg('bedEditor.errors.sizeAtMost', { max: MAX_BED_SIZE }));
   });
 
   it('accepts a valid form', () => {
@@ -53,7 +55,7 @@ describe('BedEditorComponent', () => {
     garden = jasmine.createSpyObj<GardenService>('GardenService', ['createBed']);
     TestBed.configureTestingModule({
       imports: [BedEditorComponent],
-      providers: [provideRouter([]), { provide: GardenService, useValue: garden }],
+      providers: [provideI18n(), provideRouter([]), { provide: GardenService, useValue: garden }],
     });
   });
 

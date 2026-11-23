@@ -165,6 +165,11 @@ Deno.test('eventBody makes a free all-day event titled with the task and plant',
   assertEquals(event.status, 'confirmed');
 });
 
+Deno.test('eventBody titles events in the task’s language', () => {
+  const event = eventBody({ ...task, plant_name: 'Rajče', completed_at: '2026-08-20T10:00:00Z', language: 'cs' });
+  assertEquals(event.summary, '✓ Sklizeň — Rajče');
+});
+
 Deno.test('eventBody marks completed tasks and handles month ends', () => {
   const event = eventBody({ ...task, due_date: '2026-12-31', completed_at: '2026-12-31T10:00:00Z' });
   assertEquals(event.summary, '✓ Harvest');

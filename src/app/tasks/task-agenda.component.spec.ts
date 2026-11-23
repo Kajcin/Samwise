@@ -1,3 +1,4 @@
+import { provideI18n } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { filterByStatus, TaskAgendaComponent } from './task-agenda.component';
@@ -61,7 +62,7 @@ describe('TaskAgendaComponent', () => {
     ]);
     TestBed.configureTestingModule({
       imports: [TaskAgendaComponent],
-      providers: [
+      providers: [provideI18n(), 
         provideRouter([]),
         { provide: TaskService, useValue: tasks },
         { provide: GardenService, useValue: garden },

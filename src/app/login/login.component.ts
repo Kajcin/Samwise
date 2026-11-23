@@ -3,6 +3,7 @@ import { IconComponent } from '../core/icons/icon.component';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
+import { LanguageService } from '../core/i18n/language.service';
 
 @Component({
   selector: 'app-login',
@@ -13,6 +14,7 @@ import { environment } from '../../environments/environment';
 export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
+  protected i18n = inject(LanguageService);
 
   // Local development only: email/password login for the user created by `npm run dev:user`.
   protected readonly devEmailLogin = environment.devEmailLogin;

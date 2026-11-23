@@ -6,6 +6,8 @@ import { isOverdue, TaskService, TaskWithContext } from './task.service';
 import { formatDueDate, taskLocation, taskTitle } from './task-format';
 import { Bed, GardenService } from '../garden/garden.service';
 import { messageOf } from '../core/errors';
+import { Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
 
 export interface BedSummary {
   bed: Bed;
@@ -28,6 +30,7 @@ const UPCOMING_DAYS = 7;
 export class DashboardComponent {
   private tasks = inject(TaskService);
   private garden = inject(GardenService);
+  protected i18n = inject(LanguageService);
 
   protected readonly days = UPCOMING_DAYS;
   protected readonly taskTitle = taskTitle;
@@ -37,7 +40,7 @@ export class DashboardComponent {
   protected readonly isOverdue = isOverdue;
 
   loading = signal(true);
-  error = signal<string | null>(null);
+  error = signal<Message | null>(null);
   upcoming = signal<TaskWithContext[]>([]);
   bedSummaries = signal<BedSummary[]>([]);
   busyTaskId = signal<string | null>(null);
@@ -50,7 +53,7 @@ export class DashboardComponent {
     try {
       await Promise.all([this.loadTasks(), this.loadBeds()]);
     } catch (e) {
-      this.error.set(`Could not load your dashboard: ${messageOf(e)}`);
+      this.error.set(msg('dashboard.errors.load', { detail: messageOf(e) }));
     } finally {
       this.loading.set(false);
     }
@@ -73,7 +76,7 @@ export class DashboardComponent {
       await this.tasks.markComplete(task.id);
       await this.loadTasks();
     } catch (e) {
-      this.error.set(`Could not update the task: ${messageOf(e)}`);
+      this.error.set(msg('tasks.errors.update', { detail: messageOf(e) }));
     } finally {
       this.busyTaskId.set(null);
     }

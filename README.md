@@ -198,6 +198,26 @@ configure an SPA fallback so every route serves `index.html`. Once you have
 the domain, add it to the Google redirect URIs (step 2) and the Supabase URL
 configuration (step 4).
 
+## Languages
+
+Samwise speaks English (the default) and Czech.
+
+- **Which language:** before sign-in, the browser's language (Czech if the browser
+  prefers Czech over English, otherwise English). On a user's first sign-in that
+  language is saved to their account (`user_preferences`), so it follows them to
+  other devices. They can change it in **Settings → Language**.
+- **Calendar events** are titled in the user's language ("Sklizeň — Rajče"). Changing
+  the language re-syncs the upcoming events (a database trigger, migration 0009).
+- **Built-in plants** have Czech names and notes in the database (`name_cs`,
+  `notes_cs`). Plants you add yourself show what you typed; cloning a built-in plant
+  copies its texts in your current language.
+- **Adding or changing texts:** edit `src/i18n/en.json` and `src/i18n/cs.json`. Texts use
+  ICU message format, e.g. `{count, plural, one {# task} other {# tasks}}`; Czech also
+  needs `few` (2-4: "3 úkoly"). The tests fail if the two files have different keys or
+  placeholders, if a message doesn't parse, or if the code uses a key that doesn't exist.
+  Task names and the place format also live in `supabase/functions/_shared/` for the
+  calendar events; a Deno test checks they match the JSON.
+
 ## Security decisions
 
 - **Samwise uses its own calendar.** Connecting creates a "Samwise"

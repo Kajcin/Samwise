@@ -10,7 +10,15 @@ const row = (id: string, overrides: Partial<TaskEventRow> = {}): TaskEventRow =>
 });
 
 /** In-memory fakes recording what connectCalendar does. */
-function fakes(opts: { storedCalendarId?: string | null; calendarId?: string; tasks?: TaskEventRow[]; failUpsertFor?: string } = {}) {
+function fakes(
+  opts: {
+    storedCalendarId?: string | null;
+    calendarId?: string;
+    tasks?: TaskEventRow[];
+    failUpsertFor?: string;
+    language?: 'en' | 'cs';
+  } = {},
+) {
   const log = {
     saved: [] as unknown[],
     cleared: [] as string[],
@@ -28,6 +36,7 @@ function fakes(opts: { storedCalendarId?: string | null; calendarId?: string; ta
     saveCredentials: (credentials) => { log.saved.push(credentials); return Promise.resolve(); },
     clearEventIds: (userId) => { log.cleared.push(userId); return Promise.resolve(); },
     listTasksToSync: (_userId, fromDate) => { log.listedFrom.push(fromDate); return Promise.resolve(opts.tasks ?? []); },
+    loadLanguage: () => Promise.resolve(opts.language ?? 'en'),
     upsertEvent: (_token, _calendarId, task) => {
       log.upserted.push(task);
       if (task.due_date === opts.failUpsertFor) return Promise.reject(new Error('event upsert failed: 403'));
@@ -105,6 +114,15 @@ Deno.test('a recreated calendar (the old one was deleted) clears old event ids',
   await connectCalendar(deps, 'u1', 'code-1');
 
   assertEquals(log.cleared, ['u1']);
+});
+
+Deno.test('connecting writes the events in the user’s language', async () => {
+  const czech = { ...herbsTomato, plant: { name: 'Tomato', name_cs: 'Rajče' } };
+  const { deps, log } = fakes({ language: 'cs', tasks: [row('t1', { planting: czech })] });
+
+  await connectCalendar(deps, 'u1', 'code-1');
+
+  assertEquals([log.upserted[0].plant_name, log.upserted[0].language], ['Rajče', 'cs']);
 });
 
 Deno.test('a failed event is counted and the backfill carries on', async () => {

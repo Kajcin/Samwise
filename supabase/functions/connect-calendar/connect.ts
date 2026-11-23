@@ -1,5 +1,5 @@
 // The connect flow, with its I/O injected so it can be unit-tested (index.ts wires it up).
-import type { EventTask } from '../_shared/google.ts';
+import type { EventTask, Language } from '../_shared/google.ts';
 import { TaskEventRow, toEventTask } from '../_shared/tasks.ts';
 
 export interface Tokens {
@@ -24,6 +24,8 @@ export interface ConnectDeps {
   clearEventIds(userId: string): Promise<void>;
   /** Every task due on or after `fromDate`, finished or not (finished ones show with a ✓). */
   listTasksToSync(userId: string, fromDate: string): Promise<TaskEventRow[]>;
+  /** The user's language for event titles (English if they have none yet). */
+  loadLanguage(userId: string): Promise<Language>;
   upsertEvent(accessToken: string, calendarId: string, task: EventTask): Promise<string>;
   setEventId(taskId: string, eventId: string): Promise<void>;
   /** Today as YYYY-MM-DD (UTC, like the database's current_date). */
@@ -58,9 +60,10 @@ export async function connectCalendar(deps: ConnectDeps, userId: string, code: s
   // Writing the event id back doesn't fire the tasks webhook (migration 0007).
   let backfilled = 0;
   let failed = 0;
+  const language = await deps.loadLanguage(userId);
   for (const row of await deps.listTasksToSync(userId, deps.today())) {
     try {
-      const eventId = await deps.upsertEvent(tokens.access_token, calendarId, toEventTask(row));
+      const eventId = await deps.upsertEvent(tokens.access_token, calendarId, toEventTask(row, language));
       if (eventId !== row.google_calendar_event_id) await deps.setEventId(row.id, eventId);
       backfilled++;
     } catch (error) {

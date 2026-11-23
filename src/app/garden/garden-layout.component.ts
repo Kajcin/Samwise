@@ -1,10 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { RouterLink } from '@angular/router';
-import { Bed, cellKey, GardenService, Planting } from './garden.service';
+import { Bed, cellKey, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
 import { messageOf } from '../core/errors';
 import { toIsoDate } from '../core/dates';
+import { Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
+import { plantName } from '../plant-catalog/labels';
 
 type Grid = (Planting | null)[][];
 
@@ -52,25 +55,38 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 export class GardenLayoutComponent {
   private garden = inject(GardenService);
   private catalog = inject(PlantCatalogService);
+  protected i18n = inject(LanguageService);
 
   loading = signal(true);
-  error = signal<string | null>(null);
+  error = signal<Message | null>(null);
   beds = signal<Bed[]>([]);
   grids = signal<Record<string, Grid>>({});
 
   plants = signal<Plant[]>([]);
-  /** Plant names for the grid; your own copies are marked so they're distinguishable from built-ins. */
-  private plantLabels = computed(
-    () => new Map(this.plants().map((p) => [p.id, p.user_id ? `${p.name} (yours)` : p.name])),
-  );
-  plantOptions = computed(() =>
-    [...this.plants()].sort((a, b) => a.name.localeCompare(b.name) || Number(!!a.user_id) - Number(!!b.user_id)),
-  );
+  /**
+   * Plant names for the grid, in the current language; your own copies are marked
+   * so they're distinguishable from built-ins.
+   */
+  private plantLabels = computed(() => {
+    const lang = this.i18n.lang();
+    return new Map(
+      this.plants().map((p) => {
+        const name = plantName(p, lang);
+        return [p.id, p.user_id ? this.i18n.t('garden.ownPlant', { name }) : name];
+      }),
+    );
+  });
+  plantOptions = computed(() => {
+    const lang = this.i18n.lang();
+    return [...this.plants()].sort(
+      (a, b) => plantName(a, lang).localeCompare(plantName(b, lang), lang) || Number(!!a.user_id) - Number(!!b.user_id),
+    );
+  });
 
   selected = signal<SelectedCell | null>(null);
   newPlantId = signal('');
   newPlantedDate = signal(toIsoDate(new Date()));
-  cellError = signal<string | null>(null);
+  cellError = signal<Message | null>(null);
   busy = signal(false);
 
   constructor() {
@@ -84,7 +100,7 @@ export class GardenLayoutComponent {
       this.beds.set(beds);
       await Promise.all(beds.map((bed) => this.refreshBed(bed)));
     } catch (e) {
-      this.error.set(`Could not load your garden: ${messageOf(e)}`);
+      this.error.set(msg('garden.errors.load', { detail: messageOf(e) }));
     } finally {
       this.loading.set(false);
     }
@@ -96,7 +112,7 @@ export class GardenLayoutComponent {
   }
 
   plantLabel(plantId: string): string {
-    return this.plantLabels().get(plantId) ?? 'Unknown plant';
+    return this.plantLabels().get(plantId) ?? this.i18n.t('garden.unknownPlant');
   }
 
   isSelected(bed: Bed, row: number, col: number): boolean {
@@ -120,8 +136,8 @@ export class GardenLayoutComponent {
     event.preventDefault();
     const cell = this.selected();
     if (!cell) return;
-    if (!this.newPlantId()) return this.cellError.set('Choose a plant.');
-    if (!this.newPlantedDate()) return this.cellError.set('Choose a planting date.');
+    if (!this.newPlantId()) return this.cellError.set(msg('garden.errors.choosePlant'));
+    if (!this.newPlantedDate()) return this.cellError.set(msg('garden.errors.choosePlantingDate'));
     await this.runOnCell(cell, () =>
       this.garden.assignPlanting(cell.bed.id, cell.row, cell.col, this.newPlantId(), this.newPlantedDate()),
     );
@@ -142,11 +158,15 @@ export class GardenLayoutComponent {
       await change();
       this.selected.set(null);
     } catch (e) {
-      this.cellError.set(messageOf(e));
+      this.cellError.set(
+        e instanceof CellOccupiedError ? msg('garden.errors.cellOccupied') : msg('garden.errors.action', { detail: messageOf(e) }),
+      );
     } finally {
       this.busy.set(false);
     }
     // Refresh either way: after a conflict the grid may be stale.
-    await this.refreshBed(cell.bed).catch((e) => this.error.set(`Could not refresh ${cell.bed.name}: ${messageOf(e)}`));
+    await this.refreshBed(cell.bed).catch((e) =>
+      this.error.set(msg('garden.errors.refresh', { bed: cell.bed.name, detail: messageOf(e) })),
+    );
   }
 }

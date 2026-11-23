@@ -29,6 +29,7 @@ function fakes(opts: {
   task?: TaskEventRow | null;
   upsert?: (accessToken: string, task: EventTask) => Promise<string>;
   refresh?: () => Promise<{ access_token: string; expires_at: string }>;
+  language?: 'en' | 'cs';
 } = {}) {
   const log = {
     refreshed: 0,
@@ -44,6 +45,7 @@ function fakes(opts: {
     saveAccessToken: (userId, refreshToken, token) => { log.savedTokens.push([userId, refreshToken, token]); return Promise.resolve(); },
     markRevoked: (userId, refreshToken) => { log.revoked.push([userId, refreshToken]); return Promise.resolve(); },
     markCalendarDeleted: (userId, calendarId) => { log.gone.push([userId, calendarId]); return Promise.resolve(); },
+    loadLanguage: () => Promise.resolve(opts.language ?? 'en'),
     loadTask: () => Promise.resolve(opts.task === undefined ? row() : opts.task),
     setEventId: (taskId, eventId) => { log.eventIds.push([taskId, eventId]); return Promise.resolve(); },
     refreshAccessToken: () => {
@@ -101,6 +103,24 @@ Deno.test('the task is synced as it is now, not as the payload saw it', async ()
   assertEquals(log.upserts[0].task.completed_at, '2026-11-23T11:00:00Z');
   assertEquals(log.upserts[0].task.google_calendar_event_id, 'evt-1');
   assertEquals(log.eventIds, []); // unchanged, so not written back
+});
+
+Deno.test('events are written in the user’s language', async () => {
+  const czechTomato = row({ planting: { cell_row: 0, cell_col: 1, bed: { name: 'Bylinky' }, plant: { name: 'Tomato', name_cs: 'Rajče' } } });
+  const { deps, log } = fakes({ language: 'cs', task: czechTomato });
+
+  assertEquals(await handleTaskChange(deps, insert()), 'synced');
+
+  assertEquals(log.upserts[0].task.language, 'cs');
+  assertEquals(log.upserts[0].task.plant_name, 'Rajče');
+  assertEquals(log.upserts[0].task.location, 'Bylinky, řádek 1, sloupec 2');
+});
+
+Deno.test('a re-sync (after a language change) updates the event although the task is unchanged', async () => {
+  const { deps, log } = fakes({ language: 'cs' });
+
+  assertEquals(await handleTaskChange(deps, { type: 'RESYNC', table: 'tasks', record, old_record: null }), 'synced');
+  assertEquals(log.upserts.length, 1);
 });
 
 Deno.test('an id-only update does nothing', async () => {

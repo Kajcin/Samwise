@@ -1,25 +1,25 @@
 <main class="container pb-5">
-  <p><a routerLink="/garden">← Garden</a></p>
-  <h1 class="mb-4">New bed</h1>
+  <p><a routerLink="/garden">{{ i18n.t('bedEditor.back') }}</a></p>
+  <h1 class="mb-4">{{ i18n.t('bedEditor.heading') }}</h1>
 
   <div class="row">
     <div class="col-md-8 col-lg-6">
       <form class="card" (submit)="save($event)">
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label" for="bed-name">Name</label>
+            <label class="form-label" for="bed-name">{{ i18n.t('common.name') }}</label>
             <input
               id="bed-name"
               class="form-control"
               name="name"
               [value]="name()"
               (input)="name.set($any($event.target).value)"
-              placeholder="e.g. Herb bed"
+              [placeholder]="i18n.t('bedEditor.namePlaceholder')"
             />
           </div>
           <div class="row g-3 mb-3">
             <div class="col-6">
-              <label class="form-label" for="bed-rows">Rows</label>
+              <label class="form-label" for="bed-rows">{{ i18n.t('bedEditor.rows') }}</label>
               <input
                 id="bed-rows"
                 class="form-control"
@@ -33,7 +33,7 @@
               />
             </div>
             <div class="col-6">
-              <label class="form-label" for="bed-cols">Columns</label>
+              <label class="form-label" for="bed-cols">{{ i18n.t('bedEditor.cols') }}</label>
               <input
                 id="bed-cols"
                 class="form-control"
@@ -46,13 +46,13 @@
                 (input)="setCols($any($event.target).value)"
               />
             </div>
-            <div class="form-text mt-1">Each cell holds one plant; up to {{ maxSize }} × {{ maxSize }}.</div>
+            <div class="form-text mt-1">{{ i18n.t('bedEditor.sizeHint', { max: maxSize }) }}</div>
           </div>
           @if (error()) {
-            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+            <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
           }
           <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            <app-icon name="check-lg" class="me-1" />Save bed
+            <app-icon name="check-lg" class="me-1" />{{ i18n.t('bedEditor.save') }}
           </button>
         </div>
       </form>

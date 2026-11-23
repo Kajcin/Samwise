@@ -1,0 +1,236 @@
+{
+  "nav": {
+    "dashboard": "Přehled",
+    "tasks": "Úkoly",
+    "garden": "Zahrada",
+    "plants": "Katalog rostlin",
+    "settings": "Nastavení",
+    "signOut": "Odhlásit se",
+    "toggle": "Přepnout navigaci"
+  },
+  "common": {
+    "loading": "Načítání…",
+    "close": "Zavřít",
+    "done": "Hotovo",
+    "undo": "Vrátit",
+    "overdue": "Po termínu",
+    "cloneToCustomize": "Vytvořit vlastní kopii",
+    "name": "Název"
+  },
+  "login": {
+    "tagline": "Péče o vaši zahradu, přímo ve vašem kalendáři.",
+    "google": "Přihlásit se přes Google",
+    "devTitle": "Přihlášení pro lokální vývoj",
+    "email": "E-mail",
+    "password": "Heslo",
+    "signIn": "Přihlásit se"
+  },
+  "taskTypes": {
+    "seed_start": "Výsev",
+    "transplant": "Přesazení",
+    "prune": "Zastřihávání",
+    "fertilize": "Hnojení",
+    "harvest": "Sklizeň"
+  },
+  "sun": {
+    "full_sun": "Plné slunce",
+    "partial_shade": "Polostín",
+    "full_shade": "Stín"
+  },
+  "months": {
+    "1": "leden", "2": "únor", "3": "březen", "4": "duben", "5": "květen", "6": "červen",
+    "7": "červenec", "8": "srpen", "9": "září", "10": "říjen", "11": "listopad", "12": "prosinec"
+  },
+  "dates": {
+    "today": "Dnes",
+    "tomorrow": "Zítra",
+    "yesterday": "Včera",
+    "weekdays": { "0": "Ne", "1": "Po", "2": "Út", "3": "St", "4": "Čt", "5": "Pá", "6": "So" },
+    "monthsInDate": {
+      "1": "ledna", "2": "února", "3": "března", "4": "dubna", "5": "května", "6": "června",
+      "7": "července", "8": "srpna", "9": "září", "10": "října", "11": "listopadu", "12": "prosince"
+    },
+    "full": "{weekday} {day}. {month} {year}"
+  },
+  "rules": {
+    "everyDays": "{days, plural, one {každý den} few {každé # dny} other {každých # dní}}",
+    "onPlantingDay": "v den výsadby",
+    "daysAfterPlanting": "{days, plural, one {# den po výsadbě} few {# dny po výsadbě} other {# dní po výsadbě}}"
+  },
+  "tasks": {
+    "title": "{type} — {plant}",
+    "location": "{bed}, řádek {row}, sloupec {col}",
+    "heading": "Úkoly",
+    "filterType": "Typ",
+    "allTypes": "Všechny typy",
+    "filterBed": "Záhon",
+    "allBeds": "Všechny záhony",
+    "filterShow": "Zobrazit",
+    "showTodo": "K udělání",
+    "showDone": "Hotové",
+    "showAll": "Vše",
+    "loading": "Načítání úkolů…",
+    "noMatches": "Těmto filtrům neodpovídá žádný úkol.",
+    "addHeading": "Přidat úkol",
+    "type": "Typ",
+    "due": "Termín",
+    "add": "Přidat úkol",
+    "errors": {
+      "chooseDueDate": "Vyberte termín.",
+      "load": "Úkoly se nepodařilo načíst: {detail}",
+      "update": "Úkol se nepodařilo upravit: {detail}",
+      "add": "Úkol se nepodařilo přidat: {detail}"
+    }
+  },
+  "dashboard": {
+    "heading": "Přehled",
+    "comingUp": "Nadcházející",
+    "nextDays": "(na {days, plural, one {# den} few {# dny} other {# dní}} dopředu)",
+    "allTasks": "Všechny úkoly",
+    "nothingToDo": "Během {days, plural, one {příštího dne} other {příštích # dní}} není nic na práci.",
+    "beds": "Záhony",
+    "cellsPlanted": "Osázeno {planted} z {cells, plural, one {# políčka} other {# políček}}",
+    "noBeds": "Zatím nemáte žádný záhon.",
+    "createFirstBed": "Založte svůj první záhon",
+    "errors": {
+      "load": "Přehled se nepodařilo načíst: {detail}"
+    }
+  },
+  "garden": {
+    "heading": "Zahrada",
+    "newBed": "Nový záhon",
+    "loading": "Načítání zahrady…",
+    "hint": "Vyberte políčko, abyste do něj něco zasadili nebo viděli, co v něm roste.",
+    "cellLabel": "Řádek {row}, sloupec {col}: {content}",
+    "empty": "prázdné",
+    "cellHeading": "Řádek {row}, sloupec {col}",
+    "plantedOn": "{plant} — zasazeno {date}",
+    "remove": "Odstranit",
+    "plant": "Rostlina",
+    "choosePlant": "Vyberte rostlinu",
+    "planted": "Zasazeno",
+    "plantButton": "Zasadit",
+    "ownPlant": "{name} (vlastní)",
+    "unknownPlant": "Neznámá rostlina",
+    "errors": {
+      "choosePlant": "Vyberte rostlinu.",
+      "choosePlantingDate": "Vyberte datum výsadby.",
+      "cellOccupied": "Na tomto políčku už něco roste. Nejdřív to odstraňte.",
+      "load": "Zahradu se nepodařilo načíst: {detail}",
+      "refresh": "Záhon {bed} se nepodařilo obnovit: {detail}",
+      "action": "{detail}"
+    }
+  },
+  "bedEditor": {
+    "back": "← Zahrada",
+    "heading": "Nový záhon",
+    "namePlaceholder": "např. Bylinkový záhon",
+    "rows": "Řádky",
+    "cols": "Sloupce",
+    "sizeHint": "Na každé políčko patří jedna rostlina; nejvýš {max} × {max}.",
+    "save": "Uložit záhon",
+    "errors": {
+      "nameRequired": "Vyplňte název.",
+      "sizeAtLeastOne": "Počet řádků i sloupců musí být alespoň 1.",
+      "sizeWhole": "Počet řádků i sloupců musí být celé číslo.",
+      "sizeAtMost": "Počet řádků i sloupců může být nejvýš {max}.",
+      "save": "Záhon se nepodařilo uložit: {detail}"
+    }
+  },
+  "catalog": {
+    "heading": "Katalog rostlin",
+    "search": "Hledat",
+    "searchPlaceholder": "Hledat rostliny",
+    "loading": "Načítání rostlin…",
+    "noMatches": "Hledání „{query}“ neodpovídá žádná rostlina.",
+    "yours": "vlastní",
+    "addHeading": "Přidat vlastní rostlinu",
+    "sun": "Slunce",
+    "selectSun": "Vyberte nároky na slunce",
+    "add": "Přidat rostlinu",
+    "errors": {
+      "nameRequired": "Vyplňte název.",
+      "sunRequired": "Vyberte nároky na slunce.",
+      "load": "Rostliny se nepodařilo načíst: {detail}",
+      "clone": "Rostlinu se nepodařilo zkopírovat: {detail}",
+      "save": "Rostlinu se nepodařilo uložit: {detail}"
+    }
+  },
+  "plant": {
+    "back": "← Katalog rostlin",
+    "about": "O rostlině",
+    "sun": "Slunce",
+    "watering": "Zalévání",
+    "flowering": "Kvetení",
+    "floweringRange": "{from} až {to}",
+    "careRules": "Pravidla péče",
+    "rule": "{type} — {timing}",
+    "notes": "Poznámky",
+    "notesLabel": "{type} – poznámky",
+    "noRules": "Zatím žádná pravidla péče.",
+    "readOnly": "Toto je vestavěná rostlina, její pravidla péče proto nejdou měnit.",
+    "addRuleHeading": "Přidat pravidlo péče",
+    "task": "Úkon",
+    "when": "Kdy",
+    "timingOffset": "N dní po výsadbě",
+    "timingRecurring": "Opakovat každých N dní",
+    "offsetDays": "Dní po výsadbě",
+    "recurrenceDays": "Každých N dní",
+    "addRule": "Přidat pravidlo",
+    "errors": {
+      "offsetRequired": "U pravidla podle výsadby vyplňte počet dní.",
+      "offsetInvalid": "Počet dní po výsadbě musí být celé číslo 0 nebo větší.",
+      "recurrenceRequired": "U opakovaného pravidla vyplňte počet dní.",
+      "recurrenceInvalid": "Počet dní opakování musí být celé číslo 1 nebo větší.",
+      "load": "Rostlinu se nepodařilo načíst: {detail}",
+      "clone": "Rostlinu se nepodařilo zkopírovat: {detail}",
+      "saveRule": "Pravidlo se nepodařilo uložit: {detail}",
+      "saveNotes": "Poznámky se nepodařilo uložit: {detail}"
+    }
+  },
+  "settings": {
+    "heading": "Nastavení",
+    "account": "Účet",
+    "signedInAs": "Přihlášený účet:",
+    "language": {
+      "heading": "Jazyk",
+      "label": "Jazyk",
+      "hint": "Platí pro Samwise i pro události ve vašem kalendáři „Samwise“.",
+      "saved": "Jazyk byl uložen.",
+      "savedCalendar": "Jazyk byl uložen. Události ve vašem kalendáři se do něj brzy přepnou.",
+      "error": "Jazyk se nepodařilo uložit: {detail}"
+    },
+    "calendar": {
+      "heading": "Kalendář Google",
+      "intro": "Samwise může vaše zahradní úkoly zapisovat do samostatného kalendáře „Samwise“ ve vašem účtu Google. Vidí a mění jen tento kalendář, žádný jiný.",
+      "checking": "Ověřování…",
+      "connected": "Připojeno",
+      "connectedText": "Nové a změněné úkoly se zobrazují ve vašem kalendáři „Samwise“.",
+      "disconnect": "Odpojit",
+      "disconnectHint": "Odpojením se kalendář „Samwise“ z Kalendáře Google smaže.",
+      "notConnected": "Nepřipojeno",
+      "connect": "Připojit Kalendář Google",
+      "reconnect": "Znovu připojit Kalendář Google",
+      "syncStopped": "Synchronizace kalendáře se zastavila.",
+      "reconnectRevoked": "Přístup Samwise ke Kalendáři Google byl odebrán ve vašem účtu Google, takže se úkoly nesynchronizují. Po opětovném připojení se použije stávající kalendář „Samwise“.",
+      "reconnectDeleted": "Váš kalendář „Samwise“ byl v Kalendáři Google smazán, takže se úkoly nesynchronizují. Po opětovném připojení se vytvoří znovu.",
+      "confirmDisconnect": "Odpojit Kalendář Google? Tím se z Kalendáře Google smaže kalendář „Samwise“ i všechny jeho události.",
+      "confirmDisconnectBroken": "Odpojit Kalendář Google?",
+      "connectedStatus": "Kalendář Google je připojen. Ve vašem kalendáři „Samwise“ {count, plural, one {je # nadcházející úkol} few {jsou # nadcházející úkoly} other {je # nadcházejících úkolů}}.",
+      "connectedFailed": "{count, plural, one {# úkol se zatím nepodařilo přidat; přidá se při své další změně.} few {# úkoly se zatím nepodařilo přidat; přidají se při své další změně.} other {# úkolů se zatím nepodařilo přidat; přidají se při své další změně.}}",
+      "disconnected": "Kalendář Google byl odpojen a váš kalendář „Samwise“ byl smazán.",
+      "disconnectedKept": "Kalendář Google byl odpojen. Samwise už neměl přístup, aby kalendář „Samwise“ smazal, takže ho případně smažte v Kalendáři Google sami.",
+      "errors": {
+        "check": "Připojení kalendáře se nepodařilo ověřit: {detail}",
+        "unreachableConnect": "Server Samwise není dostupný, Kalendář Google proto nebyl připojen. Zkuste to prosím za chvíli znovu.",
+        "unreachableDisconnect": "Server Samwise není dostupný, Kalendář Google proto zůstává připojený. Zkuste to prosím za chvíli znovu.",
+        "devHint": "(Lokální vývoj: běží „npx supabase functions serve“?)",
+        "access_denied": "Přístup ke kalendáři jste nepovolili, takže se nic nepřipojilo.",
+        "state_mismatch": "Odpověď Googlu neodpovídá této relaci prohlížeče. Zkuste se prosím připojit znovu.",
+        "google_rejected_code": "Google přihlášení nepřijal (mohlo vypršet). Zkuste se prosím připojit znovu.",
+        "connectFailed": "Kalendář Google se nepodařilo připojit. Zkuste to prosím znovu.",
+        "disconnectFailed": "Kalendář Google se nepodařilo odpojit. Zkuste to prosím znovu."
+      }
+    }
+  }
+}

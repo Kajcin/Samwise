@@ -1,13 +1,12 @@
-import { CareRule, Plant, TaskType } from './plant-catalog.service';
+import type { CareRule, Plant, TaskType } from './plant-catalog.service';
 import type { IconName } from '../core/icons/icons.generated';
+import { Lang, Message, msg } from '../core/i18n/i18n';
 
-export const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  seed_start: 'Seed start',
-  transplant: 'Transplant',
-  prune: 'Prune',
-  fertilize: 'Fertilize',
-  harvest: 'Harvest',
-};
+// Texts live in src/i18n/{en,cs}.json; these are their keys.
+
+export const TASK_TYPES: readonly TaskType[] = ['seed_start', 'transplant', 'prune', 'fertilize', 'harvest'];
+
+export const taskTypeKey = (type: TaskType) => `taskTypes.${type}`;
 
 /** Shown next to each task (Bootstrap Icons has no seedling, so seed start gets a flower). */
 export const TASK_TYPE_ICONS: Record<TaskType, IconName> = {
@@ -18,24 +17,30 @@ export const TASK_TYPE_ICONS: Record<TaskType, IconName> = {
   harvest: 'basket',
 };
 
-export const TASK_TYPES = Object.keys(TASK_TYPE_LABELS) as TaskType[];
+export type SunRequirement = NonNullable<Plant['sun_requirements']>;
+export const SUN_REQUIREMENTS: readonly SunRequirement[] = ['full_sun', 'partial_shade', 'full_shade'];
+export const sunKey = (sun: SunRequirement) => `sun.${sun}`;
 
-export const SUN_LABELS: Record<NonNullable<Plant['sun_requirements']>, string> = {
-  full_sun: 'Full sun',
-  partial_shade: 'Partial shade',
-  full_shade: 'Full shade',
-};
+/** Month 1-12, as it stands alone ("June" / "červen"). */
+export const monthKey = (month: number) => `months.${month}`;
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-export function monthName(month: number): string {
-  return MONTHS[month - 1] ?? String(month);
+export function describeRuleTiming(rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days'>): Message {
+  if (rule.timing_type === 'recurring') return msg('rules.everyDays', { days: rule.recurrence_days });
+  if (rule.offset_days === 0) return msg('rules.onPlantingDay');
+  return msg('rules.daysAfterPlanting', { days: rule.offset_days });
 }
 
-export function describeRuleTiming(rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days'>): string {
-  if (rule.timing_type === 'recurring') {
-    return rule.recurrence_days === 1 ? 'every day' : `every ${rule.recurrence_days} days`;
-  }
-  if (rule.offset_days === 0) return 'on planting day';
-  return rule.offset_days === 1 ? '1 day after planting' : `${rule.offset_days} days after planting`;
+// Built-in plants carry Czech texts (name_cs, notes_cs); a user's own plants don't,
+// and show what the user typed, whatever the language.
+
+export function plantName(plant: Pick<Plant, 'name' | 'name_cs'>, lang: Lang): string {
+  return (lang === 'cs' && plant.name_cs) || plant.name;
+}
+
+export function plantNotes(plant: Pick<Plant, 'notes' | 'notes_cs'>, lang: Lang): string | null {
+  return (lang === 'cs' && plant.notes_cs) || plant.notes;
+}
+
+export function ruleNotes(rule: Pick<CareRule, 'notes' | 'notes_cs'>, lang: Lang): string | null {
+  return (lang === 'cs' && rule.notes_cs) || rule.notes;
 }

@@ -1,0 +1,236 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "garden": "Garden",
+    "plants": "Plant catalog",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "toggle": "Toggle navigation"
+  },
+  "common": {
+    "loading": "Loading…",
+    "close": "Close",
+    "done": "Done",
+    "undo": "Undo",
+    "overdue": "Overdue",
+    "cloneToCustomize": "Clone to customize",
+    "name": "Name"
+  },
+  "login": {
+    "tagline": "Your garden’s care schedule, on your calendar.",
+    "google": "Sign in with Google",
+    "devTitle": "Local development sign-in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in"
+  },
+  "taskTypes": {
+    "seed_start": "Seed start",
+    "transplant": "Transplant",
+    "prune": "Prune",
+    "fertilize": "Fertilize",
+    "harvest": "Harvest"
+  },
+  "sun": {
+    "full_sun": "Full sun",
+    "partial_shade": "Partial shade",
+    "full_shade": "Full shade"
+  },
+  "months": {
+    "1": "January", "2": "February", "3": "March", "4": "April", "5": "May", "6": "June",
+    "7": "July", "8": "August", "9": "September", "10": "October", "11": "November", "12": "December"
+  },
+  "dates": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "weekdays": { "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat" },
+    "monthsInDate": {
+      "1": "Jan", "2": "Feb", "3": "Mar", "4": "Apr", "5": "May", "6": "Jun",
+      "7": "Jul", "8": "Aug", "9": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+    },
+    "full": "{weekday} {day} {month} {year}"
+  },
+  "rules": {
+    "everyDays": "{days, plural, one {every day} other {every # days}}",
+    "onPlantingDay": "on planting day",
+    "daysAfterPlanting": "{days, plural, one {# day after planting} other {# days after planting}}"
+  },
+  "tasks": {
+    "title": "{type} — {plant}",
+    "location": "{bed}, row {row} col {col}",
+    "heading": "Tasks",
+    "filterType": "Type",
+    "allTypes": "All types",
+    "filterBed": "Bed",
+    "allBeds": "All beds",
+    "filterShow": "Show",
+    "showTodo": "To do",
+    "showDone": "Done",
+    "showAll": "All",
+    "loading": "Loading tasks…",
+    "noMatches": "No tasks match these filters.",
+    "addHeading": "Add a task",
+    "type": "Type",
+    "due": "Due",
+    "add": "Add task",
+    "errors": {
+      "chooseDueDate": "Choose a due date.",
+      "load": "Could not load tasks: {detail}",
+      "update": "Could not update the task: {detail}",
+      "add": "Could not add the task: {detail}"
+    }
+  },
+  "dashboard": {
+    "heading": "Dashboard",
+    "comingUp": "Coming up",
+    "nextDays": "(next {days, plural, one {# day} other {# days}})",
+    "allTasks": "All tasks",
+    "nothingToDo": "Nothing to do in the next {days, plural, one {day} other {# days}}.",
+    "beds": "Beds",
+    "cellsPlanted": "{planted} of {cells, plural, one {# cell} other {# cells}} planted",
+    "noBeds": "No beds yet.",
+    "createFirstBed": "Create your first bed",
+    "errors": {
+      "load": "Could not load your dashboard: {detail}"
+    }
+  },
+  "garden": {
+    "heading": "Garden",
+    "newBed": "New bed",
+    "loading": "Loading your garden…",
+    "hint": "Pick a cell to plant something there, or to see what’s growing.",
+    "cellLabel": "Row {row}, column {col}: {content}",
+    "empty": "empty",
+    "cellHeading": "Row {row}, column {col}",
+    "plantedOn": "{plant} — Planted {date}",
+    "remove": "Remove",
+    "plant": "Plant",
+    "choosePlant": "Choose a plant",
+    "planted": "Planted",
+    "plantButton": "Plant",
+    "ownPlant": "{name} (yours)",
+    "unknownPlant": "Unknown plant",
+    "errors": {
+      "choosePlant": "Choose a plant.",
+      "choosePlantingDate": "Choose a planting date.",
+      "cellOccupied": "That cell already has a plant. Remove it first.",
+      "load": "Could not load your garden: {detail}",
+      "refresh": "Could not refresh {bed}: {detail}",
+      "action": "{detail}"
+    }
+  },
+  "bedEditor": {
+    "back": "← Garden",
+    "heading": "New bed",
+    "namePlaceholder": "e.g. Herb bed",
+    "rows": "Rows",
+    "cols": "Columns",
+    "sizeHint": "Each cell holds one plant; up to {max} × {max}.",
+    "save": "Save bed",
+    "errors": {
+      "nameRequired": "Name is required.",
+      "sizeAtLeastOne": "Rows and columns must be at least 1.",
+      "sizeWhole": "Rows and columns must be whole numbers.",
+      "sizeAtMost": "Rows and columns can be at most {max}.",
+      "save": "Could not save bed: {detail}"
+    }
+  },
+  "catalog": {
+    "heading": "Plant catalog",
+    "search": "Search",
+    "searchPlaceholder": "Search plants",
+    "loading": "Loading plants…",
+    "noMatches": "No plants match “{query}”.",
+    "yours": "yours",
+    "addHeading": "Add a custom plant",
+    "sun": "Sun",
+    "selectSun": "Select sun requirement",
+    "add": "Add plant",
+    "errors": {
+      "nameRequired": "Name is required.",
+      "sunRequired": "Sun requirement is required.",
+      "load": "Could not load plants: {detail}",
+      "clone": "Could not clone plant: {detail}",
+      "save": "Could not save plant: {detail}"
+    }
+  },
+  "plant": {
+    "back": "← Plant catalog",
+    "about": "About",
+    "sun": "Sun",
+    "watering": "Watering",
+    "flowering": "Flowering",
+    "floweringRange": "{from} to {to}",
+    "careRules": "Care rules",
+    "rule": "{type} — {timing}",
+    "notes": "Notes",
+    "notesLabel": "{type} notes",
+    "noRules": "No care rules yet.",
+    "readOnly": "This is a built-in plant, so its care rules are read-only.",
+    "addRuleHeading": "Add a care rule",
+    "task": "Task",
+    "when": "When",
+    "timingOffset": "Days after planting",
+    "timingRecurring": "Repeats every N days",
+    "offsetDays": "Days after planting",
+    "recurrenceDays": "Every N days",
+    "addRule": "Add rule",
+    "errors": {
+      "offsetRequired": "Offset days is required for an offset rule.",
+      "offsetInvalid": "Offset days must be a whole number of 0 or more.",
+      "recurrenceRequired": "Recurrence days is required for a recurring rule.",
+      "recurrenceInvalid": "Recurrence days must be a whole number of 1 or more.",
+      "load": "Could not load plant: {detail}",
+      "clone": "Could not clone plant: {detail}",
+      "saveRule": "Could not save rule: {detail}",
+      "saveNotes": "Could not save notes: {detail}"
+    }
+  },
+  "settings": {
+    "heading": "Settings",
+    "account": "Account",
+    "signedInAs": "Signed in as",
+    "language": {
+      "heading": "Language",
+      "label": "Language",
+      "hint": "Used for Samwise and for the events on your “Samwise” calendar.",
+      "saved": "Language saved.",
+      "savedCalendar": "Language saved. Your calendar events will switch to it shortly.",
+      "error": "Couldn’t save the language: {detail}"
+    },
+    "calendar": {
+      "heading": "Google Calendar",
+      "intro": "Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see and change that calendar, none of your others.",
+      "checking": "Checking…",
+      "connected": "Connected",
+      "connectedText": "New and changed tasks appear on your “Samwise” calendar.",
+      "disconnect": "Disconnect",
+      "disconnectHint": "Disconnecting deletes the “Samwise” calendar from Google Calendar.",
+      "notConnected": "Not connected",
+      "connect": "Connect Google Calendar",
+      "reconnect": "Reconnect Google Calendar",
+      "syncStopped": "Calendar sync stopped.",
+      "reconnectRevoked": "Samwise’s access to your Google Calendar was removed in your Google account, so tasks aren’t syncing. Reconnect to resume; your “Samwise” calendar will be reused.",
+      "reconnectDeleted": "Your “Samwise” calendar was deleted in Google Calendar, so tasks aren’t syncing. Reconnect to create it again.",
+      "confirmDisconnect": "Disconnect Google Calendar? This deletes your “Samwise” calendar and all its events from Google Calendar.",
+      "confirmDisconnectBroken": "Disconnect Google Calendar?",
+      "connectedStatus": "Google Calendar connected. {count, plural, one {# upcoming task is} other {# upcoming tasks are}} on your “Samwise” calendar.",
+      "connectedFailed": "{count, plural, one {# task couldn’t be added yet and will sync when it next changes.} other {# tasks couldn’t be added yet and will sync when they next change.}}",
+      "disconnected": "Google Calendar disconnected, and your “Samwise” calendar was deleted.",
+      "disconnectedKept": "Google Calendar disconnected. Samwise no longer had access to delete your “Samwise” calendar, so delete it in Google Calendar if you don’t want it.",
+      "errors": {
+        "check": "Couldn’t check the calendar connection: {detail}",
+        "unreachableConnect": "Samwise’s server couldn’t be reached, so Google Calendar wasn’t connected. Please try again in a moment.",
+        "unreachableDisconnect": "Samwise’s server couldn’t be reached, so Google Calendar is still connected. Please try again in a moment.",
+        "devHint": "(Local development: is “npx supabase functions serve” running?)",
+        "access_denied": "You didn’t allow calendar access, so nothing was connected.",
+        "state_mismatch": "Google’s response didn’t match this browser session. Please try connecting again.",
+        "google_rejected_code": "Google didn’t accept the sign-in (it may have expired). Please try connecting again.",
+        "connectFailed": "Couldn’t connect Google Calendar. Please try again.",
+        "disconnectFailed": "Couldn’t disconnect Google Calendar. Please try again."
+      }
+    }
+  }
+}

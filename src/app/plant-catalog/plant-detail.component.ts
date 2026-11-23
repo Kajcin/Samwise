@@ -3,8 +3,20 @@ import { IconComponent } from '../core/icons/icon.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CareRule, Plant, PlantCatalogService, TaskType } from './plant-catalog.service';
-import { describeRuleTiming, monthName, SUN_LABELS, TASK_TYPE_ICONS, TASK_TYPE_LABELS, TASK_TYPES } from './labels';
+import {
+  describeRuleTiming,
+  monthKey,
+  plantName,
+  plantNotes,
+  ruleNotes,
+  sunKey,
+  TASK_TYPE_ICONS,
+  TASK_TYPES,
+  taskTypeKey,
+} from './labels';
 import { messageOf } from '../core/errors';
+import { Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
 import { parseNumberInput } from '../core/number-input';
 
 type TimingType = CareRule['timing_type'];
@@ -13,13 +25,13 @@ export function validateCareRuleForm(
   timingType: TimingType,
   offsetDays: number | null,
   recurrenceDays: number | null,
-): string | null {
+): Message | null {
   if (timingType === 'offset_from_planting') {
-    if (offsetDays == null) return 'Offset days is required for an offset rule.';
-    if (!Number.isInteger(offsetDays) || offsetDays < 0) return 'Offset days must be a whole number of 0 or more.';
+    if (offsetDays == null) return msg('plant.errors.offsetRequired');
+    if (!Number.isInteger(offsetDays) || offsetDays < 0) return msg('plant.errors.offsetInvalid');
   } else {
-    if (recurrenceDays == null) return 'Recurrence days is required for a recurring rule.';
-    if (!Number.isInteger(recurrenceDays) || recurrenceDays < 1) return 'Recurrence days must be a whole number of 1 or more.';
+    if (recurrenceDays == null) return msg('plant.errors.recurrenceRequired');
+    if (!Number.isInteger(recurrenceDays) || recurrenceDays < 1) return msg('plant.errors.recurrenceInvalid');
   }
   return null;
 }
@@ -42,26 +54,30 @@ export class PlantDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private catalog = inject(PlantCatalogService);
+  protected i18n = inject(LanguageService);
 
   protected readonly taskTypes = TASK_TYPES;
-  protected readonly taskLabels = TASK_TYPE_LABELS;
+  protected readonly taskTypeKey = taskTypeKey;
   protected readonly taskIcons = TASK_TYPE_ICONS;
-  protected readonly sunLabels = SUN_LABELS;
-  protected readonly monthName = monthName;
+  protected readonly sunKey = sunKey;
+  protected readonly monthKey = monthKey;
   protected readonly describeTiming = describeRuleTiming;
+  protected readonly plantName = plantName;
+  protected readonly plantNotes = plantNotes;
+  protected readonly ruleNotes = ruleNotes;
 
   plant = signal<Plant | null>(null);
   /** Only the owner's custom plants are editable; built-in plants (user_id null) are read-only. */
   isEditable = computed(() => !!this.plant()?.user_id);
   private rules = signal<CareRule[]>([]);
   careRules = computed(() => [...this.rules()].sort(ruleOrder));
-  error = signal<string | null>(null);
+  error = signal<Message | null>(null);
 
   newRuleTaskType = signal<TaskType>('seed_start');
   newRuleTimingType = signal<TimingType>('offset_from_planting');
   newRuleOffsetDays = signal<number | null>(null);
   newRuleRecurrenceDays = signal<number | null>(null);
-  newRuleError = signal<string | null>(null);
+  newRuleError = signal<Message | null>(null);
 
   private plantId = '';
 
@@ -81,7 +97,7 @@ export class PlantDetailComponent {
       this.plant.set(plant);
       this.rules.set(rules);
     } catch (e) {
-      this.error.set(`Could not load plant: ${messageOf(e)}`);
+      this.error.set(msg('plant.errors.load', { detail: messageOf(e) }));
     }
   }
 
@@ -92,10 +108,10 @@ export class PlantDetailComponent {
   async cloneAndEdit(): Promise<void> {
     this.error.set(null);
     try {
-      const clone = await this.catalog.cloneToCustom(this.plantId);
+      const clone = await this.catalog.cloneToCustom(this.plantId, this.i18n.lang());
       await this.router.navigate(['/plants', clone.id]);
     } catch (e) {
-      this.error.set(`Could not clone plant: ${messageOf(e)}`);
+      this.error.set(msg('plant.errors.clone', { detail: messageOf(e) }));
     }
   }
 
@@ -119,7 +135,7 @@ export class PlantDetailComponent {
       this.newRuleRecurrenceDays.set(null);
       await this.refreshCareRules();
     } catch (e) {
-      this.newRuleError.set(`Could not save rule: ${messageOf(e)}`);
+      this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));
     }
   }
 
@@ -129,7 +145,7 @@ export class PlantDetailComponent {
       await this.catalog.updateCareRule(ruleId, { notes: notes.trim() || null });
       await this.refreshCareRules();
     } catch (e) {
-      this.error.set(`Could not save notes: ${messageOf(e)}`);
+      this.error.set(msg('plant.errors.saveNotes', { detail: messageOf(e) }));
     }
   }
 

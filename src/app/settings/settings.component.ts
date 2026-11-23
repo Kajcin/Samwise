@@ -5,6 +5,9 @@ import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
 import { CalendarError, CalendarService, CalendarStatus } from './calendar.service';
 import { messageOf } from '../core/errors';
+import { Lang, LANG_NAMES, LANGS, Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
+import { UserLanguageService } from '../core/i18n/user-language.service';
 
 /** Lets Samwise create its own calendars and manage their events, nothing else. */
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.app.created';
@@ -39,31 +42,23 @@ export function googleAuthUrl(clientId: string, redirectUri: string, state: stri
 }
 
 /** Shown when Samwise's server (the Edge Functions) didn't answer, so nothing changed. */
-export function unreachableMessage(outcome: string): string {
-  return (
-    `Samwise’s server couldn’t be reached, so ${outcome}. Please try again in a moment.` +
-    (environment.production ? '' : ' (Local development: is “npx supabase functions serve” running?)')
-  );
+function unreachable(key: 'unreachableConnect' | 'unreachableDisconnect'): Message[] {
+  const message = msg(`settings.calendar.errors.${key}`);
+  return environment.production ? [message] : [message, msg('settings.calendar.errors.devHint')];
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  unreachable: unreachableMessage('Google Calendar wasn’t connected'),
-  access_denied: "You didn't allow calendar access, so nothing was connected.",
-  state_mismatch: "Google's response didn't match this browser session. Please try connecting again.",
-  google_rejected_code: 'Google didn’t accept the sign-in (it may have expired). Please try connecting again.',
-};
+/** Codes from Google's redirect or the connect-calendar function that have their own text. */
+const CONNECT_ERRORS = new Set(['access_denied', 'state_mismatch', 'google_rejected_code']);
 
-function connectErrorMessage(code: string): string {
-  return ERROR_MESSAGES[code] ?? 'Couldn’t connect Google Calendar. Please try again.';
+export function connectErrorMessage(code: string): Message[] {
+  if (code === 'unreachable') return unreachable('unreachableConnect');
+  return [msg(CONNECT_ERRORS.has(code) ? `settings.calendar.errors.${code}` : 'settings.calendar.errors.connectFailed')];
 }
 
 /** Why syncing stopped, for a connection that broke on Google's side. */
 export const RECONNECT_MESSAGES: Partial<Record<CalendarStatus, string>> = {
-  revoked:
-    'Samwise’s access to your Google Calendar was removed in your Google account, so tasks aren’t syncing. ' +
-    'Reconnect to resume; your “Samwise” calendar will be reused.',
-  calendar_deleted:
-    'Your “Samwise” calendar was deleted in Google Calendar, so tasks aren’t syncing. Reconnect to create it again.',
+  revoked: 'settings.calendar.reconnectRevoked',
+  calendar_deleted: 'settings.calendar.reconnectDeleted',
 };
 
 @Component({
@@ -77,13 +72,24 @@ export class SettingsComponent {
   private calendar = inject(CalendarService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private userLanguage = inject(UserLanguageService);
+  protected i18n = inject(LanguageService);
+
+  protected readonly languages = LANGS;
+  protected readonly languageNames = LANG_NAMES;
+  languageStatus = signal<Message | null>(null);
+  languageError = signal<Message | null>(null);
+  savingLanguage = signal(false);
 
   /** null while checking. */
   connection = signal<CalendarStatus | null>(null);
-  reconnectMessage = computed(() => RECONNECT_MESSAGES[this.connection() ?? 'connected'] ?? '');
+  reconnectMessage = computed(() => {
+    const key = RECONNECT_MESSAGES[this.connection() ?? 'connected'];
+    return key ? this.i18n.t(key) : '';
+  });
   busy = signal(false);
-  status = signal<string | null>(null);
-  error = signal<string | null>(null);
+  status = signal<Message[] | null>(null);
+  error = signal<Message[] | null>(null);
 
   constructor() {
     this.init();
@@ -105,7 +111,7 @@ export class SettingsComponent {
     try {
       this.connection.set(await this.calendar.status());
     } catch (e) {
-      this.error.set(`Couldn’t check the calendar connection: ${messageOf(e)}`);
+      this.error.set([msg('settings.calendar.errors.check', { detail: messageOf(e) })]);
     }
   }
 
@@ -123,11 +129,30 @@ export class SettingsComponent {
     window.location.assign(url);
   }
 
+  async changeLanguage(value: string): Promise<void> {
+    const lang = value as Lang;
+    if (!LANGS.includes(lang) || lang === this.i18n.lang()) return;
+    this.languageStatus.set(null);
+    this.languageError.set(null);
+    this.savingLanguage.set(true);
+    try {
+      await this.userLanguage.save(lang);
+      // Event titles are in the user's language; the database re-syncs them (migration 0009).
+      this.languageStatus.set(
+        msg(this.connection() === 'connected' ? 'settings.language.savedCalendar' : 'settings.language.saved'),
+      );
+    } catch (e) {
+      this.languageError.set(msg('settings.language.error', { detail: messageOf(e) }));
+    } finally {
+      this.savingLanguage.set(false);
+    }
+  }
+
   async disconnectCalendar(): Promise<void> {
     const deletesCalendar = this.connection() === 'connected';
-    const question = deletesCalendar
-      ? 'Disconnect Google Calendar? This deletes your “Samwise” calendar and all its events from Google Calendar.'
-      : 'Disconnect Google Calendar?';
+    const question = this.i18n.t(
+      deletesCalendar ? 'settings.calendar.confirmDisconnect' : 'settings.calendar.confirmDisconnectBroken',
+    );
     if (!this.confirm(question)) return;
 
     this.status.set(null);
@@ -135,17 +160,14 @@ export class SettingsComponent {
     this.busy.set(true);
     try {
       const { calendarDeleted } = await this.calendar.disconnect();
-      this.status.set(
-        calendarDeleted
-          ? 'Google Calendar disconnected, and your “Samwise” calendar was deleted.'
-          : 'Google Calendar disconnected. Samwise no longer had access to delete your “Samwise” calendar, ' +
-              'so delete it in Google Calendar if you don’t want it.',
-      );
+      this.status.set([
+        msg(calendarDeleted ? 'settings.calendar.disconnected' : 'settings.calendar.disconnectedKept'),
+      ]);
     } catch (e) {
       this.error.set(
         e instanceof CalendarError && e.code === 'unreachable'
-          ? unreachableMessage('Google Calendar is still connected')
-          : 'Couldn’t disconnect Google Calendar. Please try again.',
+          ? unreachable('unreachableDisconnect')
+          : [msg('settings.calendar.errors.disconnectFailed')],
       );
     } finally {
       this.busy.set(false);
@@ -162,11 +184,10 @@ export class SettingsComponent {
     this.busy.set(true);
     try {
       const { backfilled, failed } = await this.calendar.connect(code);
-      const synced = backfilled === 1 ? '1 upcoming task is' : `${backfilled} upcoming tasks are`;
-      this.status.set(
-        `Google Calendar connected. ${synced} on your “Samwise” calendar.` +
-          (failed ? ` ${failed} couldn’t be added yet and will sync when they next change.` : ''),
-      );
+      this.status.set([
+        msg('settings.calendar.connectedStatus', { count: backfilled }),
+        ...(failed ? [msg('settings.calendar.connectedFailed', { count: failed })] : []),
+      ]);
     } catch (e) {
       this.error.set(connectErrorMessage(e instanceof CalendarError ? e.code : 'connect_failed'));
     } finally {

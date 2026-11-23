@@ -1,47 +1,47 @@
 <main class="container pb-5">
-  <h1 class="mb-4">Tasks</h1>
+  <h1 class="mb-4">{{ i18n.t('tasks.heading') }}</h1>
 
   <form class="filters row g-2 mb-4" (submit)="$event.preventDefault()">
     <div class="col-sm-4">
-      <label class="form-label small text-body-secondary mb-1" for="filter-type">Type</label>
+      <label class="form-label small text-body-secondary mb-1" for="filter-type">{{ i18n.t('tasks.filterType') }}</label>
       <select id="filter-type" class="form-select" name="type" (change)="onTypeFilter($any($event.target).value)">
-        <option value="" [selected]="!typeFilter()">All types</option>
+        <option value="" [selected]="!typeFilter()">{{ i18n.t('tasks.allTypes') }}</option>
         @for (type of taskTypes; track type) {
-          <option [value]="type" [selected]="typeFilter() === type">{{ taskLabels[type] }}</option>
+          <option [value]="type" [selected]="typeFilter() === type">{{ i18n.t(taskTypeKey(type)) }}</option>
         }
       </select>
     </div>
     <div class="col-sm-4">
-      <label class="form-label small text-body-secondary mb-1" for="filter-bed">Bed</label>
+      <label class="form-label small text-body-secondary mb-1" for="filter-bed">{{ i18n.t('tasks.filterBed') }}</label>
       <select id="filter-bed" class="form-select" name="bed" (change)="bedFilter.set($any($event.target).value)">
-        <option value="" [selected]="!bedFilter()">All beds</option>
+        <option value="" [selected]="!bedFilter()">{{ i18n.t('tasks.allBeds') }}</option>
         @for (bed of beds(); track bed.id) {
           <option [value]="bed.id" [selected]="bedFilter() === bed.id">{{ bed.name }}</option>
         }
       </select>
     </div>
     <div class="col-sm-4">
-      <label class="form-label small text-body-secondary mb-1" for="filter-status">Show</label>
+      <label class="form-label small text-body-secondary mb-1" for="filter-status">{{ i18n.t('tasks.filterShow') }}</label>
       <select id="filter-status" class="form-select" name="status" (change)="onStatusFilter($any($event.target).value)">
-        <option value="todo" [selected]="statusFilter() === 'todo'">To do</option>
-        <option value="done" [selected]="statusFilter() === 'done'">Done</option>
-        <option value="all" [selected]="statusFilter() === 'all'">All</option>
+        <option value="todo" [selected]="statusFilter() === 'todo'">{{ i18n.t('tasks.showTodo') }}</option>
+        <option value="done" [selected]="statusFilter() === 'done'">{{ i18n.t('tasks.showDone') }}</option>
+        <option value="all" [selected]="statusFilter() === 'all'">{{ i18n.t('tasks.showAll') }}</option>
       </select>
     </div>
   </form>
 
   @if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+    <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
   }
 
   <div class="row g-4">
     <div class="col-lg-8">
       @if (loading()) {
-        <p class="text-body-secondary">Loading tasks…</p>
+        <p class="text-body-secondary">{{ i18n.t('tasks.loading') }}</p>
       } @else {
         @for (day of days(); track day.date) {
           <section class="day card mb-3">
-            <h2 class="card-header h6 mb-0">{{ formatDueDate(day.date) }}</h2>
+            <h2 class="card-header h6 mb-0">{{ formatDueDate(day.date, i18n) }}</h2>
             <ul class="list-group list-group-flush">
               @for (task of day.tasks; track task.id) {
                 <li class="task list-group-item d-flex align-items-center gap-3" [attr.data-id]="task.id">
@@ -53,15 +53,15 @@
                       [class.text-body-secondary]="!!task.completed_at"
                     />
                     @if (task.completed_at) {
-                      <s class="text-body-secondary">{{ taskTitle(task) }}</s>
+                      <s class="text-body-secondary">{{ taskTitle(task, i18n) }}</s>
                     } @else {
-                      {{ taskTitle(task) }}
+                      {{ taskTitle(task, i18n) }}
                     }
-                    @if (taskLocation(task); as where) {
+                    @if (taskLocation(task, i18n); as where) {
                       <small class="text-body-secondary">({{ where }})</small>
                     }
                     @if (isOverdue(task)) {
-                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />Overdue</span>
+                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />{{ i18n.t('common.overdue') }}</span>
                     }
                   </div>
                   <button
@@ -73,7 +73,7 @@
                     (click)="toggleDone(task)"
                   >
                     <app-icon [name]="task.completed_at ? 'arrow-counterclockwise' : 'check-lg'" class="me-1" />{{
-                      task.completed_at ? 'Undo' : 'Done'
+                      i18n.t(task.completed_at ? 'common.undo' : 'common.done')
                     }}
                   </button>
                 </li>
@@ -81,7 +81,7 @@
             </ul>
           </section>
         } @empty {
-          <p class="text-body-secondary">No tasks match these filters.</p>
+          <p class="text-body-secondary">{{ i18n.t('tasks.noMatches') }}</p>
         }
       }
     </div>
@@ -89,17 +89,17 @@
     <div class="col-lg-4">
       <form class="add-task card" (submit)="addManualTask($event)">
         <div class="card-body">
-          <h2 class="h5 card-title">Add a task</h2>
+          <h2 class="h5 card-title">{{ i18n.t('tasks.addHeading') }}</h2>
           <div class="mb-3">
-            <label class="form-label" for="new-task-type">Type</label>
+            <label class="form-label" for="new-task-type">{{ i18n.t('tasks.type') }}</label>
             <select id="new-task-type" class="form-select" name="newType" (change)="newTaskType.set($any($event.target).value)">
               @for (type of taskTypes; track type) {
-                <option [value]="type" [selected]="newTaskType() === type">{{ taskLabels[type] }}</option>
+                <option [value]="type" [selected]="newTaskType() === type">{{ i18n.t(taskTypeKey(type)) }}</option>
               }
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label" for="new-task-due">Due</label>
+            <label class="form-label" for="new-task-due">{{ i18n.t('tasks.due') }}</label>
             <input
               id="new-task-due"
               class="form-control"
@@ -110,9 +110,9 @@
             />
           </div>
           @if (newTaskError()) {
-            <div class="alert alert-danger" role="alert">{{ newTaskError() }}</div>
+            <div class="alert alert-danger" role="alert">{{ i18n.text(newTaskError()) }}</div>
           }
-          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />Add task</button>
+          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('tasks.add') }}</button>
         </div>
       </form>
     </div>

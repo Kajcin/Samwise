@@ -7,7 +7,7 @@
         class="navbar-toggler"
         aria-controls="app-menu"
         [attr.aria-expanded]="menuOpen()"
-        aria-label="Toggle navigation"
+        [attr.aria-label]="i18n.t('nav.toggle')"
         (click)="menuOpen.set(!menuOpen())"
       >
         <span class="navbar-toggler-icon"></span>
@@ -16,25 +16,25 @@
         <!-- Picking a page closes the menu on phones. -->
         <ul class="navbar-nav me-auto" (click)="menuOpen.set(false)">
           <li class="nav-item">
-            <a class="nav-link" routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }"><app-icon name="house" class="me-1" />Dashboard</a>
+            <a class="nav-link" routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }"><app-icon name="house" class="me-1" />{{ i18n.t('nav.dashboard') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/tasks" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="list-check" class="me-1" />Tasks</a>
+            <a class="nav-link" routerLink="/tasks" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="list-check" class="me-1" />{{ i18n.t('nav.tasks') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/garden" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="grid-3x3" class="me-1" />Garden</a>
+            <a class="nav-link" routerLink="/garden" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="grid-3x3" class="me-1" />{{ i18n.t('nav.garden') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/plants" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="flower2" class="me-1" />Plant catalog</a>
+            <a class="nav-link" routerLink="/plants" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="flower2" class="me-1" />{{ i18n.t('nav.plants') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="gear" class="me-1" />Settings</a>
+            <a class="nav-link" routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="gear" class="me-1" />{{ i18n.t('nav.settings') }}</a>
           </li>
         </ul>
         <div class="d-flex align-items-center gap-2 py-2 py-md-0">
           <span class="navbar-text small text-truncate">{{ user.email }}</span>
           <button type="button" class="btn btn-outline-secondary btn-sm sign-out" (click)="signOut()">
-            <app-icon name="box-arrow-right" class="me-1" />Sign out
+            <app-icon name="box-arrow-right" class="me-1" />{{ i18n.t('nav.signOut') }}
           </button>
         </div>
       </div>

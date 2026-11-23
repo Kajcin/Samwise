@@ -4,7 +4,9 @@ import { filterTasks, isOverdue, TaskService, TaskWithContext } from './task.ser
 import { formatDueDate, groupByDueDate, taskLocation, taskTitle } from './task-format';
 import { Bed, GardenService } from '../garden/garden.service';
 import { TaskType } from '../plant-catalog/plant-catalog.service';
-import { TASK_TYPE_ICONS, TASK_TYPE_LABELS, TASK_TYPES } from '../plant-catalog/labels';
+import { TASK_TYPE_ICONS, TASK_TYPES, taskTypeKey } from '../plant-catalog/labels';
+import { Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
 import { messageOf } from '../core/errors';
 import { toIsoDate } from '../core/dates';
 
@@ -24,9 +26,10 @@ export function filterByStatus<T extends TaskWithContext>(tasks: T[], status: St
 export class TaskAgendaComponent {
   private taskService = inject(TaskService);
   private garden = inject(GardenService);
+  protected i18n = inject(LanguageService);
 
   protected readonly taskTypes = TASK_TYPES;
-  protected readonly taskLabels = TASK_TYPE_LABELS;
+  protected readonly taskTypeKey = taskTypeKey;
   protected readonly taskIcons = TASK_TYPE_ICONS;
   protected readonly taskTitle = taskTitle;
   protected readonly taskLocation = taskLocation;
@@ -34,7 +37,7 @@ export class TaskAgendaComponent {
   protected readonly isOverdue = isOverdue;
 
   loading = signal(true);
-  error = signal<string | null>(null);
+  error = signal<Message | null>(null);
   private tasks = signal<TaskWithContext[]>([]);
   beds = signal<Bed[]>([]);
 
@@ -52,7 +55,7 @@ export class TaskAgendaComponent {
 
   newTaskType = signal<TaskType>('fertilize');
   newTaskDue = signal(toIsoDate(new Date()));
-  newTaskError = signal<string | null>(null);
+  newTaskError = signal<Message | null>(null);
   busyTaskId = signal<string | null>(null);
 
   constructor() {
@@ -65,7 +68,7 @@ export class TaskAgendaComponent {
       this.tasks.set(tasks);
       this.beds.set(beds);
     } catch (e) {
-      this.error.set(`Could not load tasks: ${messageOf(e)}`);
+      this.error.set(msg('tasks.errors.load', { detail: messageOf(e) }));
     } finally {
       this.loading.set(false);
     }
@@ -91,7 +94,7 @@ export class TaskAgendaComponent {
       else await this.taskService.markComplete(task.id);
       await this.refresh();
     } catch (e) {
-      this.error.set(`Could not update the task: ${messageOf(e)}`);
+      this.error.set(msg('tasks.errors.update', { detail: messageOf(e) }));
     } finally {
       this.busyTaskId.set(null);
     }
@@ -100,7 +103,7 @@ export class TaskAgendaComponent {
   async addManualTask(event: Event): Promise<void> {
     event.preventDefault();
     if (!this.newTaskDue()) {
-      this.newTaskError.set('Choose a due date.');
+      this.newTaskError.set(msg('tasks.errors.chooseDueDate'));
       return;
     }
     this.newTaskError.set(null);
@@ -108,7 +111,7 @@ export class TaskAgendaComponent {
       await this.taskService.addManualTask(this.newTaskType(), this.newTaskDue());
       await this.refresh();
     } catch (e) {
-      this.newTaskError.set(`Could not add the task: ${messageOf(e)}`);
+      this.newTaskError.set(msg('tasks.errors.add', { detail: messageOf(e) }));
     }
   }
 }

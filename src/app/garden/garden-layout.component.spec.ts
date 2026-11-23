@@ -1,3 +1,4 @@
+import { provideI18n } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { buildGrid, GardenLayoutComponent } from './garden-layout.component';
@@ -59,7 +60,7 @@ describe('GardenLayoutComponent', () => {
     catalog.list.and.resolveTo(plants);
     TestBed.configureTestingModule({
       imports: [GardenLayoutComponent],
-      providers: [
+      providers: [provideI18n(), 
         provideRouter([]),
         { provide: GardenService, useValue: garden },
         { provide: PlantCatalogService, useValue: catalog },

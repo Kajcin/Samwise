@@ -11,6 +11,9 @@ export interface GoogleOAuthConfig {
   clientSecret: string;
 }
 
+/** The app's languages (user_preferences.language). */
+export type Language = 'en' | 'cs';
+
 export interface EventTask {
   /**
    * The Samwise task's id. When set, a new event gets an id derived from it, so
@@ -25,6 +28,8 @@ export interface EventTask {
   plant_name?: string | null;
   /** Human-readable place, e.g. "Herbs, row 1 col 2". */
   location?: string | null;
+  /** Language of the event title; English if absent. */
+  language?: Language;
 }
 
 /** Google rejected the refresh token (revoked, expired, or the user removed app access). */
@@ -45,13 +50,22 @@ export class CalendarGoneError extends Error {
   override name = 'CalendarGoneError';
 }
 
-// Keep in sync with TASK_TYPE_LABELS in src/app/plant-catalog/labels.ts.
-const TASK_LABELS: Record<string, string> = {
-  seed_start: 'Seed start',
-  transplant: 'Transplant',
-  prune: 'Prune',
-  fertilize: 'Fertilize',
-  harvest: 'Harvest',
+// Same as the app's taskTypes.* texts in src/i18n/{en,cs}.json (google.test.ts checks).
+export const TASK_LABELS: Record<Language, Record<string, string>> = {
+  en: {
+    seed_start: 'Seed start',
+    transplant: 'Transplant',
+    prune: 'Prune',
+    fertilize: 'Fertilize',
+    harvest: 'Harvest',
+  },
+  cs: {
+    seed_start: 'Výsev',
+    transplant: 'Přesazení',
+    prune: 'Zastřihávání',
+    fertilize: 'Hnojení',
+    harvest: 'Sklizeň',
+  },
 };
 
 /** 404 or 410: the resource doesn't exist (any more). */
@@ -167,7 +181,7 @@ export async function deleteCalendar(accessToken: string, calendarId: string): P
 
 /** The Google Calendar event for a task: a free (non-blocking) all-day event. */
 export function eventBody(task: EventTask) {
-  const label = TASK_LABELS[task.task_type] ?? task.task_type;
+  const label = TASK_LABELS[task.language ?? 'en'][task.task_type] ?? task.task_type;
   const title = task.plant_name ? `${label} — ${task.plant_name}` : label;
   return {
     summary: task.completed_at ? `✓ ${title}` : title,

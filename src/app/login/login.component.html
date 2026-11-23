@@ -4,9 +4,9 @@
       <div class="card shadow-sm">
         <div class="card-body p-4 text-center">
           <h1 class="mb-2"><app-icon name="flower3" class="text-primary me-2" />Samwise</h1>
-          <p class="text-body-secondary mb-4">Your garden’s care schedule, on your calendar.</p>
+          <p class="text-body-secondary mb-4">{{ i18n.t('login.tagline') }}</p>
           <button type="button" class="btn btn-primary btn-lg w-100" (click)="signIn()">
-            <app-icon name="google" class="me-2" />Sign in with Google
+            <app-icon name="google" class="me-2" />{{ i18n.t('login.google') }}
           </button>
         </div>
       </div>
@@ -15,9 +15,9 @@
         <div class="card mt-4 border-warning-subtle">
           <div class="card-body p-4">
             <form (submit)="devSignIn($event)">
-              <h2 class="h6 text-body-secondary mb-3">Local development sign-in</h2>
+              <h2 class="h6 text-body-secondary mb-3">{{ i18n.t('login.devTitle') }}</h2>
               <div class="mb-3">
-                <label class="form-label" for="dev-email">Email</label>
+                <label class="form-label" for="dev-email">{{ i18n.t('login.email') }}</label>
                 <input
                   id="dev-email"
                   class="form-control"
@@ -28,7 +28,7 @@
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label" for="dev-password">Password</label>
+                <label class="form-label" for="dev-password">{{ i18n.t('login.password') }}</label>
                 <input
                   id="dev-password"
                   class="form-control"
@@ -38,7 +38,7 @@
                   (input)="password.set($any($event.target).value)"
                 />
               </div>
-              <button type="submit" class="btn btn-outline-secondary">Sign in</button>
+              <button type="submit" class="btn btn-outline-secondary">{{ i18n.t('login.signIn') }}</button>
               @if (error()) {
                 <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error() }}</div>
               }

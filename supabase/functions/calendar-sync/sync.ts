@@ -1,7 +1,7 @@
 // What calendar-sync does with one tasks-table change, with its I/O injected so it
 // can be unit-tested (index.ts wires it up).
 import { CalendarGoneError, eventIdForTask, GoogleApiError, InvalidGrantError } from '../_shared/google.ts';
-import type { EventTask } from '../_shared/google.ts';
+import type { EventTask, Language } from '../_shared/google.ts';
 import { TaskEventRow, toEventTask } from '../_shared/tasks.ts';
 
 /** The fields of a tasks row that the webhook payload carries and we look at. */
@@ -14,9 +14,12 @@ export interface TaskRecord {
   google_calendar_event_id: string | null;
 }
 
-/** Body posted by the tasks trigger (migration 0007), shaped like a Supabase database webhook. */
+/**
+ * Body posted by the tasks triggers (migration 0007), shaped like a Supabase database
+ * webhook; RESYNC (migration 0009) re-syncs an unchanged task, after a language change.
+ */
 export interface WebhookPayload {
-  type: 'INSERT' | 'UPDATE' | 'DELETE';
+  type: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESYNC';
   table: string;
   record: TaskRecord | null;
   old_record: TaskRecord | null;
@@ -45,6 +48,8 @@ export interface SyncDeps {
   markRevoked(userId: string, refreshToken: string): Promise<void>;
   /** The Samwise calendar was deleted in Google: stop syncing until the user reconnects. */
   markCalendarDeleted(userId: string, calendarId: string): Promise<void>;
+  /** The user's language for event titles (English if they have none yet). */
+  loadLanguage(userId: string): Promise<Language>;
   /** The task as it is now, with its plant and bed; null if it no longer exists. */
   loadTask(taskId: string): Promise<TaskEventRow | null>;
   setEventId(taskId: string, eventId: string): Promise<void>;
@@ -126,9 +131,8 @@ export async function handleTaskChange(deps: SyncDeps, payload: WebhookPayload):
     // out of order, and the payload lacks the plant and bed names.
     const task = await deps.loadTask(changed.id);
     if (!task) return 'task_gone';
-    const eventId = await withAccessToken((token) =>
-      deps.upsertEvent(token, credentials.calendar_id, toEventTask(task))
-    );
+    const event = toEventTask(task, await deps.loadLanguage(userId));
+    const eventId = await withAccessToken((token) => deps.upsertEvent(token, credentials.calendar_id, event));
     if (eventId !== task.google_calendar_event_id) await deps.setEventId(task.id, eventId);
     return 'synced';
   } catch (e) {

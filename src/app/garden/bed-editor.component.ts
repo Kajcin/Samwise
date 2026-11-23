@@ -4,15 +4,17 @@ import { Router, RouterLink } from '@angular/router';
 import { GardenService } from './garden.service';
 import { messageOf } from '../core/errors';
 import { parseNumberInput } from '../core/number-input';
+import { Message, msg } from '../core/i18n/i18n';
+import { LanguageService } from '../core/i18n/language.service';
 
 /** Largest rows/cols value; keeps the grid usable on screen. */
 export const MAX_BED_SIZE = 20;
 
-export function validateBedForm(name: string, rows: number | null, cols: number | null): string | null {
-  if (!name.trim()) return 'Name is required.';
-  if (rows == null || cols == null || rows < 1 || cols < 1) return 'Rows and columns must be at least 1.';
-  if (!Number.isInteger(rows) || !Number.isInteger(cols)) return 'Rows and columns must be whole numbers.';
-  if (rows > MAX_BED_SIZE || cols > MAX_BED_SIZE) return `Rows and columns can be at most ${MAX_BED_SIZE}.`;
+export function validateBedForm(name: string, rows: number | null, cols: number | null): Message | null {
+  if (!name.trim()) return msg('bedEditor.errors.nameRequired');
+  if (rows == null || cols == null || rows < 1 || cols < 1) return msg('bedEditor.errors.sizeAtLeastOne');
+  if (!Number.isInteger(rows) || !Number.isInteger(cols)) return msg('bedEditor.errors.sizeWhole');
+  if (rows > MAX_BED_SIZE || cols > MAX_BED_SIZE) return msg('bedEditor.errors.sizeAtMost', { max: MAX_BED_SIZE });
   return null;
 }
 
@@ -25,13 +27,14 @@ export function validateBedForm(name: string, rows: number | null, cols: number 
 export class BedEditorComponent {
   private garden = inject(GardenService);
   private router = inject(Router);
+  protected i18n = inject(LanguageService);
 
   protected readonly maxSize = MAX_BED_SIZE;
 
   name = signal('');
   rows = signal<number | null>(3);
   cols = signal<number | null>(3);
-  error = signal<string | null>(null);
+  error = signal<Message | null>(null);
   saving = signal(false);
 
   setRows(value: string): void {
@@ -54,7 +57,7 @@ export class BedEditorComponent {
       await this.garden.createBed(this.name().trim(), rows!, cols!);
       await this.router.navigate(['/garden']);
     } catch (e) {
-      this.error.set(`Could not save bed: ${messageOf(e)}`);
+      this.error.set(msg('bedEditor.errors.save', { detail: messageOf(e) }));
     } finally {
       this.saving.set(false);
     }

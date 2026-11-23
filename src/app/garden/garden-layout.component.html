@@ -1,15 +1,15 @@
 <main class="container pb-5">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <h1 class="mb-0">Garden</h1>
-    <a class="btn btn-primary" routerLink="/garden/new"><app-icon name="plus-lg" class="me-1" />New bed</a>
+    <h1 class="mb-0">{{ i18n.t('garden.heading') }}</h1>
+    <a class="btn btn-primary" routerLink="/garden/new"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('garden.newBed') }}</a>
   </div>
 
   @if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+    <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
   }
 
   @if (loading()) {
-    <p class="text-body-secondary">Loading your garden…</p>
+    <p class="text-body-secondary">{{ i18n.t('garden.loading') }}</p>
   } @else {
     @for (bed of beds(); track bed.id) {
       <section class="card mb-4">
@@ -17,7 +17,7 @@
           <h2 class="h5 card-title">
             {{ bed.name }} <small class="text-body-secondary fw-normal">({{ bed.rows }} × {{ bed.cols }})</small>
           </h2>
-          <p class="small text-body-secondary">Pick a cell to plant something there, or to see what’s growing.</p>
+          <p class="small text-body-secondary">{{ i18n.t('garden.hint') }}</p>
 
           <!-- Wide beds scroll sideways on phones instead of squashing the cells. -->
           <div class="table-responsive mb-3">
@@ -30,7 +30,13 @@
                         type="button"
                         [class.planted]="!!cell"
                         [class.selected]="isSelected(bed, r, c)"
-                        [attr.aria-label]="'Row ' + (r + 1) + ', column ' + (c + 1) + ': ' + (cell ? plantLabel(cell.plant_id) : 'empty')"
+                        [attr.aria-label]="
+                          i18n.t('garden.cellLabel', {
+                            row: r + 1,
+                            col: c + 1,
+                            content: cell ? plantLabel(cell.plant_id) : i18n.t('garden.empty'),
+                          })
+                        "
                         (click)="selectCell(bed, r, c, cell)"
                       >
                         {{ cell ? plantLabel(cell.plant_id) : '+' }}
@@ -46,32 +52,32 @@
             @if (s.bed.id === bed.id) {
               <div class="cell-panel border rounded p-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                  <h3 class="h6 mb-0">Row {{ s.row + 1 }}, column {{ s.col + 1 }}</h3>
-                  <button type="button" class="btn-close" aria-label="Close" (click)="closePanel()"></button>
+                  <h3 class="h6 mb-0">{{ i18n.t('garden.cellHeading', { row: s.row + 1, col: s.col + 1 }) }}</h3>
+                  <button type="button" class="btn-close" [attr.aria-label]="i18n.t('common.close')" (click)="closePanel()"></button>
                 </div>
                 @if (s.planting; as p) {
-                  <p>{{ plantLabel(p.plant_id) }} — Planted {{ p.planted_date }}</p>
+                  <p>{{ i18n.t('garden.plantedOn', { plant: plantLabel(p.plant_id), date: p.planted_date }) }}</p>
                   <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy()" (click)="remove()">
-                    <app-icon name="trash" class="me-1" />Remove
+                    <app-icon name="trash" class="me-1" />{{ i18n.t('garden.remove') }}
                   </button>
                 } @else {
                   <form class="row g-2 align-items-end" (submit)="assign($event)">
                     <div class="col-sm-6">
-                      <label class="form-label small mb-1" [for]="'plant-' + bed.id">Plant</label>
+                      <label class="form-label small mb-1" [for]="'plant-' + bed.id">{{ i18n.t('garden.plant') }}</label>
                       <select
                         [id]="'plant-' + bed.id"
                         class="form-select"
                         name="plant"
                         (change)="newPlantId.set($any($event.target).value)"
                       >
-                        <option value="" [selected]="!newPlantId()">Choose a plant</option>
+                        <option value="" [selected]="!newPlantId()">{{ i18n.t('garden.choosePlant') }}</option>
                         @for (plant of plantOptions(); track plant.id) {
                           <option [value]="plant.id" [selected]="newPlantId() === plant.id">{{ plantLabel(plant.id) }}</option>
                         }
                       </select>
                     </div>
                     <div class="col-sm-4">
-                      <label class="form-label small mb-1" [for]="'planted-' + bed.id">Planted</label>
+                      <label class="form-label small mb-1" [for]="'planted-' + bed.id">{{ i18n.t('garden.planted') }}</label>
                       <input
                         [id]="'planted-' + bed.id"
                         class="form-control"
@@ -83,13 +89,13 @@
                     </div>
                     <div class="col-sm-2 d-grid">
                       <button type="submit" class="btn btn-primary" [disabled]="busy()">
-                        <app-icon name="flower1" class="me-1" />Plant
+                        <app-icon name="flower1" class="me-1" />{{ i18n.t('garden.plantButton') }}
                       </button>
                     </div>
                   </form>
                 }
                 @if (cellError()) {
-                  <div class="alert alert-danger mt-3 mb-0" role="alert">{{ cellError() }}</div>
+                  <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(cellError()) }}</div>
                 }
               </div>
             }
@@ -97,7 +103,7 @@
         </div>
       </section>
     } @empty {
-      <p>No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</p>
+      <p>{{ i18n.t('dashboard.noBeds') }} <a routerLink="/garden/new">{{ i18n.t('dashboard.createFirstBed') }}</a>.</p>
     }
   }
 </main>

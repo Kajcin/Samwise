@@ -1,60 +1,85 @@
 <main class="container pb-5">
-  <h1 class="mb-4">Settings</h1>
+  <h1 class="mb-4">{{ i18n.t('settings.heading') }}</h1>
 
   <div class="row g-4">
     <div class="col-lg-8">
       <section class="card mb-4">
         <div class="card-body">
-          <h2 class="h5 card-title">Account</h2>
-          <p class="mb-0">Signed in as <strong>{{ auth.currentUser()?.email }}</strong></p>
+          <h2 class="h5 card-title">{{ i18n.t('settings.account') }}</h2>
+          <p class="mb-0">{{ i18n.t('settings.signedInAs') }} <strong>{{ auth.currentUser()?.email }}</strong></p>
         </div>
       </section>
 
-      <section class="card">
+      <section class="card mb-4 language">
         <div class="card-body">
-          <h2 class="h5 card-title"><app-icon name="calendar-check" class="text-primary me-2" />Google Calendar</h2>
-          <p class="text-body-secondary">
-            Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see
-            and change that calendar, none of your others.
-          </p>
+          <h2 class="h5 card-title">{{ i18n.t('settings.language.heading') }}</h2>
+          <label class="form-label visually-hidden" for="language">{{ i18n.t('settings.language.label') }}</label>
+          <select
+            id="language"
+            class="form-select"
+            name="language"
+            [disabled]="savingLanguage()"
+            (change)="changeLanguage($any($event.target).value)"
+          >
+            @for (lang of languages; track lang) {
+              <option [value]="lang" [selected]="i18n.lang() === lang" [attr.lang]="lang">{{ languageNames[lang] }}</option>
+            }
+          </select>
+          <p class="form-text mb-0">{{ i18n.t('settings.language.hint') }}</p>
+          @if (languageStatus()) {
+            <div class="alert alert-success mt-3 mb-0" role="status">{{ i18n.text(languageStatus()) }}</div>
+          }
+          @if (languageError()) {
+            <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(languageError()) }}</div>
+          }
+        </div>
+      </section>
+
+      <section class="card calendar">
+        <div class="card-body">
+          <h2 class="h5 card-title">
+            <app-icon name="calendar-check" class="text-primary me-2" />{{ i18n.t('settings.calendar.heading') }}
+          </h2>
+          <p class="text-body-secondary">{{ i18n.t('settings.calendar.intro') }}</p>
 
           @if (status()) {
-            <div class="alert alert-success" role="status">{{ status() }}</div>
+            <div class="alert alert-success" role="status">{{ i18n.text(status()) }}</div>
           }
           @if (error()) {
-            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+            <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
           }
 
           @switch (connection()) {
             @case (null) {
-              <p class="text-body-secondary mb-0">Checking…</p>
+              <p class="text-body-secondary mb-0">{{ i18n.t('settings.calendar.checking') }}</p>
             }
             @case ('connected') {
               <p>
-                <span class="badge text-bg-success me-1">Connected</span>
-                New and changed tasks appear on your “Samwise” calendar.
+                <span class="badge text-bg-success me-1">{{ i18n.t('settings.calendar.connected') }}</span>
+                {{ i18n.t('settings.calendar.connectedText') }}
               </p>
               <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-                <app-icon name="calendar-x" class="me-1" />Disconnect
+                <app-icon name="calendar-x" class="me-1" />{{ i18n.t('settings.calendar.disconnect') }}
               </button>
-              <p class="form-text mb-0">Disconnecting deletes the “Samwise” calendar from Google Calendar.</p>
+              <p class="form-text mb-0">{{ i18n.t('settings.calendar.disconnectHint') }}</p>
             }
             @case ('not_connected') {
-              <p><span class="badge text-bg-secondary">Not connected</span></p>
+              <p><span class="badge text-bg-secondary">{{ i18n.t('settings.calendar.notConnected') }}</span></p>
               <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
-                <app-icon name="calendar-plus" class="me-1" />Connect Google Calendar
+                <app-icon name="calendar-plus" class="me-1" />{{ i18n.t('settings.calendar.connect') }}
               </button>
             }
             @default {
               <div class="alert alert-warning reconnect" role="alert">
-                <app-icon name="exclamation-triangle" class="me-1" /><strong>Calendar sync stopped.</strong> {{ reconnectMessage() }}
+                <app-icon name="exclamation-triangle" class="me-1" /><strong>{{ i18n.t('settings.calendar.syncStopped') }}</strong>
+                {{ reconnectMessage() }}
               </div>
               <div class="d-flex flex-wrap gap-2">
                 <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
-                  <app-icon name="arrow-repeat" class="me-1" />Reconnect Google Calendar
+                  <app-icon name="arrow-repeat" class="me-1" />{{ i18n.t('settings.calendar.reconnect') }}
                 </button>
                 <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-                  <app-icon name="calendar-x" class="me-1" />Disconnect
+                  <app-icon name="calendar-x" class="me-1" />{{ i18n.t('settings.calendar.disconnect') }}
                 </button>
               </div>
             }

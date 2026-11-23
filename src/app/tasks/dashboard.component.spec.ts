@@ -1,3 +1,4 @@
+import { provideI18n } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { DashboardComponent, groupByBedSummary } from './dashboard.component';
@@ -52,7 +53,7 @@ describe('DashboardComponent', () => {
     garden.listActivePlantings.and.callFake(async (bedId: string) => (bedId === 'b1' ? [{}, {}] : []) as any);
     TestBed.configureTestingModule({
       imports: [DashboardComponent],
-      providers: [
+      providers: [provideI18n(), 
         provideRouter([]),
         { provide: TaskService, useValue: tasks },
         { provide: GardenService, useValue: garden },

@@ -27,7 +27,8 @@ function deno(args) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-if (files.some((f) => f.endsWith('.test.ts'))) deno(['test', NO_NODE_MODULES, root]);
+// --allow-read=src/i18n: tests check the event texts against the app's translations.
+if (files.some((f) => f.endsWith('.test.ts'))) deno(['test', NO_NODE_MODULES, '--allow-read=src/i18n', root]);
 
 // index.ts files aren't unit-tested (they only wire requests to tested modules),
 // so at least make sure they type-check.

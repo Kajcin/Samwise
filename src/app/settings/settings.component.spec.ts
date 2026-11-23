@@ -1,3 +1,4 @@
+import { provideI18n } from '../core/i18n/i18n';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
@@ -5,6 +6,8 @@ import type { User } from '@supabase/supabase-js';
 import { googleAuthUrl, OAUTH_STATE_KEY, parseOAuthRedirect, SettingsComponent } from './settings.component';
 import { CalendarError, CalendarService } from './calendar.service';
 import { AuthService } from '../core/auth.service';
+import { UserLanguageService } from '../core/i18n/user-language.service';
+import { LanguageService } from '../core/i18n/language.service';
 
 describe('parseOAuthRedirect', () => {
   it('returns null when the URL has no OAuth params', () => {
@@ -44,11 +47,14 @@ describe('googleAuthUrl', () => {
 describe('SettingsComponent', () => {
   let calendar: jasmine.SpyObj<CalendarService>;
   let navigate: jasmine.Spy;
+  let userLanguage: jasmine.SpyObj<UserLanguageService>;
 
   async function render(queryParams: Record<string, string> = {}) {
     TestBed.configureTestingModule({
       imports: [SettingsComponent],
       providers: [
+        provideI18n(),
+        { provide: UserLanguageService, useValue: userLanguage },
         provideRouter([]),
         { provide: CalendarService, useValue: calendar },
         { provide: AuthService, useValue: { currentUser: signal({ email: 'me@example.com' } as User) } },
@@ -66,6 +72,9 @@ describe('SettingsComponent', () => {
     sessionStorage.removeItem(OAUTH_STATE_KEY);
     calendar = jasmine.createSpyObj<CalendarService>('CalendarService', ['status', 'connect', 'disconnect']);
     calendar.status.and.resolveTo('not_connected');
+    userLanguage = jasmine.createSpyObj<UserLanguageService>('UserLanguageService', ['save']);
+    // Like the real service: saving switches the app's language.
+    userLanguage.save.and.callFake(async (lang) => TestBed.inject(LanguageService).use(lang));
   });
 
   afterEach(() => sessionStorage.removeItem(OAUTH_STATE_KEY));
@@ -76,6 +85,55 @@ describe('SettingsComponent', () => {
     expect(el.textContent).toContain('me@example.com');
     expect(el.textContent).toContain('Not connected');
     expect(el.querySelector('button')!.textContent).toContain('Connect Google Calendar');
+  });
+
+  it('offers English and Czech, showing the current language', async () => {
+    const { el } = await render();
+    const select = el.querySelector<HTMLSelectElement>('select[name=language]')!;
+
+    expect(Array.from(select.options).map((o) => o.textContent!.trim())).toEqual(['English', 'Čeština']);
+    expect(select.value).toBe('en');
+  });
+
+  it('switches to Czech: saves it for the account and translates the page', async () => {
+    const { fixture, el } = await render();
+    const select = el.querySelector<HTMLSelectElement>('select[name=language]')!;
+
+    select.value = 'cs';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(userLanguage.save).toHaveBeenCalledWith('cs');
+    expect(el.querySelector('h1')!.textContent).toContain('Nastavení');
+    expect(el.querySelector('.language [role=status]')!.textContent).toContain('Jazyk byl uložen.');
+    expect(el.querySelector('button.connect')!.textContent).toContain('Připojit Kalendář Google');
+  });
+
+  it('mentions the calendar when a connected user changes language', async () => {
+    calendar.status.and.resolveTo('connected');
+    const { fixture, el } = await render();
+    const select = el.querySelector<HTMLSelectElement>('select[name=language]')!;
+
+    select.value = 'cs';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.language [role=status]')!.textContent).toContain('Události ve vašem kalendáři');
+  });
+
+  it('shows an error when the language could not be saved', async () => {
+    userLanguage.save.and.rejectWith(new Error('offline'));
+    const { fixture, el } = await render();
+    const select = el.querySelector<HTMLSelectElement>('select[name=language]')!;
+
+    select.value = 'cs';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.language [role=alert]')!.textContent).toContain('Couldn’t save the language: offline');
   });
 
   it('shows the connection and a Disconnect button when connected', async () => {
@@ -213,7 +271,7 @@ describe('SettingsComponent', () => {
     const { el } = await render({ error: 'access_denied', state: 'state-1' });
 
     expect(calendar.connect).not.toHaveBeenCalled();
-    expect(el.querySelector('[role=alert]')!.textContent).toContain("didn't allow calendar access");
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('didn’t allow calendar access');
   });
 
   it('refuses a response whose state does not match', async () => {
@@ -221,7 +279,7 @@ describe('SettingsComponent', () => {
     const { el } = await render({ code: 'c-1', state: 'forged' });
 
     expect(calendar.connect).not.toHaveBeenCalled();
-    expect(el.querySelector('[role=alert]')!.textContent).toContain("didn't match");
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('didn’t match');
   });
 
   it('shows a friendly message when connecting fails', async () => {

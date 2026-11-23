@@ -1,3 +1,5 @@
+import { provideI18n } from '../core/i18n/i18n';
+import { msg } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -7,20 +9,20 @@ import { CareRule, Plant, PlantCatalogService } from './plant-catalog.service';
 
 describe('validateCareRuleForm', () => {
   it('requires offset_days when timing_type is offset_from_planting', () => {
-    expect(validateCareRuleForm('offset_from_planting', null, null)).toBe('Offset days is required for an offset rule.');
+    expect(validateCareRuleForm('offset_from_planting', null, null)).toEqual(msg('plant.errors.offsetRequired'));
   });
 
   it('requires recurrence_days when timing_type is recurring', () => {
-    expect(validateCareRuleForm('recurring', null, null)).toBe('Recurrence days is required for a recurring rule.');
+    expect(validateCareRuleForm('recurring', null, null)).toEqual(msg('plant.errors.recurrenceRequired'));
   });
 
   it('rejects a negative or fractional offset', () => {
-    expect(validateCareRuleForm('offset_from_planting', -1, null)).toBe('Offset days must be a whole number of 0 or more.');
-    expect(validateCareRuleForm('offset_from_planting', 1.5, null)).toBe('Offset days must be a whole number of 0 or more.');
+    expect(validateCareRuleForm('offset_from_planting', -1, null)).toEqual(msg('plant.errors.offsetInvalid'));
+    expect(validateCareRuleForm('offset_from_planting', 1.5, null)).toEqual(msg('plant.errors.offsetInvalid'));
   });
 
   it('rejects a recurrence shorter than one day', () => {
-    expect(validateCareRuleForm('recurring', null, 0)).toBe('Recurrence days must be a whole number of 1 or more.');
+    expect(validateCareRuleForm('recurring', null, 0)).toEqual(msg('plant.errors.recurrenceInvalid'));
   });
 
   it('accepts a valid offset rule, including planting day', () => {
@@ -62,7 +64,7 @@ describe('PlantDetailComponent', () => {
     service.get.and.resolveTo(plant);
     TestBed.configureTestingModule({
       imports: [PlantDetailComponent],
-      providers: [
+      providers: [provideI18n(), 
         provideRouter([]),
         { provide: PlantCatalogService, useValue: service },
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: plant.id })) } },

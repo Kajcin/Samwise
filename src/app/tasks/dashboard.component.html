@@ -1,34 +1,37 @@
 <main class="container pb-5">
-  <h1 class="mb-4">Dashboard</h1>
+  <h1 class="mb-4">{{ i18n.t('dashboard.heading') }}</h1>
 
   @if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+    <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
   }
 
   @if (loading()) {
-    <p class="text-body-secondary">Loading…</p>
+    <p class="text-body-secondary">{{ i18n.t('common.loading') }}</p>
   } @else {
     <div class="row g-4">
       <section class="col-lg-8">
         <div class="card h-100">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">Coming up <span class="text-body-secondary fw-normal">(next {{ days }} days)</span></h2>
-            <a class="small" routerLink="/tasks">All tasks</a>
+            <h2 class="h5 mb-0">
+              {{ i18n.t('dashboard.comingUp') }}
+              <span class="text-body-secondary fw-normal">{{ i18n.t('dashboard.nextDays', { days }) }}</span>
+            </h2>
+            <a class="small" routerLink="/tasks">{{ i18n.t('dashboard.allTasks') }}</a>
           </div>
           <ul class="list-group list-group-flush">
             @for (task of upcoming(); track task.id) {
               <li class="task list-group-item d-flex align-items-center gap-3">
                 <div class="flex-grow-1">
                   <div>
-                    <strong>{{ formatDueDate(task.due_date) }}</strong>
+                    <strong>{{ formatDueDate(task.due_date, i18n) }}</strong>
                     @if (isOverdue(task)) {
-                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />Overdue</span>
+                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />{{ i18n.t('common.overdue') }}</span>
                     }
                   </div>
                   <div>
                     <app-icon [name]="taskIcons[task.task_type]" class="text-primary me-1" />
-                    {{ taskTitle(task) }}
-                    @if (taskLocation(task); as where) {
+                    {{ taskTitle(task, i18n) }}
+                    @if (taskLocation(task, i18n); as where) {
                       <small class="text-body-secondary">({{ where }})</small>
                     }
                   </div>
@@ -38,10 +41,10 @@
                   class="btn btn-sm btn-outline-primary"
                   [disabled]="busyTaskId() === task.id"
                   (click)="markDone(task)"
-                ><app-icon name="check-lg" class="me-1" />Done</button>
+                ><app-icon name="check-lg" class="me-1" />{{ i18n.t('common.done') }}</button>
               </li>
             } @empty {
-              <li class="list-group-item text-body-secondary">Nothing to do in the next {{ days }} days.</li>
+              <li class="list-group-item text-body-secondary">{{ i18n.t('dashboard.nothingToDo', { days }) }}</li>
             }
           </ul>
         </div>
@@ -50,18 +53,20 @@
       <section class="col-lg-4">
         <div class="card h-100">
           <div class="card-header">
-            <h2 class="h5 mb-0">Beds</h2>
+            <h2 class="h5 mb-0">{{ i18n.t('dashboard.beds') }}</h2>
           </div>
           <ul class="list-group list-group-flush">
             @for (summary of bedSummaries(); track summary.bed.id) {
               <li class="bed list-group-item">
                 <a routerLink="/garden">{{ summary.bed.name }}</a>
                 <div class="small text-body-secondary">
-                  {{ summary.plantingCount }} of {{ summary.bed.rows * summary.bed.cols }} cells planted
+                  {{ i18n.t('dashboard.cellsPlanted', { planted: summary.plantingCount, cells: summary.bed.rows * summary.bed.cols }) }}
                 </div>
               </li>
             } @empty {
-              <li class="list-group-item">No beds yet. <a routerLink="/garden/new">Create your first bed</a>.</li>
+              <li class="list-group-item">
+                {{ i18n.t('dashboard.noBeds') }} <a routerLink="/garden/new">{{ i18n.t('dashboard.createFirstBed') }}</a>.
+              </li>
             }
           </ul>
         </div>

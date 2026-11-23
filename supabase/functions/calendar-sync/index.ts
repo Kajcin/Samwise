@@ -56,6 +56,9 @@ Deno.serve(async (req) => {
             .eq('calendar_id', calendarId),
         );
       },
+      loadLanguage: async (userId) =>
+        check(await db.from('user_preferences').select('language').eq('user_id', userId).maybeSingle())?.language ??
+          'en',
       loadTask: async (taskId) =>
         check(await db.from('tasks').select(TASK_EVENT_SELECT).eq('id', taskId).maybeSingle()) as unknown as
           | TaskEventRow

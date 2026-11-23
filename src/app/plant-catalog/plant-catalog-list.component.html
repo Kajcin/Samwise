@@ -1,39 +1,39 @@
 <main class="container pb-5">
-  <h1 class="mb-4">Plant catalog</h1>
+  <h1 class="mb-4">{{ i18n.t('catalog.heading') }}</h1>
 
   <div class="row g-4">
     <div class="col-lg-8">
-      <label class="visually-hidden" for="plant-search">Search</label>
+      <label class="visually-hidden" for="plant-search">{{ i18n.t('catalog.search') }}</label>
       <input
         id="plant-search"
         class="form-control mb-3"
         type="search"
         [value]="query()"
         (input)="query.set($any($event.target).value)"
-        placeholder="Search plants"
+        [placeholder]="i18n.t('catalog.searchPlaceholder')"
       />
 
       @if (error()) {
-        <div class="alert alert-danger" role="alert">{{ error() }}</div>
+        <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
       }
 
       @if (loading()) {
-        <p class="text-body-secondary">Loading plants…</p>
+        <p class="text-body-secondary">{{ i18n.t('catalog.loading') }}</p>
       } @else {
         <ul class="list-group">
           @for (plant of visiblePlants(); track plant.id) {
             <li class="list-group-item d-flex align-items-center gap-2">
-              <a class="flex-grow-1" [routerLink]="['/plants', plant.id]">{{ plant.name }}</a>
+              <a class="flex-grow-1" [routerLink]="['/plants', plant.id]">{{ plantName(plant, i18n.lang()) }}</a>
               @if (plant.user_id) {
-                <span class="badge text-bg-success">yours</span>
+                <span class="badge text-bg-success">{{ i18n.t('catalog.yours') }}</span>
               } @else {
                 <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cloneAndEdit(plant.id)">
-                  <app-icon name="copy" class="me-1" />Clone to customize
+                  <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
                 </button>
               }
             </li>
           } @empty {
-            <p class="text-body-secondary">No plants match “{{ query() }}”.</p>
+            <p class="text-body-secondary">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>
           }
         </ul>
       }
@@ -42,9 +42,9 @@
     <div class="col-lg-4">
       <form class="card" (submit)="addCustomPlant($event)">
         <div class="card-body">
-          <h2 class="h5 card-title">Add a custom plant</h2>
+          <h2 class="h5 card-title">{{ i18n.t('catalog.addHeading') }}</h2>
           <div class="mb-3">
-            <label class="form-label" for="new-plant-name">Name</label>
+            <label class="form-label" for="new-plant-name">{{ i18n.t('common.name') }}</label>
             <input
               id="new-plant-name"
               class="form-control"
@@ -54,18 +54,18 @@
             />
           </div>
           <div class="mb-3">
-            <label class="form-label" for="new-plant-sun">Sun</label>
+            <label class="form-label" for="new-plant-sun">{{ i18n.t('catalog.sun') }}</label>
             <select id="new-plant-sun" class="form-select" name="sun" (change)="onSunChange($any($event.target).value)">
-              <option value="" [selected]="!newPlantSun()">Select sun requirement</option>
-              @for (option of sunOptions; track option[0]) {
-                <option [value]="option[0]" [selected]="newPlantSun() === option[0]">{{ option[1] }}</option>
+              <option value="" [selected]="!newPlantSun()">{{ i18n.t('catalog.selectSun') }}</option>
+              @for (sun of sunOptions; track sun) {
+                <option [value]="sun" [selected]="newPlantSun() === sun">{{ i18n.t(sunKey(sun)) }}</option>
               }
             </select>
           </div>
           @if (newPlantError()) {
-            <div class="alert alert-danger" role="alert">{{ newPlantError() }}</div>
+            <div class="alert alert-danger" role="alert">{{ i18n.text(newPlantError()) }}</div>
           }
-          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />Add plant</button>
+          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('catalog.add') }}</button>
         </div>
       </form>
     </div>

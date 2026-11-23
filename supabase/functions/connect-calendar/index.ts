@@ -54,6 +54,8 @@ Deno.serve(async (req) => {
             .gte('due_date', fromDate)
             .order('due_date'),
         ) as unknown as TaskEventRow[],
+      loadLanguage: async (uid) =>
+        check(await db.from('user_preferences').select('language').eq('user_id', uid).maybeSingle())?.language ?? 'en',
       upsertEvent,
       setEventId: async (taskId, eventId) => {
         check(await db.from('tasks').update({ google_calendar_event_id: eventId }).eq('id', taskId));
