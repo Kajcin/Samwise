@@ -22,10 +22,7 @@ export interface ConnectDeps {
   saveCredentials(credentials: Credentials): Promise<void>;
   /** Forget all of the user's event ids (they point into a calendar that's no longer used). */
   clearEventIds(userId: string): Promise<void>;
-  /**
-   * Tasks due on or after `fromDate` that belong on the calendar: unfinished ones, and
-   * finished ones that already have an event (so it shows them as done).
-   */
+  /** Every task due on or after `fromDate`, finished or not (finished ones show with a ✓). */
   listTasksToSync(userId: string, fromDate: string): Promise<TaskEventRow[]>;
   upsertEvent(accessToken: string, calendarId: string, task: EventTask): Promise<string>;
   setEventId(taskId: string, eventId: string): Promise<void>;

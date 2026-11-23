@@ -51,7 +51,6 @@ Deno.serve(async (req) => {
         check(
           await db.from('tasks').select(TASK_EVENT_SELECT)
             .eq('user_id', uid)
-            .or('completed_at.is.null,google_calendar_event_id.not.is.null')
             .gte('due_date', fromDate)
             .order('due_date'),
         ) as unknown as TaskEventRow[],

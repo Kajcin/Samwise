@@ -88,6 +88,17 @@ Deno.test('reconnecting updates events that already exist, without rewriting the
   assertEquals([...log.eventIds], [['t1', 'evt-t1']]);
 });
 
+Deno.test('finished upcoming tasks are synced too, also into a new calendar', async () => {
+  // After a disconnect their event ids are cleared; they still belong on the calendar, with a ✓.
+  const done = row('t1', { completed_at: '2026-11-19T08:00:00Z' });
+  const { deps, log } = fakes({ tasks: [done] });
+
+  await connectCalendar(deps, 'u1', 'code-1');
+
+  assertEquals(log.upserted.map((t) => t.completed_at), ['2026-11-19T08:00:00Z']);
+  assertEquals([...log.eventIds], [['t1', 'evt-1']]);
+});
+
 Deno.test('a recreated calendar (the old one was deleted) clears old event ids', async () => {
   const { deps, log } = fakes({ storedCalendarId: 'cal-deleted', calendarId: 'cal-2' });
 
