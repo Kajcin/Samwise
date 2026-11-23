@@ -22,8 +22,9 @@ draft plant to review and save, instead of typing everything in.
 3. **Nursery sites** (only with permission): e.g. Loukykvět has rich plant pages, but its
    copyright terms protect descriptions and photos, and systematically extracting its
    catalog could infringe its database right. Only with their written agreement, and
-   only the facts, with a link back to the product page. Without one, a plant can still
-   store a link to such a page for the user to read.
+   only the facts, with a link back to the product page. **For now (agreed):** a plant
+   just stores a link to such a page for the user to read (see "Richer plant data");
+   Samwise doesn't read the page.
 
 ## Seasonal care rules for perennials
 
@@ -34,11 +35,30 @@ almost no tasks today. Needs a seasonal rule type, task generation that repeats 
 year (and the nightly top-up), and the rule form, the plant detail and the calendar
 sync to handle it.
 
+## Flowering calendar
+
+A year overview showing when each plant flowers, month by month. It relies on the
+flowering range every plant should have (agreed: always stored as months, start to end):
+
+- Already there: `plants_catalog.flowering_start_month` / `flowering_end_month` (1-12),
+  filled in for the built-in plants. Ranges over the new year (e.g. December to March)
+  are allowed: the start month may be later than the end month.
+- Missing: entering and editing the months for your own plants (the "Add a custom plant"
+  form only asks for name and sun).
+- To decide: plants that flower twice, e.g. catmint 'Walker's Low' in May-June and again
+  in September after being cut back. One range can't express that; consider several
+  ranges per plant.
+- Plant lookup: sources often give only a season ("Spring"), so the months are the
+  user's input or an approximate mapping, to confirm in the form.
+
 ## Richer plant data
 
 Discuss and extend the plant attributes: e.g. height, spacing, soil, hardiness, flower
-colour and months, perennial / annual, attracts pollinators. Decide what the app uses
-(filters, tasks, the garden view) before adding columns.
+colour, perennial / annual, attracts pollinators. Decide what the app uses (filters,
+tasks, the garden view) before adding columns.
+
+- **Source link** (agreed): a link to a page describing the plant, e.g. its product page
+  on a nursery site, shown on the plant page. Until then, paste it into the notes.
 
 ## Going live
 
