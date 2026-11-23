@@ -1,4 +1,5 @@
 import { CareRule, Plant, TaskType } from './plant-catalog.service';
+import type { IconName } from '../core/icons/icons.generated';
 
 export const TASK_TYPE_LABELS: Record<TaskType, string> = {
   seed_start: 'Seed start',
@@ -6,6 +7,15 @@ export const TASK_TYPE_LABELS: Record<TaskType, string> = {
   prune: 'Prune',
   fertilize: 'Fertilize',
   harvest: 'Harvest',
+};
+
+/** Shown next to each task (Bootstrap Icons has no seedling, so seed start gets a flower). */
+export const TASK_TYPE_ICONS: Record<TaskType, IconName> = {
+  seed_start: 'flower1',
+  transplant: 'bucket',
+  prune: 'scissors',
+  fertilize: 'droplet',
+  harvest: 'basket',
 };
 
 export const TASK_TYPES = Object.keys(TASK_TYPE_LABELS) as TaskType[];

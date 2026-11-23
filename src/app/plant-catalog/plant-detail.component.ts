@@ -1,8 +1,9 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CareRule, Plant, PlantCatalogService, TaskType } from './plant-catalog.service';
-import { describeRuleTiming, monthName, SUN_LABELS, TASK_TYPE_LABELS, TASK_TYPES } from './labels';
+import { describeRuleTiming, monthName, SUN_LABELS, TASK_TYPE_ICONS, TASK_TYPE_LABELS, TASK_TYPES } from './labels';
 import { messageOf } from '../core/errors';
 import { parseNumberInput } from '../core/number-input';
 
@@ -34,7 +35,7 @@ function ruleOrder(a: CareRule, b: CareRule): number {
 @Component({
   selector: 'app-plant-detail',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   templateUrl: './plant-detail.component.html',
 })
 export class PlantDetailComponent {
@@ -44,6 +45,7 @@ export class PlantDetailComponent {
 
   protected readonly taskTypes = TASK_TYPES;
   protected readonly taskLabels = TASK_TYPE_LABELS;
+  protected readonly taskIcons = TASK_TYPE_ICONS;
   protected readonly sunLabels = SUN_LABELS;
   protected readonly monthName = monthName;
   protected readonly describeTiming = describeRuleTiming;

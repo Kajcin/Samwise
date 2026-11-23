@@ -46,6 +46,12 @@
               @for (task of day.tasks; track task.id) {
                 <li class="task list-group-item d-flex align-items-center gap-3" [attr.data-id]="task.id">
                   <div class="flex-grow-1">
+                    <app-icon
+                      [name]="taskIcons[task.task_type]"
+                      class="me-1"
+                      [class.text-primary]="!task.completed_at"
+                      [class.text-body-secondary]="!!task.completed_at"
+                    />
                     @if (task.completed_at) {
                       <s class="text-body-secondary">{{ taskTitle(task) }}</s>
                     } @else {
@@ -55,7 +61,7 @@
                       <small class="text-body-secondary">({{ where }})</small>
                     }
                     @if (isOverdue(task)) {
-                      <span class="badge text-bg-danger ms-1">Overdue</span>
+                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />Overdue</span>
                     }
                   </div>
                   <button
@@ -66,7 +72,9 @@
                     [disabled]="busyTaskId() === task.id"
                     (click)="toggleDone(task)"
                   >
-                    {{ task.completed_at ? 'Undo' : 'Done' }}
+                    <app-icon [name]="task.completed_at ? 'arrow-counterclockwise' : 'check-lg'" class="me-1" />{{
+                      task.completed_at ? 'Undo' : 'Done'
+                    }}
                   </button>
                 </li>
               }
@@ -104,7 +112,7 @@
           @if (newTaskError()) {
             <div class="alert alert-danger" role="alert">{{ newTaskError() }}</div>
           }
-          <button type="submit" class="btn btn-primary">Add task</button>
+          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />Add task</button>
         </div>
       </form>
     </div>

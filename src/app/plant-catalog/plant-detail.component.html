@@ -18,17 +18,17 @@
             <h2 class="h5 card-title">About</h2>
             <dl class="row mb-0">
               @if (p.sun_requirements) {
-                <dt class="col-sm-4">Sun</dt>
+                <dt class="col-sm-4"><app-icon name="sun" class="text-primary me-1" />Sun</dt>
                 <dd class="col-sm-8">{{ sunLabels[p.sun_requirements] }}</dd>
               }
               @if (p.watering_frequency_days) {
-                <dt class="col-sm-4">Watering</dt>
+                <dt class="col-sm-4"><app-icon name="droplet" class="text-primary me-1" />Watering</dt>
                 <dd class="col-sm-8">
                   every {{ p.watering_frequency_days }} {{ p.watering_frequency_days === 1 ? 'day' : 'days' }}
                 </dd>
               }
               @if (p.flowering_start_month && p.flowering_end_month) {
-                <dt class="col-sm-4">Flowering</dt>
+                <dt class="col-sm-4"><app-icon name="flower1" class="text-primary me-1" />Flowering</dt>
                 <dd class="col-sm-8">{{ monthName(p.flowering_start_month) }} to {{ monthName(p.flowering_end_month) }}</dd>
               }
             </dl>
@@ -45,6 +45,7 @@
           <ul class="list-group list-group-flush">
             @for (rule of careRules(); track rule.id) {
               <li class="list-group-item">
+                <app-icon [name]="taskIcons[rule.task_type]" class="text-primary me-1" />
                 {{ taskLabels[rule.task_type] }} — {{ describeTiming(rule) }}
                 @if (isEditable()) {
                   <input
@@ -117,14 +118,16 @@
               @if (newRuleError()) {
                 <div class="alert alert-danger" role="alert">{{ newRuleError() }}</div>
               }
-              <button type="submit" class="btn btn-primary">Add rule</button>
+              <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />Add rule</button>
             </div>
           </form>
         } @else {
           <div class="card">
             <div class="card-body">
               <p>This is a built-in plant, so its care rules are read-only.</p>
-              <button type="button" class="btn btn-outline-primary" (click)="cloneAndEdit()">Clone to customize</button>
+              <button type="button" class="btn btn-outline-primary" (click)="cloneAndEdit()">
+                <app-icon name="copy" class="me-1" />Clone to customize
+              </button>
             </div>
           </div>
         }

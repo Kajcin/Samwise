@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { Router, RouterLink } from '@angular/router';
 import { GardenService } from './garden.service';
 import { messageOf } from '../core/errors';
@@ -18,7 +19,7 @@ export function validateBedForm(name: string, rows: number | null, cols: number 
 @Component({
   selector: 'app-bed-editor',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   templateUrl: './bed-editor.component.html',
 })
 export class BedEditorComponent {

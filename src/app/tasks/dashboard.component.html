@@ -22,10 +22,11 @@
                   <div>
                     <strong>{{ formatDueDate(task.due_date) }}</strong>
                     @if (isOverdue(task)) {
-                      <span class="badge text-bg-danger ms-1">Overdue</span>
+                      <span class="badge text-bg-danger ms-1"><app-icon name="exclamation-triangle" class="me-1" />Overdue</span>
                     }
                   </div>
                   <div>
+                    <app-icon [name]="taskIcons[task.task_type]" class="text-primary me-1" />
                     {{ taskTitle(task) }}
                     @if (taskLocation(task); as where) {
                       <small class="text-body-secondary">({{ where }})</small>
@@ -37,7 +38,7 @@
                   class="btn btn-sm btn-outline-primary"
                   [disabled]="busyTaskId() === task.id"
                   (click)="markDone(task)"
-                >Done</button>
+                ><app-icon name="check-lg" class="me-1" />Done</button>
               </li>
             } @empty {
               <li class="list-group-item text-body-secondary">Nothing to do in the next {{ days }} days.</li>

@@ -1,4 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
+import { TASK_TYPE_ICONS } from '../plant-catalog/labels';
 import { RouterLink } from '@angular/router';
 import { isOverdue, TaskService, TaskWithContext } from './task.service';
 import { formatDueDate, taskLocation, taskTitle } from './task-format';
@@ -20,7 +22,7 @@ const UPCOMING_DAYS = 7;
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
@@ -29,6 +31,7 @@ export class DashboardComponent {
 
   protected readonly days = UPCOMING_DAYS;
   protected readonly taskTitle = taskTitle;
+  protected readonly taskIcons = TASK_TYPE_ICONS;
   protected readonly taskLocation = taskLocation;
   protected readonly formatDueDate = formatDueDate;
   protected readonly isOverdue = isOverdue;

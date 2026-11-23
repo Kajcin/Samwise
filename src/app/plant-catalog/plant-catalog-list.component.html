@@ -28,7 +28,7 @@
                 <span class="badge text-bg-success">yours</span>
               } @else {
                 <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cloneAndEdit(plant.id)">
-                  Clone to customize
+                  <app-icon name="copy" class="me-1" />Clone to customize
                 </button>
               }
             </li>
@@ -65,7 +65,7 @@
           @if (newPlantError()) {
             <div class="alert alert-danger" role="alert">{{ newPlantError() }}</div>
           }
-          <button type="submit" class="btn btn-primary">Add plant</button>
+          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />Add plant</button>
         </div>
       </form>
     </div>

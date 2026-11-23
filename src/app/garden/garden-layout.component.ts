@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { RouterLink } from '@angular/router';
 import { Bed, cellKey, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
@@ -24,7 +25,7 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 @Component({
   selector: 'app-garden-layout',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   templateUrl: './garden-layout.component.html',
   styles: `
     .bed-grid { border-collapse: separate; border-spacing: 4px; }

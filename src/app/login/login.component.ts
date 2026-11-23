@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
@@ -6,6 +7,7 @@ import { environment } from '../../environments/environment';
 @Component({
   selector: 'app-login',
   standalone: true,
+  imports: [IconComponent],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {

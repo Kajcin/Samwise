@@ -1,7 +1,7 @@
 @if (auth.currentUser(); as user) {
   <nav class="navbar navbar-expand-md app-navbar mb-4">
     <div class="container">
-      <span class="navbar-brand">Samwise</span>
+      <span class="navbar-brand"><app-icon name="flower3" class="me-1" />Samwise</span>
       <button
         type="button"
         class="navbar-toggler"
@@ -16,24 +16,26 @@
         <!-- Picking a page closes the menu on phones. -->
         <ul class="navbar-nav me-auto" (click)="menuOpen.set(false)">
           <li class="nav-item">
-            <a class="nav-link" routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+            <a class="nav-link" routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }"><app-icon name="house" class="me-1" />Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/tasks" routerLinkActive="active" ariaCurrentWhenActive="page">Tasks</a>
+            <a class="nav-link" routerLink="/tasks" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="list-check" class="me-1" />Tasks</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/garden" routerLinkActive="active" ariaCurrentWhenActive="page">Garden</a>
+            <a class="nav-link" routerLink="/garden" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="grid-3x3" class="me-1" />Garden</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/plants" routerLinkActive="active" ariaCurrentWhenActive="page">Plant catalog</a>
+            <a class="nav-link" routerLink="/plants" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="flower2" class="me-1" />Plant catalog</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page">Settings</a>
+            <a class="nav-link" routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="gear" class="me-1" />Settings</a>
           </li>
         </ul>
         <div class="d-flex align-items-center gap-2 py-2 py-md-0">
           <span class="navbar-text small text-truncate">{{ user.email }}</span>
-          <button type="button" class="btn btn-outline-secondary btn-sm sign-out" (click)="signOut()">Sign out</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm sign-out" (click)="signOut()">
+            <app-icon name="box-arrow-right" class="me-1" />Sign out
+          </button>
         </div>
       </div>
     </div>

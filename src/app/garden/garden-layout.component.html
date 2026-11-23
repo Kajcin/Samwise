@@ -1,7 +1,7 @@
 <main class="container pb-5">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <h1 class="mb-0">Garden</h1>
-    <a class="btn btn-primary" routerLink="/garden/new">New bed</a>
+    <a class="btn btn-primary" routerLink="/garden/new"><app-icon name="plus-lg" class="me-1" />New bed</a>
   </div>
 
   @if (error()) {
@@ -51,7 +51,9 @@
                 </div>
                 @if (s.planting; as p) {
                   <p>{{ plantLabel(p.plant_id) }} — Planted {{ p.planted_date }}</p>
-                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy()" (click)="remove()">Remove</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy()" (click)="remove()">
+                    <app-icon name="trash" class="me-1" />Remove
+                  </button>
                 } @else {
                   <form class="row g-2 align-items-end" (submit)="assign($event)">
                     <div class="col-sm-6">
@@ -80,7 +82,9 @@
                       />
                     </div>
                     <div class="col-sm-2 d-grid">
-                      <button type="submit" class="btn btn-primary" [disabled]="busy()">Plant</button>
+                      <button type="submit" class="btn btn-primary" [disabled]="busy()">
+                        <app-icon name="flower1" class="me-1" />Plant
+                      </button>
                     </div>
                   </form>
                 }

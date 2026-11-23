@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { Router, RouterLink } from '@angular/router';
 import { Plant, PlantCatalogService } from './plant-catalog.service';
 import { SUN_LABELS } from './labels';
@@ -25,7 +26,7 @@ function byName(a: Plant, b: Plant): number {
 @Component({
   selector: 'app-plant-catalog-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   templateUrl: './plant-catalog-list.component.html',
 })
 export class PlantCatalogListComponent {

@@ -51,7 +51,9 @@
           @if (error()) {
             <div class="alert alert-danger" role="alert">{{ error() }}</div>
           }
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">Save bed</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            <app-icon name="check-lg" class="me-1" />Save bed
+          </button>
         </div>
       </form>
     </div>

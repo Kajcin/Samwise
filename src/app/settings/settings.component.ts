@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { IconComponent } from '../core/icons/icon.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
@@ -68,6 +69,7 @@ export const RECONNECT_MESSAGES: Partial<Record<CalendarStatus, string>> = {
 @Component({
   selector: 'app-settings',
   standalone: true,
+  imports: [IconComponent],
   templateUrl: './settings.component.html',
 })
 export class SettingsComponent {
