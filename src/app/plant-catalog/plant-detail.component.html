@@ -13,34 +13,158 @@
 
     <div class="row g-4 mt-1">
       <div class="col-lg-8">
-        <section class="card mb-4">
-          <div class="card-body">
-            <h2 class="h5 card-title">{{ i18n.t('plant.about') }}</h2>
-            <dl class="row mb-0">
-              @if (p.sun_requirements) {
-                <dt class="col-sm-4"><app-icon name="sun" class="text-primary me-1" />{{ i18n.t('plant.sun') }}</dt>
-                <dd class="col-sm-8">{{ i18n.t(sunKey(p.sun_requirements)) }}</dd>
+        <section class="card mb-4 about">
+          @if (draft(); as d) {
+            <form class="card-body plant-form" novalidate (submit)="savePlant($event)">
+              <h2 class="h5 card-title">{{ i18n.t('plant.editHeading') }}</h2>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="plant-name">{{ i18n.t('common.name') }}</label>
+                  <input id="plant-name" class="form-control" name="name" [value]="d.name" (input)="setDraft('name', $any($event.target).value)" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="plant-species">{{ i18n.t('plant.latinName') }}</label>
+                  <input
+                    id="plant-species"
+                    class="form-control fst-italic"
+                    name="species"
+                    [value]="d.species"
+                    (input)="setDraft('species', $any($event.target).value)"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="plant-sun">{{ i18n.t('plant.sun') }}</label>
+                  <select id="plant-sun" class="form-select" name="sun" (change)="setDraft('sun', $any($event.target).value)">
+                    @for (sun of sunOptions; track sun) {
+                      <option [value]="sun" [selected]="d.sun === sun">{{ i18n.t(sunKey(sun)) }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="plant-watering">{{ i18n.t('plant.wateringEvery') }}</label>
+                  <input
+                    id="plant-watering"
+                    class="form-control"
+                    name="watering"
+                    type="number"
+                    min="1"
+                    max="365"
+                    step="1"
+                    [value]="d.wateringDays ?? ''"
+                    (input)="setDraftNumber('wateringDays', $any($event.target).value)"
+                  />
+                </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label" for="plant-flowering-from">{{ i18n.t('plant.floweringFrom') }}</label>
+                  <select
+                    id="plant-flowering-from"
+                    class="form-select"
+                    name="floweringFrom"
+                    (change)="setDraftNumber('floweringStart', $any($event.target).value)"
+                  >
+                    <option value="" [selected]="d.floweringStart == null">{{ i18n.t('plant.notSet') }}</option>
+                    @for (month of months; track month) {
+                      <option [value]="month" [selected]="d.floweringStart === month">{{ i18n.t(monthKey(month)) }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label" for="plant-flowering-to">{{ i18n.t('plant.floweringTo') }}</label>
+                  <select
+                    id="plant-flowering-to"
+                    class="form-select"
+                    name="floweringTo"
+                    (change)="setDraftNumber('floweringEnd', $any($event.target).value)"
+                  >
+                    <option value="" [selected]="d.floweringEnd == null">{{ i18n.t('plant.notSet') }}</option>
+                    @for (month of months; track month) {
+                      <option [value]="month" [selected]="d.floweringEnd === month">{{ i18n.t(monthKey(month)) }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="plant-source">{{ i18n.t('plant.sourceUrl') }}</label>
+                  <input
+                    id="plant-source"
+                    class="form-control"
+                    name="sourceUrl"
+                    type="url"
+                    inputmode="url"
+                    placeholder="https://"
+                    [value]="d.sourceUrl"
+                    (input)="setDraft('sourceUrl', $any($event.target).value)"
+                  />
+                  <div class="form-text">{{ i18n.t('plant.sourceUrlHint') }}</div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="plant-notes">{{ i18n.t('plant.notes') }}</label>
+                  <textarea
+                    id="plant-notes"
+                    class="form-control"
+                    name="notes"
+                    rows="3"
+                    [value]="d.notes"
+                    (input)="setDraft('notes', $any($event.target).value)"
+                  ></textarea>
+                </div>
+              </div>
+              @if (editError()) {
+                <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(editError()) }}</div>
               }
-              @if (p.watering_frequency_days) {
-                <dt class="col-sm-4"><app-icon name="droplet" class="text-primary me-1" />{{ i18n.t('plant.watering') }}</dt>
-                <dd class="col-sm-8">{{ i18n.t('rules.everyDays', { days: p.watering_frequency_days }) }}</dd>
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="submit" class="btn btn-primary save" [disabled]="saving()">
+                  <app-icon name="check-lg" class="me-1" />{{ i18n.t('plant.save') }}
+                </button>
+                <button type="button" class="btn btn-outline-secondary cancel" [disabled]="saving()" (click)="cancelEditing()">
+                  {{ i18n.t('plant.cancel') }}
+                </button>
+                <button type="button" class="btn btn-outline-danger ms-auto delete-plant" [disabled]="saving()" (click)="deletePlant()">
+                  <app-icon name="trash" class="me-1" />{{ i18n.t('plant.deletePlant') }}
+                </button>
+              </div>
+            </form>
+          } @else {
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h2 class="h5 card-title">{{ i18n.t('plant.about') }}</h2>
+                @if (isEditable()) {
+                  <button type="button" class="btn btn-sm btn-outline-primary edit" (click)="startEditing()">
+                    <app-icon name="pencil" class="me-1" />{{ i18n.t('plant.edit') }}
+                  </button>
+                }
+              </div>
+              <dl class="row mb-0">
+                @if (p.sun_requirements) {
+                  <dt class="col-sm-4"><app-icon name="sun" class="text-primary me-1" />{{ i18n.t('plant.sun') }}</dt>
+                  <dd class="col-sm-8">{{ i18n.t(sunKey(p.sun_requirements)) }}</dd>
+                }
+                @if (p.watering_frequency_days) {
+                  <dt class="col-sm-4"><app-icon name="droplet" class="text-primary me-1" />{{ i18n.t('plant.watering') }}</dt>
+                  <dd class="col-sm-8">{{ i18n.t('rules.everyDays', { days: p.watering_frequency_days }) }}</dd>
+                }
+                @if (p.flowering_start_month && p.flowering_end_month) {
+                  <dt class="col-sm-4"><app-icon name="flower1" class="text-primary me-1" />{{ i18n.t('plant.flowering') }}</dt>
+                  <dd class="col-sm-8">
+                    {{
+                      i18n.t('plant.floweringRange', {
+                        from: i18n.t(monthKey(p.flowering_start_month)),
+                        to: i18n.t(monthKey(p.flowering_end_month)),
+                      })
+                    }}
+                  </dd>
+                }
+                @if (p.source_url) {
+                  <dt class="col-sm-4"><app-icon name="box-arrow-up-right" class="text-primary me-1" />{{ i18n.t('plant.source') }}</dt>
+                  <dd class="col-sm-8">
+                    <a class="source-link" [href]="p.source_url" target="_blank" rel="noopener noreferrer">{{ linkHost(p.source_url) }}</a>
+                  </dd>
+                }
+              </dl>
+              @if (plantNotes(p, i18n.lang()); as notes) {
+                <p class="mt-3 mb-0 plant-notes">{{ notes }}</p>
               }
-              @if (p.flowering_start_month && p.flowering_end_month) {
-                <dt class="col-sm-4"><app-icon name="flower1" class="text-primary me-1" />{{ i18n.t('plant.flowering') }}</dt>
-                <dd class="col-sm-8">
-                  {{
-                    i18n.t('plant.floweringRange', {
-                      from: i18n.t(monthKey(p.flowering_start_month)),
-                      to: i18n.t(monthKey(p.flowering_end_month)),
-                    })
-                  }}
-                </dd>
-              }
-            </dl>
-            @if (plantNotes(p, i18n.lang()); as notes) {
-              <p class="mt-3 mb-0">{{ notes }}</p>
-            }
-          </div>
+            </div>
+          }
         </section>
 
         <section class="card">
@@ -50,6 +174,17 @@
           <ul class="list-group list-group-flush">
             @for (rule of careRules(); track rule.id) {
               <li class="list-group-item">
+                @if (isEditable()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-danger float-end p-0 delete-rule"
+                    [attr.aria-label]="i18n.t('plant.deleteRule')"
+                    [title]="i18n.t('plant.deleteRule')"
+                    (click)="deleteCareRule(rule.id)"
+                  >
+                    <app-icon name="trash" />
+                  </button>
+                }
                 <app-icon [name]="taskIcons[rule.task_type]" class="text-primary me-1" />
                 {{ i18n.t('plant.rule', { type: i18n.t(taskTypeKey(rule.task_type)), timing: i18n.text(describeTiming(rule)) }) }}
                 @if (isEditable()) {
@@ -68,6 +203,9 @@
               <p class="list-group-item text-body-secondary mb-0">{{ i18n.t('plant.noRules') }}</p>
             }
           </ul>
+          @if (isEditable()) {
+            <div class="card-footer small text-body-secondary">{{ i18n.t('plant.rulesNote') }}</div>
+          }
         </section>
       </div>
 

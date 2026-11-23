@@ -177,6 +177,22 @@
     "offsetDays": "Dní po výsadbě",
     "recurrenceDays": "Každých N dní",
     "addRule": "Přidat pravidlo",
+    "edit": "Upravit",
+    "editHeading": "Upravit rostlinu",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "deletePlant": "Smazat rostlinu",
+    "confirmDelete": "Smazat rostlinu „{name}“ i s jejími pravidly péče?",
+    "latinName": "Latinský název",
+    "wateringEvery": "Zalévat každých … dní",
+    "floweringFrom": "Kvete od",
+    "floweringTo": "do",
+    "notSet": "—",
+    "source": "Zdroj",
+    "sourceUrl": "Odkaz na zdroj",
+    "sourceUrlHint": "Stránka o rostlině, např. na webu zahradnictví.",
+    "deleteRule": "Smazat pravidlo",
+    "rulesNote": "Změny pravidel péče platí pro nové výsadby; už vytvořené úkoly zůstanou, jak jsou.",
     "errors": {
       "offsetRequired": "U pravidla podle výsadby vyplňte počet dní.",
       "offsetInvalid": "Počet dní po výsadbě musí být celé číslo 0 nebo větší.",
@@ -185,7 +201,14 @@
       "load": "Rostlinu se nepodařilo načíst: {detail}",
       "clone": "Rostlinu se nepodařilo zkopírovat: {detail}",
       "saveRule": "Pravidlo se nepodařilo uložit: {detail}",
-      "saveNotes": "Poznámky se nepodařilo uložit: {detail}"
+      "saveNotes": "Poznámky se nepodařilo uložit: {detail}",
+      "wateringInvalid": "Zalévání musí být celý počet dní od 1 do 365.",
+      "floweringBoth": "Vyberte oba měsíce kvetení, nebo žádný.",
+      "sourceUrlInvalid": "Odkaz na zdroj musí být webová adresa začínající http:// nebo https://.",
+      "save": "Rostlinu se nepodařilo uložit: {detail}",
+      "delete": "Rostlinu se nepodařilo smazat: {detail}",
+      "inUse": "Tato rostlina je (nebo byla) zasazená ve vaší zahradě, proto ji nelze smazat: odkazují na ni vaše výsadby a jejich úkoly.",
+      "deleteRule": "Pravidlo se nepodařilo smazat: {detail}"
     }
   },
   "settings": {

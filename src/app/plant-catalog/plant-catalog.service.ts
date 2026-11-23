@@ -19,9 +19,37 @@ export interface Plant {
   notes: string | null;
   /** Czech notes; built-in plants only. */
   notes_cs?: string | null;
+  /** A page describing the plant (e.g. a nursery's product page); Samwise only links to it. */
+  source_url?: string | null;
 }
 
 export type NewPlant = Omit<Plant, 'id' | 'user_id' | 'name_cs' | 'notes_cs'>;
+
+/** The fields of your own plant that you can edit. */
+export type PlantChanges = Partial<
+  Pick<
+    Plant,
+    | 'name'
+    | 'species'
+    | 'sun_requirements'
+    | 'watering_frequency_days'
+    | 'flowering_start_month'
+    | 'flowering_end_month'
+    | 'notes'
+    | 'source_url'
+  >
+>;
+
+/** The plant is (or was) planted, so the database keeps it: plantings and tasks refer to it. */
+export class PlantInUseError extends Error {
+  constructor() {
+    super('This plant is (or was) planted, so it cannot be deleted.');
+    this.name = 'PlantInUseError';
+  }
+}
+
+/** Postgres foreign_key_violation. */
+const FOREIGN_KEY_VIOLATION = '23503';
 
 export type TaskType = 'seed_start' | 'transplant' | 'prune' | 'fertilize' | 'harvest';
 
@@ -115,6 +143,20 @@ export class PlantCatalogService {
     return clone as Plant;
   }
 
+  /** Updates one of your own plants (RLS refuses other plants). */
+  async updatePlant(plantId: string, changes: PlantChanges): Promise<Plant> {
+    const { data, error } = await supabase.from('plants_catalog').update(changes).eq('id', plantId).select().single();
+    if (error) throw error;
+    return data as Plant;
+  }
+
+  /** Deletes one of your own plants with its care rules; refused if it is or was planted. */
+  async deletePlant(plantId: string): Promise<void> {
+    const { error } = await supabase.from('plants_catalog').delete().eq('id', plantId);
+    if (error?.code === FOREIGN_KEY_VIOLATION) throw new PlantInUseError();
+    if (error) throw error;
+  }
+
   async listCareRules(plantId: string): Promise<CareRule[]> {
     const { data, error } = await supabase.from('care_rules').select('*').eq('plant_id', plantId);
     if (error) throw error;
@@ -129,6 +171,12 @@ export class PlantCatalogService {
       .single();
     if (error) throw error;
     return data as CareRule;
+  }
+
+  /** Tasks already generated from the rule stay; it only affects future plantings. */
+  async deleteCareRule(ruleId: string): Promise<void> {
+    const { error } = await supabase.from('care_rules').delete().eq('id', ruleId);
+    if (error) throw error;
   }
 
   async updateCareRule(ruleId: string, changes: Partial<NewCareRule>): Promise<void> {

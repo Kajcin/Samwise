@@ -177,6 +177,22 @@
     "offsetDays": "Days after planting",
     "recurrenceDays": "Every N days",
     "addRule": "Add rule",
+    "edit": "Edit",
+    "editHeading": "Edit plant",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deletePlant": "Delete plant",
+    "confirmDelete": "Delete “{name}” and its care rules?",
+    "latinName": "Latin name",
+    "wateringEvery": "Water every … days",
+    "floweringFrom": "Flowering from",
+    "floweringTo": "to",
+    "notSet": "—",
+    "source": "Source",
+    "sourceUrl": "Source link",
+    "sourceUrlHint": "A page about the plant, e.g. on a nursery’s website.",
+    "deleteRule": "Delete rule",
+    "rulesNote": "Changes to care rules apply to new plantings; tasks already created stay as they are.",
     "errors": {
       "offsetRequired": "Offset days is required for an offset rule.",
       "offsetInvalid": "Offset days must be a whole number of 0 or more.",
@@ -185,7 +201,14 @@
       "load": "Could not load plant: {detail}",
       "clone": "Could not clone plant: {detail}",
       "saveRule": "Could not save rule: {detail}",
-      "saveNotes": "Could not save notes: {detail}"
+      "saveNotes": "Could not save notes: {detail}",
+      "wateringInvalid": "Watering must be a whole number of days from 1 to 365.",
+      "floweringBoth": "Choose both flowering months, or neither.",
+      "sourceUrlInvalid": "The source link must be a web address starting with http:// or https://.",
+      "save": "Could not save the plant: {detail}",
+      "delete": "Could not delete the plant: {detail}",
+      "inUse": "This plant is (or was) planted in your garden, so it can’t be deleted: your plantings and their tasks refer to it.",
+      "deleteRule": "Could not delete the rule: {detail}"
     }
   },
   "settings": {

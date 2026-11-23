@@ -43,8 +43,7 @@ flowering range every plant should have (agreed: always stored as months, start 
 - Already there: `plants_catalog.flowering_start_month` / `flowering_end_month` (1-12),
   filled in for the built-in plants. Ranges over the new year (e.g. December to March)
   are allowed: the start month may be later than the end month.
-- Missing: entering and editing the months for your own plants (the "Add a custom plant"
-  form only asks for name and sun).
+- Done: editing the months of your own plants (plant page → Edit).
 - To decide: plants that flower twice, e.g. catmint 'Walker's Low' in May-June and again
   in September after being cut back. One range can't express that; consider several
   ranges per plant.
@@ -57,8 +56,12 @@ Discuss and extend the plant attributes: e.g. height, spacing, soil, hardiness, 
 colour, perennial / annual, attracts pollinators. Decide what the app uses (filters,
 tasks, the garden view) before adding columns.
 
-- **Source link** (agreed): a link to a page describing the plant, e.g. its product page
-  on a nursery site, shown on the plant page. Until then, paste it into the notes.
+- Done: **source link** (`source_url`), a link to a page describing the plant, e.g. its
+  product page on a nursery site; edited and shown on the plant page.
+- Done: editing your own plants (name, Latin name, sun, watering, flowering months, notes,
+  source link), deleting their care rules, and deleting plants that were never planted.
+- Later: changing a care rule doesn't update tasks already generated for plants in the
+  ground (the plant page says so); regenerating them is a possible follow-up.
 
 ## Going live
 

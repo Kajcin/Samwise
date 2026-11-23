@@ -2,13 +2,15 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CareRule, Plant, PlantCatalogService, TaskType } from './plant-catalog.service';
+import { CareRule, Plant, PlantCatalogService, PlantChanges, PlantInUseError, TaskType } from './plant-catalog.service';
 import {
   describeRuleTiming,
   monthKey,
   plantName,
   plantNotes,
   ruleNotes,
+  SUN_REQUIREMENTS,
+  SunRequirement,
   sunKey,
   TASK_TYPE_ICONS,
   TASK_TYPES,
@@ -35,6 +37,75 @@ export function validateCareRuleForm(
   }
   return null;
 }
+
+/** The editable fields of your own plant, as the edit form holds them. */
+export interface PlantForm {
+  name: string;
+  species: string;
+  sun: SunRequirement | '';
+  wateringDays: number | null;
+  floweringStart: number | null;
+  floweringEnd: number | null;
+  notes: string;
+  sourceUrl: string;
+}
+
+export function plantToForm(plant: Plant): PlantForm {
+  return {
+    name: plant.name,
+    species: plant.species ?? '',
+    sun: plant.sun_requirements ?? '',
+    wateringDays: plant.watering_frequency_days,
+    floweringStart: plant.flowering_start_month,
+    floweringEnd: plant.flowering_end_month,
+    notes: plant.notes ?? '',
+    sourceUrl: plant.source_url ?? '',
+  };
+}
+
+function isWebAddress(text: string): boolean {
+  try {
+    const url = new URL(text);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && !/\s/.test(text);
+  } catch {
+    return false;
+  }
+}
+
+/** Mirrors the database's checks (migration 0010), with messages people understand. */
+export function validatePlantForm(form: PlantForm): Message | null {
+  if (!form.name.trim()) return msg('catalog.errors.nameRequired');
+  if (!form.sun) return msg('catalog.errors.sunRequired');
+  const days = form.wateringDays;
+  if (days != null && (!Number.isInteger(days) || days < 1 || days > 365)) return msg('plant.errors.wateringInvalid');
+  if ((form.floweringStart == null) !== (form.floweringEnd == null)) return msg('plant.errors.floweringBoth');
+  if (form.sourceUrl.trim() && !isWebAddress(form.sourceUrl.trim())) return msg('plant.errors.sourceUrlInvalid');
+  return null;
+}
+
+export function formToChanges(form: PlantForm): PlantChanges {
+  return {
+    name: form.name.trim(),
+    species: form.species.trim() || null,
+    sun_requirements: form.sun || null,
+    watering_frequency_days: form.wateringDays,
+    flowering_start_month: form.floweringStart,
+    flowering_end_month: form.floweringEnd,
+    notes: form.notes.trim() || null,
+    source_url: form.sourceUrl.trim() || null,
+  };
+}
+
+/** "www.loukykvet.cz" for a link's text. */
+export function linkHost(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+export const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 /** Offset rules in timeline order first, then recurring rules by interval. */
 function ruleOrder(a: CareRule, b: CareRule): number {
@@ -65,6 +136,14 @@ export class PlantDetailComponent {
   protected readonly plantName = plantName;
   protected readonly plantNotes = plantNotes;
   protected readonly ruleNotes = ruleNotes;
+  protected readonly sunOptions = SUN_REQUIREMENTS;
+  protected readonly months = MONTHS;
+  protected readonly linkHost = linkHost;
+
+  /** The edit form's draft; null when not editing. */
+  draft = signal<PlantForm | null>(null);
+  saving = signal(false);
+  editError = signal<Message | null>(null);
 
   plant = signal<Plant | null>(null);
   /** Only the owner's custom plants are editable; built-in plants (user_id null) are read-only. */
@@ -91,6 +170,7 @@ export class PlantDetailComponent {
   private async load(): Promise<void> {
     this.error.set(null);
     this.plant.set(null);
+    this.draft.set(null);
     this.rules.set([]);
     try {
       const [plant, rules] = await Promise.all([this.catalog.get(this.plantId), this.catalog.listCareRules(this.plantId)]);
@@ -137,6 +217,77 @@ export class PlantDetailComponent {
     } catch (e) {
       this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));
     }
+  }
+
+  startEditing(): void {
+    const plant = this.plant();
+    if (!plant || !this.isEditable()) return;
+    this.draft.set(plantToForm(plant));
+    this.editError.set(null);
+  }
+
+  cancelEditing(): void {
+    this.draft.set(null);
+    this.editError.set(null);
+  }
+
+  /** Updates one field of the draft (the form's inputs call this). */
+  setDraft<K extends keyof PlantForm>(field: K, value: PlantForm[K]): void {
+    this.draft.update((d) => (d ? { ...d, [field]: value } : d));
+  }
+
+  setDraftNumber(field: 'wateringDays' | 'floweringStart' | 'floweringEnd', value: string): void {
+    this.setDraft(field, parseNumberInput(value));
+  }
+
+  async savePlant(event: Event): Promise<void> {
+    event.preventDefault();
+    const form = this.draft();
+    if (!form) return;
+    const validation = validatePlantForm(form);
+    this.editError.set(validation);
+    if (validation) return;
+    this.saving.set(true);
+    try {
+      this.plant.set(await this.catalog.updatePlant(this.plantId, formToChanges(form)));
+      this.draft.set(null);
+    } catch (e) {
+      this.editError.set(msg('plant.errors.save', { detail: messageOf(e) }));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async deletePlant(): Promise<void> {
+    const plant = this.plant();
+    if (!plant || !this.confirm(this.i18n.t('plant.confirmDelete', { name: plant.name }))) return;
+    this.saving.set(true);
+    this.editError.set(null);
+    try {
+      await this.catalog.deletePlant(this.plantId);
+      await this.router.navigate(['/plants']);
+    } catch (e) {
+      this.editError.set(
+        e instanceof PlantInUseError ? msg('plant.errors.inUse') : msg('plant.errors.delete', { detail: messageOf(e) }),
+      );
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async deleteCareRule(ruleId: string): Promise<void> {
+    this.error.set(null);
+    try {
+      await this.catalog.deleteCareRule(ruleId);
+      await this.refreshCareRules();
+    } catch (e) {
+      this.error.set(msg('plant.errors.deleteRule', { detail: messageOf(e) }));
+    }
+  }
+
+  /** Separate so tests can answer the confirmation dialog. */
+  protected confirm(question: string): boolean {
+    return window.confirm(question);
   }
 
   async updateRuleNotes(ruleId: string, notes: string): Promise<void> {

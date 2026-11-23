@@ -3,9 +3,10 @@ import { msg } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { PlantDetailComponent, validateCareRuleForm } from './plant-detail.component';
+import { formToChanges, linkHost, PlantDetailComponent, PlantForm, validateCareRuleForm, validatePlantForm } from './plant-detail.component';
 import { parseNumberInput } from '../core/number-input';
-import { CareRule, Plant, PlantCatalogService } from './plant-catalog.service';
+import { CareRule, Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
+import { Router } from '@angular/router';
 
 describe('validateCareRuleForm', () => {
   it('requires offset_days when timing_type is offset_from_planting', () => {
@@ -32,6 +33,62 @@ describe('validateCareRuleForm', () => {
 
   it('accepts a valid recurring rule', () => {
     expect(validateCareRuleForm('recurring', null, 14)).toBeNull();
+  });
+});
+
+describe('validatePlantForm', () => {
+  const valid: PlantForm = {
+    name: 'Catmint', species: '', sun: 'full_sun', wateringDays: null,
+    floweringStart: null, floweringEnd: null, notes: '', sourceUrl: '',
+  };
+
+  it('accepts a plant with only a name and sun', () => {
+    expect(validatePlantForm(valid)).toBeNull();
+  });
+
+  it('requires a name and sun', () => {
+    expect(validatePlantForm({ ...valid, name: ' ' })).toEqual(msg('catalog.errors.nameRequired'));
+    expect(validatePlantForm({ ...valid, sun: '' })).toEqual(msg('catalog.errors.sunRequired'));
+  });
+
+  it('wants watering as whole days from 1 to 365', () => {
+    expect(validatePlantForm({ ...valid, wateringDays: 0 })).toEqual(msg('plant.errors.wateringInvalid'));
+    expect(validatePlantForm({ ...valid, wateringDays: 2.5 })).toEqual(msg('plant.errors.wateringInvalid'));
+    expect(validatePlantForm({ ...valid, wateringDays: 366 })).toEqual(msg('plant.errors.wateringInvalid'));
+    expect(validatePlantForm({ ...valid, wateringDays: 7 })).toBeNull();
+  });
+
+  it('wants both flowering months or neither, allowing a range over the new year', () => {
+    expect(validatePlantForm({ ...valid, floweringStart: 5 })).toEqual(msg('plant.errors.floweringBoth'));
+    expect(validatePlantForm({ ...valid, floweringEnd: 9 })).toEqual(msg('plant.errors.floweringBoth'));
+    expect(validatePlantForm({ ...valid, floweringStart: 12, floweringEnd: 3 })).toBeNull();
+  });
+
+  it('accepts only web addresses as the source link', () => {
+    for (const bad of ['loukykvet.cz', 'javascript:alert(1)', 'ftp://x.cz', 'https://a b.cz']) {
+      expect(validatePlantForm({ ...valid, sourceUrl: bad })).withContext(bad).toEqual(msg('plant.errors.sourceUrlInvalid'));
+    }
+    expect(validatePlantForm({ ...valid, sourceUrl: ' https://www.loukykvet.cz/obchod/2166-santa-walkers-low ' })).toBeNull();
+  });
+});
+
+describe('formToChanges', () => {
+  it('trims texts and stores empty ones as missing', () => {
+    expect(
+      formToChanges({
+        name: ' Catmint ', species: ' ', sun: 'full_sun', wateringDays: 7,
+        floweringStart: 5, floweringEnd: 9, notes: '  ', sourceUrl: ' https://x.cz/a ',
+      }),
+    ).toEqual({
+      name: 'Catmint', species: null, sun_requirements: 'full_sun', watering_frequency_days: 7,
+      flowering_start_month: 5, flowering_end_month: 9, notes: null, source_url: 'https://x.cz/a',
+    });
+  });
+});
+
+describe('linkHost', () => {
+  it('shows a link by its site', () => {
+    expect(linkHost('https://www.loukykvet.cz/obchod/2166-santa-walkers-low')).toBe('www.loukykvet.cz');
   });
 });
 
@@ -77,7 +134,9 @@ describe('PlantDetailComponent', () => {
   }
 
   beforeEach(() => {
-    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['get', 'listCareRules', 'addCareRule', 'updateCareRule', 'cloneToCustom']);
+    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', [
+      'get', 'listCareRules', 'addCareRule', 'updateCareRule', 'cloneToCustom', 'updatePlant', 'deletePlant', 'deleteCareRule',
+    ]);
     service.listCareRules.and.resolveTo(rules);
   });
 
@@ -122,5 +181,130 @@ describe('PlantDetailComponent', () => {
 
     expect(el.querySelector('[role=alert]')!.textContent).toContain('Offset days is required');
     expect(service.addCareRule).not.toHaveBeenCalled();
+  });
+
+  /** Sets a form field the way typing or choosing does. */
+  function setField(el: HTMLElement, name: string, value: string) {
+    const field = el.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[name=${name}]`)!;
+    field.value = value;
+    field.dispatchEvent(new Event(field instanceof HTMLSelectElement ? 'change' : 'input'));
+  }
+
+  it('offers editing only for your own plants', async () => {
+    expect((await render(seeded)).el.querySelector('button.edit')).toBeNull();
+    TestBed.resetTestingModule();
+    expect((await render(custom)).el.querySelector('button.edit')).not.toBeNull();
+  });
+
+  it('edits a plant: all fields, including flowering months and a source link', async () => {
+    const saved: Plant = {
+      ...custom, name: 'Catmint', species: 'Nepeta × faassenii', watering_frequency_days: 7,
+      flowering_start_month: 5, flowering_end_month: 9, notes: 'Cut back after flowering.',
+      source_url: 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low',
+    };
+    service.updatePlant.and.resolveTo(saved);
+    const { fixture, el } = await render(custom);
+
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector<HTMLInputElement>('[name=name]')!.value).toBe('My Tomato'); // starts from the plant
+    setField(el, 'name', 'Catmint');
+    setField(el, 'species', 'Nepeta × faassenii');
+    setField(el, 'watering', '7');
+    setField(el, 'floweringFrom', '5');
+    setField(el, 'floweringTo', '9');
+    setField(el, 'notes', 'Cut back after flowering.');
+    setField(el, 'sourceUrl', 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
+    el.querySelector<HTMLFormElement>('form.plant-form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(service.updatePlant).toHaveBeenCalledWith('p2', {
+      name: 'Catmint', species: 'Nepeta × faassenii', sun_requirements: 'full_sun', watering_frequency_days: 7,
+      flowering_start_month: 5, flowering_end_month: 9, notes: 'Cut back after flowering.',
+      source_url: 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low',
+    });
+    expect(el.querySelector('form.plant-form')).toBeNull(); // back to viewing
+    expect(el.querySelector('h1')!.textContent).toContain('Catmint');
+    expect(el.textContent).toContain('May to September');
+    const link = el.querySelector<HTMLAnchorElement>('a.source-link')!;
+    expect(link.textContent).toBe('www.loukykvet.cz');
+    expect(link.href).toBe('https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
+    expect(link.rel).toBe('noopener noreferrer');
+    expect(link.target).toBe('_blank');
+  });
+
+  it('keeps the form open with a message when the input is invalid', async () => {
+    const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+
+    setField(el, 'floweringTo', ''); // "from" is still June
+    el.querySelector<HTMLFormElement>('form.plant-form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(service.updatePlant).not.toHaveBeenCalled();
+    expect(el.querySelector('form.plant-form [role=alert]')!.textContent).toContain('Choose both flowering months');
+  });
+
+  it('cancels editing without saving', async () => {
+    const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+
+    setField(el, 'name', 'Something else');
+    el.querySelector<HTMLButtonElement>('button.cancel')!.click();
+    fixture.detectChanges();
+
+    expect(service.updatePlant).not.toHaveBeenCalled();
+    expect(el.querySelector('form.plant-form')).toBeNull();
+    expect(el.querySelector('h1')!.textContent).toContain('My Tomato');
+  });
+
+  it('deletes a plant after confirmation and returns to the catalog', async () => {
+    service.deletePlant.and.resolveTo();
+    const { fixture, el } = await render(custom);
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const confirm = spyOn(fixture.componentInstance as any, 'confirm').and.returnValue(true);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+
+    expect(confirm.calls.mostRecent().args[0]).toContain('My Tomato');
+    expect(service.deletePlant).toHaveBeenCalledWith('p2');
+    expect(navigate).toHaveBeenCalledWith(['/plants']);
+  });
+
+  it('explains why a planted plant can’t be deleted', async () => {
+    service.deletePlant.and.rejectWith(new PlantInUseError());
+    const { fixture, el } = await render(custom);
+    spyOn(fixture.componentInstance as any, 'confirm').and.returnValue(true);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('form.plant-form [role=alert]')!.textContent).toContain('planted in your garden');
+  });
+
+  it('deletes a care rule of your own plant (only there)', async () => {
+    service.deleteCareRule.and.resolveTo();
+    const { fixture, el } = await render(custom);
+    expect(el.textContent).toContain('tasks already created stay as they are');
+    service.listCareRules.and.resolveTo([rules[0]]);
+
+    el.querySelector<HTMLButtonElement>('button.delete-rule')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(service.deleteCareRule).toHaveBeenCalledWith('r1'); // the first one shown (timeline order)
+    expect(el.querySelectorAll('li').length).toBe(1);
+    TestBed.resetTestingModule();
+    expect((await render(seeded)).el.querySelector('button.delete-rule')).toBeNull();
   });
 });

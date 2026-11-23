@@ -1,3 +1,4 @@
+import { PlantInUseError } from './plant-catalog.service';
 import { PlantCatalogService } from './plant-catalog.service';
 import { supabase } from '../core/supabase-client';
 
@@ -132,5 +133,74 @@ describe('PlantCatalogService care rules', () => {
 
     expect(update).toHaveBeenCalledWith({ recurrence_days: 21 });
     expect(eq).toHaveBeenCalledWith('id', 'r1');
+  });
+});
+
+describe('PlantCatalogService editing', () => {
+  let service: PlantCatalogService;
+
+  beforeEach(() => {
+    service = new PlantCatalogService();
+  });
+
+  it('updatePlant() updates the plant and returns the saved row', async () => {
+    const saved = { id: 'p2', name: 'Catmint' };
+    const single = jasmine.createSpy('single').and.resolveTo({ data: saved, error: null });
+    const eq = jasmine.createSpy('eq').and.returnValue({ select: () => ({ single }) });
+    const update = jasmine.createSpy('update').and.returnValue({ eq });
+    spyOn(supabase, 'from').and.returnValue({ update } as any);
+
+    expect(await service.updatePlant('p2', { name: 'Catmint', source_url: 'https://x.cz' })).toEqual(saved as any);
+    expect(update).toHaveBeenCalledWith({ name: 'Catmint', source_url: 'https://x.cz' });
+    expect(eq).toHaveBeenCalledWith('id', 'p2');
+  });
+
+  it('deletePlant() deletes the plant', async () => {
+    const eq = jasmine.createSpy('eq').and.resolveTo({ data: null, error: null });
+    spyOn(supabase, 'from').and.returnValue({ delete: () => ({ eq }) } as any);
+
+    await service.deletePlant('p2');
+    expect(eq).toHaveBeenCalledWith('id', 'p2');
+  });
+
+  it('deletePlant() reports a planted plant as in use (foreign key violation)', async () => {
+    const eq = jasmine.createSpy('eq').and.resolveTo({ data: null, error: { code: '23503', message: 'violates foreign key' } });
+    spyOn(supabase, 'from').and.returnValue({ delete: () => ({ eq }) } as any);
+
+    await expectAsync(service.deletePlant('p2')).toBeRejectedWithError(PlantInUseError);
+  });
+
+  it('deleteCareRule() deletes the rule', async () => {
+    const eq = jasmine.createSpy('eq').and.resolveTo({ data: null, error: null });
+    spyOn(supabase, 'from').and.returnValue({ delete: () => ({ eq }) } as any);
+
+    await service.deleteCareRule('r1');
+    expect(eq).toHaveBeenCalledWith('id', 'r1');
+  });
+
+  it('cloneToCustom() in Czech copies the Czech texts as the copy’s own', async () => {
+    spyOn(supabase.auth, 'getUser').and.resolveTo({ data: { user: { id: 'me' } }, error: null } as any);
+    const seeded = {
+      id: 'seed-1', user_id: null, name: 'Tomato', name_cs: 'Rajče', species: null, sun_requirements: 'full_sun',
+      watering_frequency_days: 2, flowering_start_month: 6, flowering_end_month: 9,
+      notes: 'Stake it.', notes_cs: 'Vyvazujte.', source_url: null,
+    };
+    const rules = [{ task_type: 'transplant', timing_type: 'offset_from_planting', offset_days: 21, recurrence_days: null,
+      notes: 'After last frost.', notes_cs: 'Po posledních mrazech.' }];
+    const insertPlant = jasmine.createSpy('insertPlant').and.returnValue({
+      select: () => ({ single: () => Promise.resolve({ data: { id: 'clone-1' }, error: null }) }),
+    });
+    const insertRules = jasmine.createSpy('insertRules').and.resolveTo({ data: null, error: null });
+    spyOn(supabase, 'from').and.callFake(((table: string) =>
+      table === 'plants_catalog'
+        ? { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: seeded, error: null }) }) }), insert: insertPlant }
+        : { select: () => ({ eq: () => Promise.resolve({ data: rules, error: null }) }), insert: insertRules }) as any);
+
+    await service.cloneToCustom('seed-1', 'cs');
+
+    const plant = insertPlant.calls.mostRecent().args[0];
+    expect([plant.name, plant.notes, 'name_cs' in plant, 'notes_cs' in plant]).toEqual(['Rajče', 'Vyvazujte.', false, false]);
+    const [rule] = insertRules.calls.mostRecent().args[0];
+    expect([rule.notes, 'notes_cs' in rule]).toEqual(['Po posledních mrazech.', false]);
   });
 });
