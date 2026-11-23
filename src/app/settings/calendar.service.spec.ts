@@ -48,6 +48,32 @@ describe('CalendarService', () => {
     await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarError('connect_failed'));
   });
 
+  it('reports an unreachable server when the request never got an answer', async () => {
+    stubInvoke({ data: null, error: { name: 'FunctionsFetchError', message: 'Failed to fetch', context: new TypeError('Failed to fetch') } });
+
+    await expectAsync(service.disconnect()).toBeRejectedWith(new CalendarError('unreachable'));
+  });
+
+  it('reports an unreachable server when the gateway answers instead of the function', async () => {
+    // 503: local gateway with `supabase functions serve` not running; 404: function not deployed.
+    const gatewayError = (status: number) => ({
+      data: null,
+      error: { name: 'FunctionsHttpError', context: new Response(JSON.stringify({ message: 'name resolution failed' }), { status }) },
+    });
+    const invoke = stubInvoke(gatewayError(503));
+    invoke.and.returnValues(Promise.resolve(gatewayError(503)), Promise.resolve(gatewayError(404)));
+
+    await expectAsync(service.connect('code-1')).toBeRejectedWith(new CalendarError('unreachable'));
+    await expectAsync(service.disconnect()).toBeRejectedWith(new CalendarError('unreachable'));
+  });
+
+  it("prefers the function's own error code over the status", async () => {
+    const context = new Response(JSON.stringify({ error: 'disconnect_failed' }), { status: 500 });
+    stubInvoke({ data: null, error: { name: 'FunctionsHttpError', context } });
+
+    await expectAsync(service.disconnect()).toBeRejectedWith(new CalendarError('disconnect_failed'));
+  });
+
   it('disconnect() calls the disconnect-calendar function', async () => {
     const invoke = stubInvoke({ data: { connected: false, calendarDeleted: true }, error: null });
 

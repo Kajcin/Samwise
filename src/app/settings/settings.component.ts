@@ -37,7 +37,16 @@ export function googleAuthUrl(clientId: string, redirectUri: string, state: stri
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
+/** Shown when Samwise's server (the Edge Functions) didn't answer, so nothing changed. */
+export function unreachableMessage(outcome: string): string {
+  return (
+    `Samwise’s server couldn’t be reached, so ${outcome}. Please try again in a moment.` +
+    (environment.production ? '' : ' (Local development: is “npx supabase functions serve” running?)')
+  );
+}
+
 const ERROR_MESSAGES: Record<string, string> = {
+  unreachable: unreachableMessage('Google Calendar wasn’t connected'),
   access_denied: "You didn't allow calendar access, so nothing was connected.",
   state_mismatch: "Google's response didn't match this browser session. Please try connecting again.",
   google_rejected_code: 'Google didn’t accept the sign-in (it may have expired). Please try connecting again.',
@@ -130,8 +139,12 @@ export class SettingsComponent {
           : 'Google Calendar disconnected. Samwise no longer had access to delete your “Samwise” calendar, ' +
               'so delete it in Google Calendar if you don’t want it.',
       );
-    } catch {
-      this.error.set('Couldn’t disconnect Google Calendar. Please try again.');
+    } catch (e) {
+      this.error.set(
+        e instanceof CalendarError && e.code === 'unreachable'
+          ? unreachableMessage('Google Calendar is still connected')
+          : 'Couldn’t disconnect Google Calendar. Please try again.',
+      );
     } finally {
       this.busy.set(false);
     }

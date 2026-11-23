@@ -144,6 +144,29 @@ describe('SettingsComponent', () => {
     expect(calendar.disconnect).not.toHaveBeenCalled();
   });
 
+  it("says when Samwise's server can't be reached while disconnecting", async () => {
+    calendar.status.and.resolveTo('connected');
+    calendar.disconnect.and.rejectWith(new CalendarError('unreachable'));
+    const { fixture, component, el } = await render();
+    spyOn(component as any, 'confirm').and.returnValue(true);
+
+    (el.querySelector('button.disconnect') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const alert = el.querySelector('[role=alert]')!.textContent!;
+    expect(alert).toContain('Samwise’s server couldn’t be reached, so Google Calendar is still connected');
+    expect(alert).toContain('npx supabase functions serve'); // tests run with the development environment
+  });
+
+  it("says when Samwise's server can't be reached while connecting", async () => {
+    sessionStorage.setItem(OAUTH_STATE_KEY, 'state-1');
+    calendar.connect.and.rejectWith(new CalendarError('unreachable'));
+    const { el } = await render({ code: 'c-1', state: 'state-1' });
+
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('so Google Calendar wasn’t connected');
+  });
+
   it('shows an error when disconnecting fails, and stays connected', async () => {
     calendar.status.and.resolveTo('connected');
     calendar.disconnect.and.rejectWith(new CalendarError('disconnect_failed'));
