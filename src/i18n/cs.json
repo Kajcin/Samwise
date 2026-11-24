@@ -116,6 +116,7 @@
     "addHeading": "Přidat úkol",
     "type": "Typ",
     "due": "Termín",
+    "save": "Uložit úkol",
     "add": "Přidat úkol",
     "errors": {
       "chooseDueDate": "Vyberte termín.",
@@ -190,6 +191,7 @@
     "addHeading": "Přidat vlastní rostlinu",
     "sun": "Slunce",
     "selectSun": "Vyberte nároky na slunce",
+    "save": "Uložit rostlinu",
     "add": "Přidat rostlinu",
     "errors": {
       "nameRequired": "Vyplňte název.",

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { ModalComponent } from '../core/modal/modal.component';
 import { filterTasks, isOverdue, TaskService, TaskWithContext } from './task.service';
 import { formatDue, groupByDueDate, taskLocation, taskTitle } from './task-format';
 import { Bed, GardenService } from '../garden/garden.service';
@@ -20,7 +21,7 @@ export function filterByStatus<T extends TaskWithContext>(tasks: T[], status: St
 @Component({
   selector: 'app-task-agenda',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, ModalComponent],
   templateUrl: './task-agenda.component.html',
 })
 export class TaskAgendaComponent {
@@ -57,6 +58,8 @@ export class TaskAgendaComponent {
   newTaskDue = signal(toIsoDate(new Date()));
   newTaskError = signal<Message | null>(null);
   busyTaskId = signal<string | null>(null);
+  /** The "add a task" dialog. */
+  addDialogOpen = signal(false);
 
   constructor() {
     this.load();
@@ -100,6 +103,20 @@ export class TaskAgendaComponent {
     }
   }
 
+  /** Opens the "Add a task" dialog with the defaults: fertilizing, due today. */
+  openAddDialog(): void {
+    this.newTaskType.set('fertilize');
+    this.newTaskDue.set(toIsoDate(new Date()));
+    this.newTaskError.set(null);
+    this.addDialogOpen.set(true);
+  }
+
+  /** Closes the dialog; what was chosen is dropped. */
+  closeAddDialog(): void {
+    this.addDialogOpen.set(false);
+    this.newTaskError.set(null);
+  }
+
   async addManualTask(event: Event): Promise<void> {
     event.preventDefault();
     if (!this.newTaskDue()) {
@@ -109,6 +126,7 @@ export class TaskAgendaComponent {
     this.newTaskError.set(null);
     try {
       await this.taskService.addManualTask(this.newTaskType(), this.newTaskDue());
+      this.addDialogOpen.set(false);
       await this.refresh();
     } catch (e) {
       this.newTaskError.set(msg('tasks.errors.add', { detail: messageOf(e) }));

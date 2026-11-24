@@ -160,7 +160,7 @@ describe('PlantCatalogListComponent', () => {
     const dialog = el.querySelector('[role=dialog]')!;
     expect(dialog.querySelector('.modal-title')!.textContent).toContain('Add a custom plant');
     expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
-      .toEqual(['Close', 'Add plant']);
+      .toEqual(['Close', 'Save plant']);
 
     for (const close of [
       () => el.querySelector<HTMLButtonElement>('[role=dialog] .btn-close')!.click(),

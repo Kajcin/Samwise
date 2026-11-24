@@ -111,7 +111,9 @@ describe('TaskAgendaComponent', () => {
 
   it('adds a manual task', async () => {
     tasks.addManualTask.and.resolveTo(task({ id: 'new' }));
-    const { el, settle, choose } = await render();
+    const { el, settle, choose, fixture } = await render();
+    el.querySelector<HTMLButtonElement>('button.add-task-button')!.click();
+    fixture.detectChanges();
 
     await choose('newType', 'harvest');
     const date = el.querySelector<HTMLInputElement>('input[name=newDue]')!;
@@ -122,10 +124,35 @@ describe('TaskAgendaComponent', () => {
 
     expect(tasks.addManualTask).toHaveBeenCalledWith('harvest', '2026-12-01');
     expect(tasks.listAll).toHaveBeenCalledTimes(2);
+    expect(el.querySelector('[role=dialog]')).toBeNull(); // saved: the dialog closes
+  });
+
+  it('adds tasks in a dialog from the top of the page; closing it drops the choice', async () => {
+    const { el, choose, fixture } = await render();
+    const open = () => {
+      el.querySelector<HTMLButtonElement>('button.add-task-button')!.click();
+      fixture.detectChanges();
+    };
+
+    open();
+    const dialog = el.querySelector('[role=dialog]')!;
+    expect(dialog.querySelector('.modal-title')!.textContent).toContain('Add a task');
+    expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
+      .toEqual(['Close', 'Save task']);
+    await choose('newType', 'harvest');
+
+    el.querySelector<HTMLButtonElement>('[role=dialog] button.close-dialog')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('[role=dialog]')).toBeNull();
+    open();
+    expect(el.querySelector<HTMLSelectElement>('select[name=newType]')!.value).toBe('fertilize');
+    expect(tasks.addManualTask).not.toHaveBeenCalled();
   });
 
   it('requires a due date for a manual task', async () => {
-    const { el, settle } = await render();
+    const { el, settle, fixture } = await render();
+    el.querySelector<HTMLButtonElement>('button.add-task-button')!.click();
+    fixture.detectChanges();
 
     const date = el.querySelector<HTMLInputElement>('input[name=newDue]')!;
     date.value = '';
@@ -133,7 +160,7 @@ describe('TaskAgendaComponent', () => {
     el.querySelector<HTMLFormElement>('form.add-task')!.dispatchEvent(new Event('submit'));
     await settle();
 
-    expect(el.querySelector('[role=alert]')!.textContent).toContain('Choose a due date.');
+    expect(el.querySelector('form.add-task [role=alert]')!.textContent).toContain('Choose a due date.');
     expect(tasks.addManualTask).not.toHaveBeenCalled();
   });
 });
