@@ -104,7 +104,7 @@
         </button>
       }
       @if (lookupLoading()) {
-        <app-loading class="mb-3 lookup-loading" [text]="i18n.t('lookup.searching')" />
+        <app-loading class="mb-3 lookup-loading" size="lg" [text]="i18n.t('lookup.searching')" />
       }
       @if (lookupError()) {
         <div class="alert alert-danger lookup-error" role="alert">{{ i18n.text(lookupError()) }}</div>

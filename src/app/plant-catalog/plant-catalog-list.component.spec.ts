@@ -458,6 +458,10 @@ describe('PlantCatalogListComponent', () => {
     const status = el.querySelector('app-loading.lookup-loading')!;
     expect(status.getAttribute('role')).toBe('status');
     expect(status.textContent).toContain('Searching Wikipedia…');
+    // Large and centered, holding the place where the results will appear (above the list).
+    expect(status.querySelector('.spinner-lg')).not.toBeNull();
+    expect(getComputedStyle(status).flexDirection).toBe('column');
+    expect(status.compareDocumentPosition(el.querySelector('ul.list-group')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     answer([catmint]);
     await fixture.whenStable();

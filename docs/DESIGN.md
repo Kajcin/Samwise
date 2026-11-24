@@ -100,6 +100,9 @@ Never leave people guessing whether something is happening.
 - **A wait of unknown length** (a page loading its data, a web search, connecting the
   calendar): `<app-loading [text]="…" />`, a spinner with a line such as "Načítání
   rostlin…" (`role="status"`, so screen readers hear it).
+- **Results on their way** (the web search): `<app-loading size="lg" … />`, a large
+  spinner centered with the text below it, in the spot where the results will appear;
+  what's already on the page (the catalog matches) stays below it.
 - **A button whose action runs** (saving, deleting, searching, connecting): disable it,
   set `[attr.aria-busy]`, and show `<app-spinner class="me-1" />` in place of its icon
   (or before the text of a text-only button). Only the clicked button spins; the others
