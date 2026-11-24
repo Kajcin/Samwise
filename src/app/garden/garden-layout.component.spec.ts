@@ -1,6 +1,6 @@
 import { provideI18n } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { buildGrid, GardenLayoutComponent } from './garden-layout.component';
 import { Bed, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
@@ -55,7 +55,7 @@ describe('GardenLayoutComponent', () => {
   }
 
   beforeEach(() => {
-    garden = jasmine.createSpyObj<GardenService>('GardenService', ['listBeds', 'listActivePlantings', 'assignPlanting', 'removePlanting']);
+    garden = jasmine.createSpyObj<GardenService>('GardenService', ['listBeds', 'listActivePlantings', 'assignPlanting', 'removePlanting', 'createBed']);
     catalog = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['list']);
     garden.listBeds.and.resolveTo([bed]);
     garden.listActivePlantings.and.resolveTo([planting(0, 0)]);
@@ -144,12 +144,60 @@ describe('GardenLayoutComponent', () => {
     expect(el.querySelector('[role=alert]')!.textContent).toContain('That cell already has a plant.');
   });
 
-  it('points to the bed editor when there are no beds yet', async () => {
+  it('offers to create the first bed when there are none yet', async () => {
     garden.listBeds.and.resolveTo([]);
-    const { el } = await render();
+    const { el, fixture } = await render();
 
     expect(el.textContent).toContain('No beds yet');
-    expect(el.querySelector('a[href="/garden/new"]')).not.toBeNull();
+    el.querySelector<HTMLButtonElement>('button.first-bed')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('[role=dialog] .modal-title')!.textContent).toContain('New bed');
+  });
+
+  it('creates a bed in the dialog from the top of the page, and shows it', async () => {
+    const created: Bed = { id: 'bed-2', user_id: 'me', name: 'Annuals', rows: 2, cols: 3 };
+    garden.createBed.and.resolveTo(created);
+    const { el, settle } = await render();
+    el.querySelector<HTMLButtonElement>('button.new-bed')!.click();
+    await settle();
+
+    const dialog = el.querySelector('[role=dialog]')!;
+    expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
+      .toEqual(['Close', 'Save bed']);
+    const set = (name: string, value: string) => {
+      const input = el.querySelector<HTMLInputElement>(`input[name=${name}]`)!;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    set('name', 'Annuals');
+    set('rows', '2');
+    el.querySelector<HTMLFormElement>('form.bed-form')!.dispatchEvent(new Event('submit'));
+    await settle();
+
+    expect(garden.createBed).toHaveBeenCalledWith('Annuals', 2, 3);
+    expect(el.querySelector('[role=dialog]')).toBeNull();
+    expect(Array.from(el.querySelectorAll('h2')).map((h) => h.textContent!.trim().split(' ')[0])).toEqual(['Annuals', 'Herbs']);
+  });
+
+  it('keeps the dialog open with a message for an invalid bed', async () => {
+    const { el, settle } = await render();
+    el.querySelector<HTMLButtonElement>('button.new-bed')!.click();
+    await settle();
+
+    el.querySelector<HTMLFormElement>('form.bed-form')!.dispatchEvent(new Event('submit')); // no name
+    await settle();
+
+    expect(garden.createBed).not.toHaveBeenCalled();
+    expect(el.querySelector('form.bed-form [role=alert]')!.textContent).toContain('Name is required.');
+  });
+
+  it('opens the dialog when asked to in the address (/garden?newBed=1)', async () => {
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { queryParamMap: convertToParamMap({ newBed: '1' }) } } });
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const { el } = await render();
+
+    expect(el.querySelector('[role=dialog] .modal-title')!.textContent).toContain('New bed');
+    expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: {}, replaceUrl: true })); // cleaned
   });
 
   it('shows the plant’s main photo in its cells, with the name over it', async () => {

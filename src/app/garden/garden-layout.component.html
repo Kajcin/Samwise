@@ -1,7 +1,9 @@
 <main class="container pb-5">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <h1 class="mb-0">{{ i18n.t('garden.heading') }}</h1>
-    <a class="btn btn-primary" routerLink="/garden/new"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('garden.newBed') }}</a>
+    <button type="button" class="btn btn-primary new-bed" (click)="openBedDialog()">
+      <app-icon name="plus-lg" class="me-1" />{{ i18n.t('garden.newBed') }}
+    </button>
   </div>
 
   @if (error()) {
@@ -116,7 +118,72 @@
         </div>
       </section>
     } @empty {
-      <p>{{ i18n.t('dashboard.noBeds') }} <a routerLink="/garden/new">{{ i18n.t('dashboard.createFirstBed') }}</a>.</p>
+      <p>
+        {{ i18n.t('dashboard.noBeds') }}
+        <button type="button" class="btn btn-link p-0 align-baseline first-bed" (click)="openBedDialog()">
+          {{ i18n.t('dashboard.createFirstBed') }}</button>.
+      </p>
     }
   }
+
+  <app-modal [open]="bedDialogOpen()" [title]="i18n.t('bedEditor.heading')" (closed)="closeBedDialog()">
+    <!-- Created on each opening, so the fields start fresh. -->
+    @if (bedDialogOpen()) {
+      <form class="bed-form" novalidate (submit)="saveBed($event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" for="bed-name">{{ i18n.t('common.name') }}</label>
+            <input
+              id="bed-name"
+              class="form-control"
+              name="name"
+              [value]="newBedName()"
+              (input)="newBedName.set($any($event.target).value)"
+              [placeholder]="i18n.t('bedEditor.namePlaceholder')"
+            />
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label" for="bed-rows">{{ i18n.t('bedEditor.rows') }}</label>
+              <input
+                id="bed-rows"
+                class="form-control"
+                name="rows"
+                type="number"
+                min="1"
+                [max]="maxBedSize"
+                step="1"
+                [value]="newBedRows() ?? ''"
+                (input)="newBedRows.set(parseNumber($any($event.target).value))"
+              />
+            </div>
+            <div class="col-6">
+              <label class="form-label" for="bed-cols">{{ i18n.t('bedEditor.cols') }}</label>
+              <input
+                id="bed-cols"
+                class="form-control"
+                name="cols"
+                type="number"
+                min="1"
+                [max]="maxBedSize"
+                step="1"
+                [value]="newBedCols() ?? ''"
+                (input)="newBedCols.set(parseNumber($any($event.target).value))"
+              />
+            </div>
+          </div>
+          <div class="form-text">{{ i18n.t('bedEditor.sizeHint', { max: maxBedSize }) }}</div>
+          @if (bedError()) {
+            <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(bedError()) }}</div>
+          }
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeBedDialog()">
+            {{ i18n.t('common.close') }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="savingBed()">{{ i18n.t('bedEditor.save') }}</button>
+        </div>
+      </form>
+    }
+  </app-modal>
 </main>

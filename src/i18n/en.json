@@ -165,7 +165,6 @@
     }
   },
   "bedEditor": {
-    "back": "← Garden",
     "heading": "New bed",
     "namePlaceholder": "e.g. Herb bed",
     "rows": "Rows",

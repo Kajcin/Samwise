@@ -1,6 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ModalComponent } from '../core/modal/modal.component';
+import { parseNumberInput } from '../core/number-input';
+import { MAX_BED_SIZE, validateBedForm } from './bed-form';
 import { Bed, cellKey, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
 import { messageOf } from '../core/errors';
@@ -29,7 +32,7 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 @Component({
   selector: 'app-garden-layout',
   standalone: true,
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink, IconComponent, ModalComponent],
   templateUrl: './garden-layout.component.html',
   styles: `
     .bed-grid { border-collapse: separate; border-spacing: 4px; }
@@ -117,8 +120,60 @@ export class GardenLayoutComponent {
   cellError = signal<Message | null>(null);
   busy = signal(false);
 
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  // The "new bed" dialog.
+  protected readonly maxBedSize = MAX_BED_SIZE;
+  protected readonly parseNumber = parseNumberInput;
+  bedDialogOpen = signal(false);
+  newBedName = signal('');
+  newBedRows = signal<number | null>(3);
+  newBedCols = signal<number | null>(3);
+  bedError = signal<Message | null>(null);
+  savingBed = signal(false);
+
   constructor() {
+    // /garden?newBed=1 (e.g. the dashboard's "create your first bed") opens the dialog.
+    if (this.route.snapshot.queryParamMap.has('newBed')) {
+      this.openBedDialog();
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
     this.load();
+  }
+
+  openBedDialog(): void {
+    this.newBedName.set('');
+    this.newBedRows.set(3);
+    this.newBedCols.set(3);
+    this.bedError.set(null);
+    this.bedDialogOpen.set(true);
+  }
+
+  /** Closes the dialog; what was typed is dropped. */
+  closeBedDialog(): void {
+    this.bedDialogOpen.set(false);
+    this.bedError.set(null);
+  }
+
+  async saveBed(event: Event): Promise<void> {
+    event.preventDefault();
+    const rows = this.newBedRows();
+    const cols = this.newBedCols();
+    const validation = validateBedForm(this.newBedName(), rows, cols);
+    this.bedError.set(validation);
+    if (validation) return;
+    this.savingBed.set(true);
+    try {
+      const bed = await this.garden.createBed(this.newBedName().trim(), rows!, cols!);
+      this.beds.update((list) => [...list, bed].sort((a, b) => a.name.localeCompare(b.name, this.i18n.lang())));
+      this.grids.update((grids) => ({ ...grids, [bed.id]: buildGrid(bed.rows, bed.cols, []) }));
+      this.bedDialogOpen.set(false);
+    } catch (e) {
+      this.bedError.set(msg('bedEditor.errors.save', { detail: messageOf(e) }));
+    } finally {
+      this.savingBed.set(false);
+    }
   }
 
   /** The garden works without photos, so a failure here is only logged. */

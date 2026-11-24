@@ -65,7 +65,7 @@
               </li>
             } @empty {
               <li class="list-group-item">
-                {{ i18n.t('dashboard.noBeds') }} <a routerLink="/garden/new">{{ i18n.t('dashboard.createFirstBed') }}</a>.
+                {{ i18n.t('dashboard.noBeds') }} <a routerLink="/garden" [queryParams]="{ newBed: 1 }">{{ i18n.t('dashboard.createFirstBed') }}</a>.
               </li>
             }
           </ul>

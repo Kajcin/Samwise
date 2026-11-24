@@ -100,7 +100,7 @@ describe('DashboardComponent', () => {
     const { el } = await render();
 
     expect(el.textContent).toContain('Nothing to do in the next 7 days.');
-    expect(el.querySelector('a[href="/garden/new"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/garden?newBed=1"]')).not.toBeNull(); // opens the "new bed" dialog
   });
 
   it('shows an error when loading fails', async () => {
