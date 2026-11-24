@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ModalComponent } from '../core/modal/modal.component';
 import { parseNumberInput } from '../core/number-input';
 import { MAX_BED_SIZE, validateBedForm } from './bed-form';
@@ -32,7 +32,7 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 @Component({
   selector: 'app-garden-layout',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent],
+  imports: [IconComponent, ModalComponent],
   templateUrl: './garden-layout.component.html',
   styles: `
     .bed-grid { border-collapse: separate; border-spacing: 4px; }
