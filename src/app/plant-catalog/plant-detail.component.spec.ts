@@ -417,6 +417,9 @@ describe('PlantDetailComponent', () => {
     TestBed.resetTestingModule();
     const { fixture, el } = await render(custom);
     expect(el.querySelector('[role=dialog]')).toBeNull();
+    const add = el.querySelector<HTMLButtonElement>('button.add-rule')!;
+    expect(add.textContent!.trim()).toBe('Add'); // like "Edit" in the card above
+    expect(add.getAttribute('aria-label')).toBe('Add rule');
 
     el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
     fixture.detectChanges();

@@ -10,6 +10,7 @@
   },
   "common": {
     "loading": "Loading…",
+    "add": "Add",
     "close": "Close",
     "cancel": "Cancel",
     "done": "Done",
