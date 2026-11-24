@@ -12,7 +12,7 @@ import { FunctionError } from '../core/edge-functions';
 import { isWebAddress } from '../core/web-address';
 import { environment } from '../../environments/environment';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
-import { PlantPhotosService } from './plant-photos.service';
+import { PlantPhoto, PlantPhotosService } from './plant-photos.service';
 
 /** Matches the English and the Czech name, so "tomato" finds Rajče too. */
 export function filterPlants(plants: Plant[], query: string): Plant[] {
@@ -57,6 +57,24 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
       object-fit: cover;
       border-radius: 0.4rem;
     }
+    .catalog-thumb {
+      width: 2.75rem;
+      height: 2.75rem;
+      flex-shrink: 0;
+      border-radius: 0.4rem;
+      overflow: hidden;
+      background: linear-gradient(160deg, #f4f7ec, #e2ecd2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bs-primary);
+      opacity: 0.9;
+    }
+    .catalog-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
     .delete-slot {
       display: inline-flex;
       justify-content: center;
@@ -82,6 +100,10 @@ export class PlantCatalogListComponent {
   loading = signal(true);
   error = signal<Message | null>(null);
   deletingId = signal<string | null>(null);
+  /** Your main photo of each plant, by plant id; empty until loaded (or if that fails). */
+  mainPhotos = signal<ReadonlyMap<string, PlantPhoto>>(new Map());
+  /** Thumbnails whose picture didn't load: they show the placeholder. */
+  brokenThumbs = signal<ReadonlySet<string>>(new Set());
   query = signal('');
   visiblePlants = computed(() => sortByName(filterPlants(this.plants(), this.query()), this.i18n.lang()));
 
@@ -104,12 +126,26 @@ export class PlantCatalogListComponent {
   lookupError = signal<Message[] | null>(null);
 
   constructor() {
+    this.loadMainPhotos();
     this.service
       .list()
       .then((p) => this.plants.set(p))
       .catch((e) => this.error.set(msg('catalog.errors.load', { detail: messageOf(e) })))
       .finally(() => this.loading.set(false));
   }
+  /** The catalog works without thumbnails, so a failure here is only logged. */
+  private async loadMainPhotos(): Promise<void> {
+    try {
+      this.mainPhotos.set(await this.photos.mainPhotos());
+    } catch (e) {
+      console.error('Could not load the plant photos:', messageOf(e));
+    }
+  }
+
+  markThumbBroken(plantId: string): void {
+    this.brokenThumbs.update((set) => new Set(set).add(plantId));
+  }
+
 
   onSunChange(value: string): void {
     this.newPlantSun.set(value ? (value as SunRequirement) : null);

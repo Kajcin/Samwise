@@ -74,8 +74,9 @@ describe('PlantCatalogListComponent', () => {
     dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
     dialog.ask.and.resolveTo(true);
     lookup = jasmine.createSpyObj<PlantLookupService>('PlantLookupService', ['lookup']);
-    photos = jasmine.createSpyObj<PlantPhotosService>('PlantPhotosService', ['addWikimedia']);
+    photos = jasmine.createSpyObj<PlantPhotosService>('PlantPhotosService', ['addWikimedia', 'mainPhotos']);
     photos.addWikimedia.and.resolveTo();
+    photos.mainPhotos.and.resolveTo(new Map());
     TestBed.configureTestingModule({
       imports: [PlantCatalogListComponent],
       providers: [
@@ -338,5 +339,33 @@ describe('PlantCatalogListComponent', () => {
     fixture.detectChanges();
 
     expect(el.querySelector('.lookup-error')!.textContent).toContain('couldn’t be reached, so nothing was searched');
+  });
+
+  it('shows each plant’s main photo as a thumbnail, and a placeholder without one', async () => {
+    photos.mainPhotos.and.resolveTo(new Map([['3', { plant_id: '3', displayUrl: 'https://storage.test/chili.jpg' } as any]]));
+    const { fixture, el } = await render();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const rows = Array.from(el.querySelectorAll('li'));
+    const thumb = (name: string) => rows.find((li) => li.textContent!.includes(name))!.querySelector('.catalog-thumb')!;
+    expect(thumb('My Chili').querySelector('img')!.getAttribute('src')).toBe('https://storage.test/chili.jpg');
+    expect(thumb('Basil').querySelector('img')).toBeNull();
+    expect(thumb('Basil').querySelector('app-icon')).not.toBeNull();
+
+    thumb('My Chili').querySelector('img')!.dispatchEvent(new Event('error')); // e.g. a link that's gone
+    fixture.detectChanges();
+    expect(thumb('My Chili').querySelector('img')).toBeNull();
+  });
+
+  it('still lists the plants when the photos can’t be loaded', async () => {
+    photos.mainPhotos.and.rejectWith(new Error('offline'));
+    spyOn(console, 'error');
+    const { fixture, el } = await render();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelectorAll('li').length).toBe(3);
+    expect(el.querySelector('[role=alert]')).toBeNull();
   });
 });

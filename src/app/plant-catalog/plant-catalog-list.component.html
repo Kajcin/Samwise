@@ -85,6 +85,17 @@
         <ul class="list-group">
           @for (plant of visiblePlants(); track plant.id) {
             <li class="list-group-item d-flex align-items-center gap-2">
+              <span class="catalog-thumb" aria-hidden="true">
+                @if (mainPhotos().get(plant.id); as photo) {
+                  @if (!brokenThumbs().has(plant.id)) {
+                    <img [src]="photo.displayUrl" alt="" loading="lazy" referrerpolicy="no-referrer" (error)="markThumbBroken(plant.id)" />
+                  } @else {
+                    <app-icon name="flower2" />
+                  }
+                } @else {
+                  <app-icon name="flower2" />
+                }
+              </span>
               <a class="flex-grow-1" [routerLink]="['/plants', plant.id]">{{ plantName(plant, i18n.lang()) }}</a>
               @if (plant.user_id) {
                 <span class="badge text-bg-success">{{ i18n.t('catalog.yours') }}</span>

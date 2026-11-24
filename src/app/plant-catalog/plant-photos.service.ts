@@ -48,8 +48,19 @@ export class PlantPhotosService {
       .order('is_main', { ascending: false })
       .order('created_at', { ascending: false });
     if (error) throw error;
-    const rows = (data ?? []) as Omit<PlantPhoto, 'displayUrl'>[];
+    return this.withDisplayUrls((data ?? []) as Omit<PlantPhoto, 'displayUrl'>[]);
+  }
 
+  /** Your main photo of each plant that has one, by plant id (for the catalog list). */
+  async mainPhotos(): Promise<Map<string, PlantPhoto>> {
+    const { data, error } = await supabase.from('plant_photos').select('*').eq('is_main', true);
+    if (error) throw error;
+    const photos = await this.withDisplayUrls((data ?? []) as Omit<PlantPhoto, 'displayUrl'>[]);
+    return new Map(photos.map((p) => [p.plant_id, p]));
+  }
+
+  /** Adds where to show each photo from; uploads get signed URLs, in one request. */
+  private async withDisplayUrls(rows: Omit<PlantPhoto, 'displayUrl'>[]): Promise<PlantPhoto[]> {
     const paths = rows.filter((r) => r.storage_path).map((r) => r.storage_path!);
     const signed = new Map<string, string>();
     if (paths.length) {

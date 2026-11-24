@@ -98,4 +98,19 @@ describe('PlantPhotosService', () => {
     await service.setMain('b');
     expect(supabase.rpc).toHaveBeenCalledWith('set_main_plant_photo', { p_photo_id: 'b' });
   });
+
+  it('gives your main photo of each plant, by plant id', async () => {
+    const rows = [
+      { id: 'a', plant_id: 'p1', kind: 'upload', storage_path: 'me/p1/a.jpg', url: null, is_main: true },
+      { id: 'c', plant_id: 'p2', kind: 'wikimedia', storage_path: null, url: 'https://upload.wikimedia.org/c.jpg', is_main: true },
+    ];
+    const eq = jasmine.createSpy('eq').and.resolveTo({ data: rows, error: null });
+    spyOn(supabase, 'from').and.returnValue({ select: () => ({ eq }) } as any);
+
+    const main = await service.mainPhotos();
+
+    expect(eq).toHaveBeenCalledWith('is_main', true);
+    expect(main.get('p1')!.displayUrl).toBe('https://storage.test/signed/a.jpg');
+    expect(main.get('p2')!.displayUrl).toBe('https://upload.wikimedia.org/c.jpg');
+  });
 });
