@@ -12,6 +12,7 @@ import { FunctionError } from '../core/edge-functions';
 import { isWebAddress } from '../core/web-address';
 import { environment } from '../../environments/environment';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
+import { PlantPhotosService } from './plant-photos.service';
 
 /** Matches the English and the Czech name, so "tomato" finds Rajče too. */
 export function filterPlants(plants: Plant[], query: string): Plant[] {
@@ -50,6 +51,12 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
   imports: [RouterLink, IconComponent],
   templateUrl: './plant-catalog-list.component.html',
   styles: `
+    .lookup-thumb {
+      width: 4.5rem;
+      height: 4.5rem;
+      object-fit: cover;
+      border-radius: 0.4rem;
+    }
     .delete-slot {
       display: inline-flex;
       justify-content: center;
@@ -65,6 +72,7 @@ export class PlantCatalogListComponent {
   protected i18n = inject(LanguageService);
   private confirmDialog = inject(ConfirmDialogService);
   private lookupService = inject(PlantLookupService);
+  private photos = inject(PlantPhotosService);
 
   protected readonly sunOptions = SUN_REQUIREMENTS;
   protected readonly sunKey = sunKey;
@@ -198,6 +206,11 @@ export class PlantCatalogListComponent {
         notes: this.newPlantNotes().trim() || null,
         source_url: this.newPlantSourceUrl().trim() || null,
       });
+      // From a lookup: the article's picture (with its credit) becomes the plant's photo.
+      const image = this.prefilledFrom()?.image;
+      if (image) {
+        await this.photos.addWikimedia(plant.id, image).catch((e) => console.error('Could not add the photo:', messageOf(e)));
+      }
       this.plants.update((list) => [...list, plant]);
       await this.router.navigate(['/plants', plant.id]);
     } catch (e) {

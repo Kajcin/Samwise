@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from 'jsr:@std/assert@1';
-import { getEntities, searchWikipedia } from './wikimedia.ts';
+import { getEntities, getImageCredits, plainText, searchWikipedia } from './wikimedia.ts';
 
 function stubFetch(body: unknown, status = 200) {
   const original = globalThis.fetch;
@@ -16,7 +16,11 @@ Deno.test('searchWikipedia asks for intros and Wikidata ids, and keeps the searc
     query: {
       pages: [
         { index: 2, title: 'Šanta kočičí', pageprops: { wikibase_item: 'Q161139' }, extract: 'Šanta kočičí (Nepeta cataria)…', fullurl: 'https://cs.wikipedia.org/wiki/%C5%A0anta_ko%C4%8Di%C4%8D%C3%AD' },
-        { index: 1, title: 'Šanta', pageprops: { wikibase_item: 'Q303820' }, extract: 'Šanta (Nepeta) je rod…', fullurl: 'https://cs.wikipedia.org/wiki/%C5%A0anta' },
+        {
+          index: 1, title: 'Šanta', pageprops: { wikibase_item: 'Q303820' }, extract: 'Šanta (Nepeta) je rod…',
+          fullurl: 'https://cs.wikipedia.org/wiki/%C5%A0anta',
+          pageimage: 'Nepeta_racemosa.jpg', thumbnail: { source: 'https://upload.wikimedia.org/thumb/Nepeta_racemosa.jpg' },
+        },
         { index: 3, title: 'Seznam', extract: '' },
       ],
     },
@@ -30,6 +34,9 @@ Deno.test('searchWikipedia asks for intros and Wikidata ids, and keeps the searc
     assertEquals(url.searchParams.get('gsrsearch'), 'šanta');
     assertEquals(url.searchParams.get('ppprop'), 'wikibase_item');
     assertEquals(url.searchParams.get('redirects'), '1');
+    assertEquals(url.searchParams.get('pilicense'), 'free'); // only freely licensed pictures
+    assertEquals(pages[0].image, { file: 'Nepeta_racemosa.jpg', thumbUrl: 'https://upload.wikimedia.org/thumb/Nepeta_racemosa.jpg' });
+    assertEquals(pages[1].image, null);
     assertEquals((init!.headers as Record<string, string>)['User-Agent'], 'test-agent/1.0');
   } finally { f.restore(); }
 });
@@ -102,4 +109,42 @@ Deno.test('gives up after repeated rate limiting', async () => {
     await assertRejects(() => getEntities(['Q1']), Error, '429');
     assertEquals(calls, 3);
   } finally { globalThis.fetch = original; }
+});
+
+Deno.test('plainText turns the author’s HTML into text', () => {
+  assertEquals(plainText('<a href="//commons.wikimedia.org/wiki/User:Jane">Jane&nbsp;Doe</a> &amp; Co'), 'Jane Doe & Co');
+  assertEquals(plainText(''), '');
+});
+
+Deno.test('getImageCredits reads author and licence, and skips files without a licence', async () => {
+  const f = stubFetch({
+    query: {
+      pages: [
+        {
+          title: 'File:Nepeta racemosa.jpg',
+          imageinfo: [{
+            descriptionurl: 'https://commons.wikimedia.org/wiki/File:Nepeta_racemosa.jpg',
+            extmetadata: {
+              Artist: { value: '<a href="//commons.wikimedia.org/wiki/User:Jane">Jane Doe</a>' },
+              LicenseShortName: { value: 'CC BY-SA 4.0' },
+              LicenseUrl: { value: 'https://creativecommons.org/licenses/by-sa/4.0' },
+            },
+          }],
+        },
+        { title: 'File:Mystery.jpg', imageinfo: [{ descriptionurl: 'x', extmetadata: {} }] },
+      ],
+    },
+  });
+  try {
+    const credits = await getImageCredits(['Nepeta_racemosa.jpg', 'Mystery.jpg']);
+
+    assertEquals(credits, {
+      'Nepeta racemosa.jpg': {
+        author: 'Jane Doe', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        sourceUrl: 'https://commons.wikimedia.org/wiki/File:Nepeta_racemosa.jpg',
+      },
+    });
+    assertEquals(f.calls[0].url.origin, 'https://commons.wikimedia.org');
+    assertEquals(f.calls[0].url.searchParams.get('titles'), 'File:Nepeta racemosa.jpg|File:Mystery.jpg');
+  } finally { f.restore(); }
 });

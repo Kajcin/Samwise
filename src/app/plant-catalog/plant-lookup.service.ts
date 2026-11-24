@@ -2,6 +2,16 @@ import { Injectable } from '@angular/core';
 import { invokeFunction } from '../core/edge-functions';
 import type { Lang } from '../core/i18n/i18n';
 
+/** A free picture of the plant from Wikimedia Commons, with what's needed to credit it. */
+export interface PlantImage {
+  url: string;
+  author: string | null;
+  license: string;
+  licenseUrl: string | null;
+  /** The picture's page on Wikimedia Commons. */
+  sourceUrl: string;
+}
+
 export type TaxonRank = 'family' | 'genus' | 'species' | 'hybrid' | 'subspecies' | 'variety' | 'cultivar';
 
 /** A plant found on Wikipedia (see supabase/functions/plant-lookup/lookup.ts). */
@@ -18,6 +28,8 @@ export interface PlantCandidate {
   url: string;
   /** The Wikipedia it came from. */
   language: Lang;
+  /** The article's free main picture; null if none (or its licence is unknown). */
+  image?: PlantImage | null;
 }
 
 @Injectable({ providedIn: 'root' })

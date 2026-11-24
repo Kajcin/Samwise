@@ -8,6 +8,8 @@ import { parseNumberInput } from '../core/number-input';
 import { CareRule, Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
 import { Router } from '@angular/router';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
+import { PlantPhotosService } from './plant-photos.service';
+import { PlantLookupService } from './plant-lookup.service';
 
 describe('validateCareRuleForm', () => {
   it('requires offset_days when timing_type is offset_from_planting', () => {
@@ -132,6 +134,8 @@ describe('PlantDetailComponent', () => {
         provideRouter([]),
         { provide: PlantCatalogService, useValue: service },
         { provide: ConfirmDialogService, useValue: dialog },
+        { provide: PlantPhotosService, useValue: jasmine.createSpyObj('PlantPhotosService', { list: Promise.resolve([]) }) },
+        { provide: PlantLookupService, useValue: jasmine.createSpyObj('PlantLookupService', ['lookup']) },
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: plant.id })) } },
       ],
     });
@@ -477,6 +481,7 @@ describe('PlantDetailComponent', () => {
   it('shows a picture placeholder, and for built-in plants the copy button by the title', async () => {
     const { el } = await render(seeded);
 
+    await new Promise((r) => setTimeout(r));
     expect(el.querySelector('.plant-image')!.textContent).toContain('No photo yet');
     expect(el.querySelector('button.clone')!.textContent).toContain('Clone to customize');
     expect(el.querySelector('.card-footer')!.textContent).toContain('built-in plant');

@@ -4,6 +4,7 @@ import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 import { PlantInUseError } from './plant-catalog.service';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
 import { FunctionError } from '../core/edge-functions';
+import { PlantPhotosService } from './plant-photos.service';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { filterPlants, PlantCatalogListComponent, validateNewPlantForm } from './plant-catalog-list.component';
@@ -58,6 +59,7 @@ describe('PlantCatalogListComponent', () => {
   let service: jasmine.SpyObj<PlantCatalogService>;
   let dialog: jasmine.SpyObj<ConfirmDialogService>;
   let lookup: jasmine.SpyObj<PlantLookupService>;
+  let photos: jasmine.SpyObj<PlantPhotosService>;
 
   async function render() {
     const fixture = TestBed.createComponent(PlantCatalogListComponent);
@@ -72,6 +74,8 @@ describe('PlantCatalogListComponent', () => {
     dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
     dialog.ask.and.resolveTo(true);
     lookup = jasmine.createSpyObj<PlantLookupService>('PlantLookupService', ['lookup']);
+    photos = jasmine.createSpyObj<PlantPhotosService>('PlantPhotosService', ['addWikimedia']);
+    photos.addWikimedia.and.resolveTo();
     TestBed.configureTestingModule({
       imports: [PlantCatalogListComponent],
       providers: [
@@ -80,6 +84,7 @@ describe('PlantCatalogListComponent', () => {
         { provide: PlantCatalogService, useValue: service },
         { provide: ConfirmDialogService, useValue: dialog },
         { provide: PlantLookupService, useValue: lookup },
+        { provide: PlantPhotosService, useValue: photos },
       ],
     });
   });
@@ -281,6 +286,29 @@ describe('PlantCatalogListComponent', () => {
       notes: `${catmint.description} (Source: Wikipedia, CC BY-SA 4.0)`,
       source_url: catmint.url,
     }));
+    expect(photos.addWikimedia).not.toHaveBeenCalled(); // this result has no picture
+  });
+
+  it('gives a plant added from a result with a picture that picture as its photo', async () => {
+    const image = { url: 'https://upload.wikimedia.org/n.jpg', author: 'Jane', license: 'CC BY-SA 4.0', licenseUrl: null, sourceUrl: 'https://commons.wikimedia.org/wiki/File:N.jpg' };
+    lookup.lookup.and.resolveTo([{ ...catmint, image }]);
+    service.addCustom.and.resolveTo({ id: 'new' } as Plant);
+    const { fixture, el } = await render();
+    await search(fixture, el, 'šanta');
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector<HTMLImageElement>('.candidate img.lookup-thumb')!.src).toBe(image.url);
+
+    el.querySelector<HTMLButtonElement>('.candidate button.use')!.click();
+    fixture.detectChanges();
+    const sun = el.querySelector<HTMLSelectElement>('select[name=sun]')!;
+    sun.value = 'full_sun';
+    sun.dispatchEvent(new Event('change'));
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(photos.addWikimedia).toHaveBeenCalledWith('new', image);
   });
 
   it('clears the pre-filled fields on request', async () => {

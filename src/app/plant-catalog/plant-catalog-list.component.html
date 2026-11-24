@@ -35,7 +35,15 @@
             @for (candidate of results; track candidate.wikidataId) {
               <li class="list-group-item candidate">
                 <div class="d-flex justify-content-between align-items-start gap-3">
-                  <div>
+                  @if (candidate.image) {
+                    <img
+                      class="lookup-thumb flex-shrink-0"
+                      [src]="candidate.image.url"
+                      [alt]="i18n.t('photos.alt', { plant: candidate.articleTitle })"
+                      referrerpolicy="no-referrer"
+                    />
+                  }
+                  <div class="flex-grow-1">
                     <strong>{{ candidate.name }}</strong>
                     <i class="text-body-secondary ms-1">{{ candidate.latinName }}</i>
                     @if (candidate.rank) {

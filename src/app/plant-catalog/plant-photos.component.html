@@ -1,0 +1,202 @@
+<figure class="card plant-photos mb-0">
+  <div class="ratio ratio-4x3 rounded-top overflow-hidden photo-placeholder">
+    @if (viewed(); as photo) {
+      @if (!broken().has(photo.id)) {
+        <img
+          class="w-100 h-100 object-fit-cover main-photo"
+          [src]="photo.displayUrl"
+          [alt]="i18n.t('photos.alt', { plant: plantName() })"
+          referrerpolicy="no-referrer"
+          (error)="markBroken(photo.id)"
+        />
+      } @else {
+        <div class="d-flex flex-column align-items-center justify-content-center text-body-secondary p-3 text-center">
+          <app-icon name="exclamation-triangle" class="fs-3 mb-2" />
+          <span class="small broken-note">{{ i18n.t('photos.broken') }}</span>
+        </div>
+      }
+    } @else {
+      <div class="d-flex flex-column align-items-center justify-content-center text-primary">
+        <app-icon name="flower2" class="photo-placeholder-icon" />
+        <span class="small text-body-secondary mt-2 no-photo">
+          {{ i18n.t(loading() ? 'common.loading' : 'plant.noPhoto') }}
+        </span>
+      </div>
+    }
+  </div>
+
+  <div class="card-body p-2">
+    @if (viewed(); as photo) {
+      <figcaption class="small text-body-secondary mb-2 credit">
+        @if (photo.is_main) {
+          <span class="badge text-bg-light border me-1">{{ i18n.t('photos.main') }}</span>
+        }
+        @switch (photo.kind) {
+          @case ('wikimedia') {
+            {{ i18n.t('photos.creditLabel') }}
+            @if (photo.attribution?.author) {
+              {{ photo.attribution!.author }},
+            }
+            @if (photo.attribution?.licenseUrl) {
+              <a [href]="photo.attribution!.licenseUrl" target="_blank" rel="noopener noreferrer">{{ photo.attribution!.license }}</a>,
+            } @else {
+              {{ photo.attribution?.license }},
+            }
+            <a [href]="photo.attribution?.sourceUrl" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a>
+          }
+          @case ('link') {
+            {{ i18n.t('photos.source') }}
+            <a [href]="photo.url" target="_blank" rel="noopener noreferrer">{{ hostOf(photo.url ?? '') }}</a>
+          }
+          @default {
+            {{ i18n.t('photos.yourPhoto') }}
+          }
+        }
+      </figcaption>
+    }
+
+    @if (photos().length > 1) {
+      <div class="d-flex flex-wrap gap-1 mb-2 thumbs" role="group" [attr.aria-label]="i18n.t('photos.all')">
+        @for (photo of photos(); track photo.id; let n = $index) {
+          <button
+            type="button"
+            class="thumb btn"
+            [attr.aria-pressed]="viewed()?.id === photo.id"
+            [attr.aria-label]="i18n.t('photos.thumbLabel', { n: n + 1 })"
+            (click)="view(photo)"
+          >
+            <img [src]="photo.displayUrl" alt="" referrerpolicy="no-referrer" />
+            @if (photo.is_main) {
+              <app-icon name="star-fill" class="main-star" />
+            }
+          </button>
+        }
+      </div>
+    }
+
+    @if (error()) {
+      <div class="alert alert-danger small py-2 mb-2" role="alert">{{ i18n.text(error()) }}</div>
+    }
+
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary add-photo" [disabled]="busy()" (click)="openDialog()">
+        <app-icon name="plus-lg" class="me-1" />{{ i18n.t('photos.add') }}
+      </button>
+      @if (viewed(); as photo) {
+        @if (!photo.is_main) {
+          <button type="button" class="btn btn-sm btn-outline-secondary set-main" [disabled]="busy()" (click)="setMain(photo)">
+            <app-icon name="star-fill" class="me-1" />{{ i18n.t('photos.setMain') }}
+          </button>
+        }
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger ms-auto delete-photo"
+          [disabled]="busy()"
+          [attr.aria-label]="i18n.t('photos.delete')"
+          [title]="i18n.t('photos.delete')"
+          (click)="deletePhoto(photo)"
+        >
+          <app-icon name="trash" />
+        </button>
+      }
+    </div>
+  </div>
+</figure>
+
+<app-modal [open]="dialogOpen()" [title]="i18n.t('photos.dialogTitle')" (closed)="closeDialog()">
+  @if (dialogOpen()) {
+    <form class="photo-form" novalidate (submit)="submit($event)">
+      <div class="modal-body">
+        <div class="btn-group w-100 mb-3" role="group" [attr.aria-label]="i18n.t('photos.dialogTitle')">
+          @for (s of sources; track s.id) {
+            <input
+              type="radio"
+              class="btn-check"
+              name="photoSource"
+              [id]="'photo-source-' + s.id"
+              [value]="s.id"
+              [checked]="source() === s.id"
+              (change)="chooseSource(s.id)"
+            />
+            <label class="btn btn-outline-primary btn-sm" [for]="'photo-source-' + s.id">
+              <app-icon [name]="s.icon" class="me-1" />{{ i18n.t(s.label) }}
+            </label>
+          }
+        </div>
+
+        @switch (source()) {
+          @case ('upload') {
+            <label class="form-label" for="photo-files">{{ i18n.t('photos.chooseFiles') }}</label>
+            <input
+              id="photo-files"
+              class="form-control"
+              name="files"
+              type="file"
+              accept="image/*"
+              multiple
+              [disabled]="!!progress()"
+              (change)="onFilesChosen($any($event.target))"
+            />
+            <div class="form-text">{{ i18n.t('photos.uploadHint') }}</div>
+            @if (progress(); as p) {
+              <p class="mt-2 mb-0 small" role="status">{{ i18n.t('photos.uploading', { done: p.done + 1, total: p.total }) }}</p>
+            }
+          }
+          @case ('link') {
+            <label class="form-label" for="photo-link">{{ i18n.t('photos.linkLabel') }}</label>
+            <input
+              id="photo-link"
+              class="form-control"
+              name="link"
+              type="url"
+              inputmode="url"
+              placeholder="https://"
+              [value]="linkUrl()"
+              (input)="linkUrl.set($any($event.target).value)"
+            />
+            <div class="form-text">{{ i18n.t('photos.linkHint') }}</div>
+          }
+          @case ('wikipedia') {
+            @if (wikiLoading()) {
+              <p class="text-body-secondary mb-0" role="status">{{ i18n.t('photos.wikipediaSearching') }}</p>
+            } @else if (wikiResults(); as results) {
+              <ul class="list-unstyled mb-0 wiki-results">
+                @for (candidate of results; track candidate.wikidataId) {
+                  <li class="d-flex align-items-center gap-2 mb-2 wiki-candidate">
+                    <img class="candidate-image" [src]="candidate.image!.url" alt="" referrerpolicy="no-referrer" />
+                    <div class="flex-grow-1 small">
+                      <strong>{{ candidate.articleTitle }}</strong>
+                      <i class="d-block text-body-secondary">{{ candidate.latinName }}</i>
+                      <span class="text-body-secondary">
+                        {{ candidate.image!.author ? candidate.image!.author + ', ' : '' }}{{ candidate.image!.license }}
+                      </span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary use" (click)="useWikipediaImage(candidate)">
+                      {{ i18n.t('lookup.use') }}
+                    </button>
+                  </li>
+                } @empty {
+                  <li class="text-body-secondary wiki-none">{{ i18n.t('photos.wikipediaNone') }}</li>
+                }
+              </ul>
+            }
+          }
+        }
+
+        @if (dialogError()) {
+          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(dialogError()) }}</div>
+        }
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-outline-secondary close-dialog" [disabled]="!!progress()" (click)="closeDialog()">
+          {{ i18n.t('common.close') }}
+        </button>
+        @if (source() !== 'wikipedia') {
+          <button type="submit" class="btn btn-primary" [disabled]="!!progress()">
+            <app-icon name="plus-lg" class="me-1" />{{ i18n.t(source() === 'upload' ? 'photos.upload' : 'photos.addLink') }}
+          </button>
+        }
+      </div>
+    </form>
+  }
+</app-modal>

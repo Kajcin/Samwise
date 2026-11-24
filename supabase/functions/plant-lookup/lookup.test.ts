@@ -1,5 +1,5 @@
 import { assertEquals } from 'jsr:@std/assert@1';
-import { cacheKey, Language, LookupDeps, lookupPlant, TaxonEntity, WikiPage } from './lookup.ts';
+import { cacheKey, ImageCredit, Language, LookupDeps, lookupPlant, TaxonEntity, WikiPage } from './lookup.ts';
 
 // Shaped like the real answers for these searches (cs.wikipedia.org, Wikidata, Nov 2026).
 const page = (title: string, wikidataId: string | null, extract = `${title} je…`): WikiPage => ({
@@ -18,9 +18,10 @@ const ENTITIES: Record<string, TaxonEntity> = {
   Q315796: { taxonName: null, rankId: null, isPlant: false, labels: { cs: 'Santa Claus' } },
 };
 
-function fakes(searches: Record<string, WikiPage[]>) {
+function fakes(searches: Record<string, WikiPage[]>, credits: Record<string, ImageCredit> = {}) {
   const log: string[] = [];
   const entityRequests: string[][] = [];
+  const imageRequests: string[][] = [];
   const deps: LookupDeps = {
     searchWikipedia: (language: Language, query: string) => {
       log.push(`${language}: ${query}`);
@@ -30,8 +31,12 @@ function fakes(searches: Record<string, WikiPage[]>) {
       entityRequests.push(ids);
       return Promise.resolve(Object.fromEntries(ids.filter((id) => ENTITIES[id]).map((id) => [id, ENTITIES[id]])));
     },
+    getImageCredits: (files) => {
+      imageRequests.push(files);
+      return Promise.resolve(Object.fromEntries(Object.entries(credits).filter(([file]) => files.some((f) => f.replaceAll('_', ' ') === file))));
+    },
   };
-  return { deps, log, entityRequests };
+  return { deps, log, entityRequests, imageRequests };
 }
 
 Deno.test('finds plants and leaves out animals, people and pages without a Wikidata item', async () => {
@@ -94,8 +99,8 @@ Deno.test('returns nothing for empty or one-letter searches, or when no plant is
 });
 
 Deno.test('the cache key ignores case, accents, spacing and punctuation but not the language', () => {
-  assertEquals(cacheKey("  Šanta   Walker's LOW ", 'cs'), 'cs:santa walkers low');
-  assertEquals(cacheKey('šanta', 'en'), 'en:santa');
+  assertEquals(cacheKey("  Šanta   Walker's LOW ", 'cs'), 'v3:cs:santa walkers low');
+  assertEquals(cacheKey('šanta', 'en'), 'v3:en:santa');
 });
 
 Deno.test('asks Wikidata about each page only once per lookup, however many rounds', async () => {
@@ -109,4 +114,57 @@ Deno.test('asks Wikidata about each page only once per lookup, however many roun
 
   assertEquals(await lookupPlant(deps, 'xyzzy plant qq', 'en'), []);
   assertEquals(entityRequests, [['Q28425'], ['Q315796']]);
+});
+
+Deno.test('adds each plant’s free picture with its credit, in one request', async () => {
+  const withImage = (p: WikiPage, file: string): WikiPage => ({ ...p, image: { file, thumbUrl: `https://upload.wikimedia.org/thumb/${file}` } });
+  const { deps, imageRequests } = fakes(
+    {
+      'cs: šanta': [
+        withImage(page('Šanta', 'Q303820'), 'Nepeta_racemosa.jpg'),
+        withImage(page('Šanta zkřížená', 'Q912457'), 'No_licence.jpg'),
+        page('Šanta hroznovitá', 'Q2319755'),
+      ],
+    },
+    {
+      'Nepeta racemosa.jpg': {
+        author: 'Jane Doe', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        sourceUrl: 'https://commons.wikimedia.org/wiki/File:Nepeta_racemosa.jpg',
+      },
+    },
+  );
+
+  const found = await lookupPlant(deps, 'šanta', 'cs');
+
+  assertEquals(imageRequests, [['Nepeta_racemosa.jpg', 'No_licence.jpg']]);
+  assertEquals(found[0].image, {
+    url: 'https://upload.wikimedia.org/thumb/Nepeta_racemosa.jpg',
+    author: 'Jane Doe', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Nepeta_racemosa.jpg',
+  });
+  assertEquals(found[1].image, null); // its licence is unknown: not shown
+  assertEquals(found[2].image, null); // the article has no picture
+});
+
+Deno.test('asks for no credits when no plant has a picture', async () => {
+  const { deps, imageRequests } = fakes({ 'cs: šanta': [page('Šanta', 'Q303820')] });
+
+  await lookupPlant(deps, 'šanta', 'cs');
+  assertEquals(imageRequests, []);
+});
+
+Deno.test('next to an exact match, results that only guess a cultivar are left out', async () => {
+  const ENTITY = (taxonName: string, cs: string): TaxonEntity => ({ taxonName, rankId: 'Q7432', isPlant: true, labels: { cs } });
+  const { deps } = fakes({
+    'cs: šalvěj lékařská': [page('Šalvěj lékařská', 'Q1'), page('Šalvěj', 'Q2'), page('Šalvěj luční', 'Q3')],
+  });
+  deps.getEntities = () => Promise.resolve({
+    Q1: ENTITY('Salvia officinalis', 'šalvěj lékařská'),
+    Q2: ENTITY('Salvia', 'šalvěj'),
+    Q3: ENTITY('Salvia pratensis', 'šalvěj luční'),
+  });
+
+  const found = await lookupPlant(deps, 'šalvěj lékařská', 'cs');
+
+  assertEquals(found.map((c) => [c.name, c.cultivar]), [['Šalvěj lékařská', null]]);
 });

@@ -291,6 +291,43 @@
       "failed": "Hledání na Wikipedii selhalo. Zkuste to prosím později."
     }
   },
+  "photos": {
+    "add": "Přidat fotku",
+    "dialogTitle": "Přidat fotku",
+    "tabUpload": "Nahrát",
+    "tabLink": "Odkaz",
+    "tabWikipedia": "Wikipedie",
+    "chooseFiles": "Fotky ze zařízení",
+    "uploadHint": "JPEG, PNG nebo WebP. Před nahráním se zmenší asi na 1600 px a uvidíte je jen vy.",
+    "upload": "Nahrát",
+    "uploading": "Nahrávám {done} z {total}…",
+    "linkLabel": "Adresa obrázku",
+    "linkHint": "Obrázek zůstává na svém webu a zobrazuje se odtud, nic se nekopíruje. Respektujte podmínky webu – některé použití svých fotek nedovolují.",
+    "addLink": "Přidat odkaz",
+    "wikipediaSearching": "Hledám obrázky na Wikipedii…",
+    "wikipediaNone": "Na Wikipedii k této rostlině volný obrázek není.",
+    "alt": "Fotka: {plant}",
+    "all": "Všechny fotky",
+    "thumbLabel": "Fotka {n}",
+    "main": "Hlavní fotka",
+    "setMain": "Nastavit jako hlavní",
+    "delete": "Smazat fotku",
+    "deleteTitle": "Smazat fotku?",
+    "deleteMessage": "Fotka se z této rostliny odstraní.",
+    "creditLabel": "Foto:",
+    "source": "Zdroj:",
+    "yourPhoto": "Vaše fotka",
+    "broken": "Obrázek se nepodařilo načíst (možná byl na svém webu přesunut nebo odstraněn).",
+    "errors": {
+      "load": "Fotky se nepodařilo načíst: {detail}",
+      "save": "Fotku se nepodařilo uložit: {detail}",
+      "delete": "Fotku se nepodařilo smazat: {detail}",
+      "noFiles": "Nejdřív vyberte jednu nebo více fotek.",
+      "unreadable": "„{file}“ není obrázek, který prohlížeč umí přečíst (např. HEIC z iPhonu – nejdřív ho uložte jako JPEG).",
+      "upload": "„{file}“ se nepodařilo nahrát: {detail}",
+      "linkInvalid": "Zadejte webovou adresu začínající http:// nebo https://."
+    }
+  },
   "settings": {
     "heading": "Nastavení",
     "account": "Účet",

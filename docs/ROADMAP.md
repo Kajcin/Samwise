@@ -68,6 +68,16 @@ tasks, the garden view) before adding columns.
 - Later: changing a care rule doesn't update tasks already generated for plants in the
   ground (the plant page says so); regenerating them is a possible follow-up.
 
+## Plant photos
+
+Done (migration 0014): several photos per plant, one main; uploads (shrunk, private
+storage), links, and Wikimedia Commons pictures with their credit, also on built-in plants
+(each user's own). Plants added from the lookup get the article's picture.
+
+Possible follow-ups:
+- The main photo as a thumbnail in the plant catalog and the garden grid.
+- A photo per planting (how it's doing this year), not just per plant.
+
 ## Going live
 
 Frontend hosting, the hosted Supabase project (README sections 4 and 5), the Google

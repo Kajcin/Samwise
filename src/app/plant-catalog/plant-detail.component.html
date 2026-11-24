@@ -236,14 +236,7 @@
       </div>
 
       <div class="col-lg-4 order-first order-lg-last">
-        <figure class="card plant-image mb-0">
-          <div class="ratio ratio-4x3 plant-image-placeholder rounded">
-            <div class="d-flex flex-column align-items-center justify-content-center text-primary">
-              <app-icon name="flower2" class="plant-image-icon" />
-              <figcaption class="small text-body-secondary mt-2">{{ i18n.t('plant.noPhoto') }}</figcaption>
-            </div>
-          </div>
-        </figure>
+        <app-plant-photos class="plant-image d-block" [plantId]="p.id" [plantName]="plantName(p, i18n.lang())" [species]="p.species" />
       </div>
     </div>
 

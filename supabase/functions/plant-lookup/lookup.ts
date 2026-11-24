@@ -11,6 +11,23 @@ export interface WikiPage {
   /** The article's first sentences, plain text. */
   extract: string;
   url: string;
+  /** The article's main free image (pageimages), if any. */
+  image?: { file: string; thumbUrl: string } | null;
+}
+
+/** Who made a Commons picture and under which licence, to credit it. */
+export interface ImageCredit {
+  /** Plain text; null when Commons doesn't name one. */
+  author: string | null;
+  license: string;
+  licenseUrl: string | null;
+  /** The picture's page on Wikimedia Commons. */
+  sourceUrl: string;
+}
+
+/** A free picture of the plant, with what's needed to credit it. */
+export interface PlantImage extends ImageCredit {
+  url: string;
 }
 
 /** The parts of a Wikidata item the lookup uses. */
@@ -28,6 +45,8 @@ export interface TaxonEntity {
 export interface LookupDeps {
   searchWikipedia(language: Language, query: string): Promise<WikiPage[]>;
   getEntities(ids: string[]): Promise<Record<string, TaxonEntity>>;
+  /** Credits for Commons files, by file name; files without a known licence are left out. */
+  getImageCredits(files: string[]): Promise<Record<string, ImageCredit>>;
 }
 
 /** A plant found for the query, to pre-fill the "Add a custom plant" form. */
@@ -46,6 +65,8 @@ export interface PlantCandidate {
   url: string;
   /** Which Wikipedia: its texts are in this language. */
   language: Language;
+  /** The article's free main picture with its credit; null if none or its licence is unknown. */
+  image: PlantImage | null;
 }
 
 const RANKS: Record<string, Rank> = {
@@ -111,7 +132,34 @@ function toCandidate(query: string, page: WikiPage, entity: TaxonEntity, languag
     description: page.extract.trim(),
     url: page.url,
     language,
+    image: null,
   };
+}
+
+/**
+ * When some result accounts for every searched word ("šalvěj lékařská" → Šalvěj lékařská),
+ * results that only guess the rest is a cultivar (Šalvěj + 'Lékařská') are dropped.
+ */
+export function preferExactMatches(candidates: PlantCandidate[]): PlantCandidate[] {
+  const exact = candidates.filter((c) => !c.cultivar);
+  return exact.length ? exact : candidates;
+}
+
+/** Commons file names, as the image APIs write them ("A_b.jpg" and "A b.jpg" are one file). */
+export function fileKey(file: string): string {
+  return file.replace(/^File:/i, '').replaceAll('_', ' ').trim();
+}
+
+/** Adds each candidate's picture, if Commons knows its licence (one request for all). */
+async function withImages(deps: LookupDeps, candidates: PlantCandidate[], pages: Map<string, WikiPage>) {
+  const files = [...new Set(candidates.map((c) => pages.get(c.wikidataId)?.image?.file).filter((f): f is string => !!f))];
+  if (!files.length) return candidates;
+  const credits = await deps.getImageCredits(files);
+  return candidates.map((c) => {
+    const image = pages.get(c.wikidataId)?.image;
+    const credit = image ? credits[fileKey(image.file)] : undefined;
+    return credit && image ? { ...c, image: { url: image.thumbUrl, ...credit } } : c;
+  });
 }
 
 /** Wikidata items fetched so far in one lookup: later rounds mostly find the same pages. */
@@ -131,19 +179,26 @@ async function entitiesFor(deps: LookupDeps, ids: string[], memo: EntityMemo): P
   return out;
 }
 
-async function plantsIn(deps: LookupDeps, language: Language, query: string, originalQuery: string, memo: EntityMemo) {
+/** The plants among the search hits, and the page each came from (for its picture). */
+async function plantsIn(
+  deps: LookupDeps,
+  language: Language,
+  query: string,
+  originalQuery: string,
+  memo: EntityMemo,
+): Promise<{ candidates: PlantCandidate[]; pages: Map<string, WikiPage> }> {
   const pages = (await deps.searchWikipedia(language, query)).filter((p) => p.wikidataId);
-  if (!pages.length) return [];
+  if (!pages.length) return { candidates: [], pages: new Map() };
   const entities = await entitiesFor(deps, pages.map((p) => p.wikidataId!), memo);
-  const seen = new Set<string>();
+  const byId = new Map<string, WikiPage>();
   const candidates: PlantCandidate[] = [];
   for (const page of pages) {
     const entity = entities[page.wikidataId!];
-    if (!entity?.isPlant || !entity.taxonName || seen.has(page.wikidataId!)) continue;
-    seen.add(page.wikidataId!);
+    if (!entity?.isPlant || !entity.taxonName || byId.has(page.wikidataId!)) continue;
+    byId.set(page.wikidataId!, page);
     candidates.push(toCandidate(originalQuery, page, entity, language));
   }
-  return candidates;
+  return { candidates, pages: byId };
 }
 
 /**
@@ -160,14 +215,17 @@ export async function lookupPlant(deps: LookupDeps, query: string, language: Lan
   for (let drop = 0; drop <= Math.min(MAX_DROPPED_WORDS, queryWords.length - 1); drop++) {
     const shorter = queryWords.slice(0, queryWords.length - drop).join(' ');
     for (const lang of languages) {
-      const found = await plantsIn(deps, lang, shorter, query, memo);
-      if (found.length) return found.slice(0, MAX_CANDIDATES);
+      const { candidates, pages } = await plantsIn(deps, lang, shorter, query, memo);
+      if (candidates.length) return withImages(deps, preferExactMatches(candidates).slice(0, MAX_CANDIDATES), pages);
     }
   }
   return [];
 }
 
+/** Bumped when the cached result's shape changes (v2: pictures), so old entries aren't used. */
+const CACHE_VERSION = 'v3'; // v3: no cultivar guesses next to an exact match
+
 /** Lookup cache key: the same search in the same language. */
 export function cacheKey(query: string, language: Language): string {
-  return `${language}:${words(query).map(normalize).join(' ')}`;
+  return `${CACHE_VERSION}:${language}:${words(query).map(normalize).join(' ')}`;
 }

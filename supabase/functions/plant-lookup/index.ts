@@ -5,7 +5,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json, requireEnv } from '../_shared/http.ts';
 import { cacheKey, Language, lookupPlant, PlantCandidate } from './lookup.ts';
-import { DEFAULT_USER_AGENT, getEntities, searchWikipedia } from './wikimedia.ts';
+import { DEFAULT_USER_AGENT, getEntities, getImageCredits, searchWikipedia } from './wikimedia.ts';
 
 /** Cached results are used for this long (plant data rarely changes). */
 const CACHE_DAYS = 30;
@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
       {
         searchWikipedia: (lang, q) => searchWikipedia(lang, q, userAgent),
         getEntities: (ids) => getEntities(ids, userAgent),
+        getImageCredits: (files) => getImageCredits(files, userAgent),
       },
       query,
       language,

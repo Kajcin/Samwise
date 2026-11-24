@@ -1,6 +1,7 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { ModalComponent } from '../core/modal/modal.component';
+import { PlantPhotosComponent } from './plant-photos.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -127,17 +128,8 @@ function ruleOrder(a: CareRule, b: CareRule): number {
 @Component({
   selector: 'app-plant-detail',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent],
+  imports: [RouterLink, IconComponent, ModalComponent, PlantPhotosComponent],
   templateUrl: './plant-detail.component.html',
-  styles: `
-    .plant-image-placeholder {
-      background: linear-gradient(160deg, #f4f7ec, #e2ecd2);
-    }
-    .plant-image-icon {
-      font-size: 4.5rem;
-      opacity: 0.6;
-    }
-  `,
 })
 export class PlantDetailComponent {
   private route = inject(ActivatedRoute);

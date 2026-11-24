@@ -291,6 +291,43 @@
       "failed": "The search on Wikipedia failed. Please try again later."
     }
   },
+  "photos": {
+    "add": "Add photo",
+    "dialogTitle": "Add a photo",
+    "tabUpload": "Upload",
+    "tabLink": "Link",
+    "tabWikipedia": "Wikipedia",
+    "chooseFiles": "Photos from your device",
+    "uploadHint": "JPEG, PNG or WebP. They’re reduced to about 1600 px before uploading and are visible only to you.",
+    "upload": "Upload",
+    "uploading": "Uploading {done} of {total}…",
+    "linkLabel": "Address of the picture",
+    "linkHint": "The picture stays on its website and is shown from there; nothing is copied. Respect the website’s terms: some don’t allow using their photos.",
+    "addLink": "Add link",
+    "wikipediaSearching": "Looking for pictures on Wikipedia…",
+    "wikipediaNone": "Wikipedia has no free picture of this plant.",
+    "alt": "Photo of {plant}",
+    "all": "All photos",
+    "thumbLabel": "Photo {n}",
+    "main": "Main photo",
+    "setMain": "Make main",
+    "delete": "Delete photo",
+    "deleteTitle": "Delete photo?",
+    "deleteMessage": "The photo will be removed from this plant.",
+    "creditLabel": "Photo:",
+    "source": "Source:",
+    "yourPhoto": "Your photo",
+    "broken": "The picture couldn’t be loaded (it may have been moved or removed from its website).",
+    "errors": {
+      "load": "Couldn’t load the photos: {detail}",
+      "save": "Couldn’t save the photo: {detail}",
+      "delete": "Couldn’t delete the photo: {detail}",
+      "noFiles": "Choose one or more photos first.",
+      "unreadable": "“{file}” isn’t a picture the browser can read (e.g. HEIC from an iPhone: save it as JPEG first).",
+      "upload": "Couldn’t upload “{file}”: {detail}",
+      "linkInvalid": "Enter a web address starting with http:// or https://."
+    }
+  },
   "settings": {
     "heading": "Settings",
     "account": "Account",

@@ -168,9 +168,17 @@ export class PlantCatalogService {
 
   /** Deletes one of your own plants with its care rules; refused if it is or was planted. */
   async deletePlant(plantId: string): Promise<void> {
+    // The photo rows go with the plant (cascade); their uploaded files are removed here.
+    const { data: uploads } = await supabase
+      .from('plant_photos')
+      .select('storage_path')
+      .eq('plant_id', plantId)
+      .not('storage_path', 'is', null);
     const { error } = await supabase.from('plants_catalog').delete().eq('id', plantId);
     if (error?.code === FOREIGN_KEY_VIOLATION) throw new PlantInUseError();
     if (error) throw error;
+    const paths = (uploads ?? []).map((u) => u.storage_path as string);
+    if (paths.length) await supabase.storage.from('plant-photos').remove(paths);
   }
 
   async listCareRules(plantId: string): Promise<CareRule[]> {

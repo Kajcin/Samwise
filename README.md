@@ -14,6 +14,7 @@ a requirement. What that means for each service:
 | Service | Free tier | Watch out for |
 | --- | --- | --- |
 | Supabase (hosted) | Free plan: 2 projects | Free projects **pause after about a week without activity**; while paused, the daily task top-up doesn't run. Handle this when deploying (e.g. a scheduled ping), or reopen the app to resume. |
+| Supabase Storage (plant photos) | 1 GB of files on the free plan | Photos are shrunk to about 1600 px (a few hundred kB) before uploading, so thousands fit. Pictures from Wikipedia and pasted links aren't stored, only shown from their sites. |
 | Google sign-in + Calendar API | No charge within quotas | The app stays unverified, so at most 100 users and an "unverified app" warning at sign-in. |
 | GitHub + Actions | Free for public repos | Unauthenticated API calls are limited to 60 per hour. |
 | Docker Desktop | Free for personal use | Only needed for local development. |
@@ -235,7 +236,24 @@ requirement and saves. Nothing is saved without that.
   to contact them: set `WIKIMEDIA_USER_AGENT` in `supabase/functions/.env` (and with
   `npx supabase secrets set` when hosted), e.g. `my-garden/1.0 (https://example.com; me@example.com)`.
   Without it, a generic one is sent.
+- The article's free main picture comes along, credited (author, licence, link to Wikimedia
+  Commons); a plant added from a result gets it as its main photo. Pictures without a known
+  licence are left out.
 - Samwise never reads other sites (e.g. nursery shops); see `docs/ROADMAP.md`.
+
+## Plant photos
+
+Each plant page shows your photos of the plant (`plant_photos`, migration 0014): the main
+one large, the others as thumbnails. You can add photos to your own plants and to the
+built-in ones; either way they're visible only to you.
+
+- **Upload:** shrunk in the browser to about 1600 px (JPEG) and stored in the private
+  `plant-photos` bucket, in your own folder (`<user id>/<plant id>/…`); shown through signed
+  URLs that last an hour. Deleting a photo or the plant deletes the file.
+- **Link:** only the address is stored and the picture is shown from its site (nothing is
+  copied). Respect the site's terms; if the picture disappears, the page says so.
+- **From Wikipedia:** looks the plant up by its Latin name (or name) and offers the free
+  pictures found, credited as above.
 
 ## Security decisions
 

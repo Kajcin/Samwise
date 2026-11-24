@@ -155,19 +155,30 @@ describe('PlantCatalogService editing', () => {
     expect(eq).toHaveBeenCalledWith('id', 'p2');
   });
 
-  it('deletePlant() deletes the plant', async () => {
-    const eq = jasmine.createSpy('eq').and.resolveTo({ data: null, error: null });
-    spyOn(supabase, 'from').and.returnValue({ delete: () => ({ eq }) } as any);
+  /** plants_catalog.delete().eq() answers `deleted`; plant_photos lists `paths` as uploads. */
+  function fakeDelete(deleted: { data: null; error: unknown }, paths: string[] = []) {
+    const eq = jasmine.createSpy('eq').and.resolveTo(deleted);
+    const photos = { select: () => ({ eq: () => ({ not: () => Promise.resolve({ data: paths.map((storage_path) => ({ storage_path })), error: null }) }) }) };
+    spyOn(supabase, 'from').and.callFake(((table: string) => (table === 'plant_photos' ? photos : { delete: () => ({ eq }) })) as any);
+    const remove = jasmine.createSpy('remove').and.resolveTo({ data: [], error: null });
+    spyOn(supabase.storage, 'from').and.returnValue({ remove } as any);
+    return { eq, remove };
+  }
+
+  it('deletePlant() deletes the plant, and the files of its uploaded photos', async () => {
+    const { eq, remove } = fakeDelete({ data: null, error: null }, ['me/p2/a.jpg', 'me/p2/b.jpg']);
 
     await service.deletePlant('p2');
+
     expect(eq).toHaveBeenCalledWith('id', 'p2');
+    expect(remove).toHaveBeenCalledWith(['me/p2/a.jpg', 'me/p2/b.jpg']);
   });
 
-  it('deletePlant() reports a planted plant as in use (foreign key violation)', async () => {
-    const eq = jasmine.createSpy('eq').and.resolveTo({ data: null, error: { code: '23503', message: 'violates foreign key' } });
-    spyOn(supabase, 'from').and.returnValue({ delete: () => ({ eq }) } as any);
+  it('deletePlant() reports a planted plant as in use (foreign key violation), keeping its photos', async () => {
+    const { remove } = fakeDelete({ data: null, error: { code: '23503', message: 'violates foreign key' } }, ['me/p2/a.jpg']);
 
     await expectAsync(service.deletePlant('p2')).toBeRejectedWithError(PlantInUseError);
+    expect(remove).not.toHaveBeenCalled();
   });
 
   it('deleteCareRule() deletes the rule', async () => {
