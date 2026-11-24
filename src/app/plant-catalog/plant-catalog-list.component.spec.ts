@@ -442,6 +442,56 @@ describe('PlantCatalogListComponent', () => {
     expect(el.querySelector('.lookup-results .card-footer')!.textContent).toContain('CC BY-SA 4.0');
   });
 
+  it('shows a spinner while the web search runs', async () => {
+    let answer!: (results: PlantCandidate[]) => void;
+    lookup.lookup.and.returnValue(new Promise((resolve) => (answer = resolve)));
+    const { fixture, el } = await render();
+    await search(fixture, el, 'chřest');
+
+    el.querySelector<HTMLButtonElement>('button.lookup')!.click();
+    fixture.detectChanges();
+
+    const button = el.querySelector<HTMLButtonElement>('button.lookup')!;
+    expect(button.disabled).toBeTrue();
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.querySelector('app-spinner')).not.toBeNull();
+    const status = el.querySelector('app-loading.lookup-loading')!;
+    expect(status.getAttribute('role')).toBe('status');
+    expect(status.textContent).toContain('Searching Wikipedia…');
+
+    answer([catmint]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('app-loading.lookup-loading')).toBeNull();
+    expect(el.querySelector('button.lookup app-spinner')).toBeNull();
+    expect(el.querySelector('.lookup-results .candidate')).not.toBeNull();
+  });
+
+  it('keeps the save button busy while a new plant is saved, so it can’t be saved twice', async () => {
+    let created!: (plant: Plant) => void;
+    service.addCustom.and.returnValue(new Promise((resolve) => (created = resolve)));
+    const { fixture, el } = await render();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    el.querySelector<HTMLButtonElement>('button.add-plant')!.click();
+    fixture.detectChanges();
+    for (const [name, value, event] of [['name', 'Kale', 'input'], ['sun', 'full_sun', 'change']]) {
+      const field = el.querySelector<HTMLInputElement>(`[name=${name}]`)!;
+      field.value = value;
+      field.dispatchEvent(new Event(event));
+    }
+
+    el.querySelector<HTMLFormElement>('form.add-plant-form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    const save = el.querySelector<HTMLButtonElement>('.modal-footer button[type=submit]')!;
+    expect(save.disabled).toBeTrue();
+    expect(save.querySelector('app-spinner')).not.toBeNull();
+    expect(service.addCustom).toHaveBeenCalledTimes(1);
+
+    created(plant({ id: 'new-1', user_id: 'me', name: 'Kale' }));
+    await fixture.whenStable();
+  });
+
   it('looks up on Enter in the search box too', async () => {
     lookup.lookup.and.resolveTo([]);
     const { fixture, el } = await render();

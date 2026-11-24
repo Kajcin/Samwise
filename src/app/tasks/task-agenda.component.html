@@ -42,7 +42,7 @@
   <div class="row g-4">
     <div class="col-12">
       @if (loading()) {
-        <p class="text-body-secondary">{{ i18n.t('tasks.loading') }}</p>
+        <app-loading [text]="i18n.t('tasks.loading')" />
       } @else {
         @for (day of days(); track day.date + (day.until ?? '')) {
           <section class="day card mb-3">
@@ -75,9 +75,15 @@
                     [class.btn-outline-primary]="!task.completed_at"
                     [class.btn-outline-secondary]="!!task.completed_at"
                     [disabled]="busyTaskId() === task.id"
+                    [attr.aria-busy]="busyTaskId() === task.id"
                     (click)="toggleDone(task)"
                   >
-                    <app-icon [name]="task.completed_at ? 'arrow-counterclockwise' : 'check-lg'" class="me-1" />{{
+                    @if (busyTaskId() === task.id) {
+                      <app-spinner class="me-1" />
+                    } @else {
+                      <app-icon [name]="task.completed_at ? 'arrow-counterclockwise' : 'check-lg'" class="me-1" />
+                    }
+                    {{
                       i18n.t(task.completed_at ? 'common.undo' : 'common.done')
                     }}
                   </button>
@@ -124,7 +130,12 @@
           <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeAddDialog()">
             {{ i18n.t('common.close') }}
           </button>
-          <button type="submit" class="btn btn-primary">{{ i18n.t('tasks.save') }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="savingTask()" [attr.aria-busy]="savingTask()">
+            @if (savingTask()) {
+              <app-spinner class="me-1" />
+            }
+            {{ i18n.t('tasks.save') }}
+          </button>
         </div>
       </form>
     }

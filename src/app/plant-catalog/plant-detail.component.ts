@@ -1,5 +1,7 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { PlantPhotosComponent } from './plant-photos.component';
 import { PlantChipsComponent } from './plant-chips.component';
@@ -148,8 +150,7 @@ function ruleOrder(a: CareRule, b: CareRule): number {
     PlantPhotosComponent,
     PlantChipsComponent,
     MonthStripComponent,
-    PlantTraitsFieldsComponent,
-  ],
+    PlantTraitsFieldsComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './plant-detail.component.html',
 })
 export class PlantDetailComponent {
@@ -182,6 +183,10 @@ export class PlantDetailComponent {
   draft = signal<PlantForm | null>(null);
   saving = signal(false);
   deleting = signal(false);
+  cloning = signal(false);
+  savingRule = signal(false);
+  /** While the plant and its rules load. */
+  loading = signal(true);
   editError = signal<Message | null>(null);
 
   plant = signal<Plant | null>(null);
@@ -221,12 +226,15 @@ export class PlantDetailComponent {
     this.plant.set(null);
     this.draft.set(null);
     this.rules.set([]);
+    this.loading.set(true);
     try {
       const [plant, rules] = await Promise.all([this.catalog.get(this.plantId), this.catalog.listCareRules(this.plantId)]);
       this.plant.set(plant);
       this.rules.set(rules);
     } catch (e) {
       this.error.set(msg('plant.errors.load', { detail: messageOf(e) }));
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -236,11 +244,14 @@ export class PlantDetailComponent {
 
   async cloneAndEdit(): Promise<void> {
     this.error.set(null);
+    this.cloning.set(true);
     try {
       const clone = await this.catalog.cloneToCustom(this.plantId, this.i18n.lang());
       await this.router.navigate(['/plants', clone.id]);
     } catch (e) {
       this.error.set(msg('plant.errors.clone', { detail: messageOf(e) }));
+    } finally {
+      this.cloning.set(false);
     }
   }
 
@@ -274,6 +285,7 @@ export class PlantDetailComponent {
     const validation = validateCareRuleForm(timing, offset, recurrence, month);
     this.newRuleError.set(validation);
     if (validation) return;
+    this.savingRule.set(true);
     try {
       await this.catalog.addCareRule(this.plantId, {
         task_type: this.newRuleTaskType(),
@@ -288,6 +300,8 @@ export class PlantDetailComponent {
       await this.refreshCareRules();
     } catch (e) {
       this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));
+    } finally {
+      this.savingRule.set(false);
     }
   }
 

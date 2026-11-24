@@ -88,12 +88,23 @@
       }
 
       @if (canLookUp()) {
-        <button type="button" class="btn btn-sm btn-outline-primary mb-3 lookup" [disabled]="lookupLoading()" (click)="searchWeb()">
-          <app-icon name="search" class="me-1" />{{ i18n.t('lookup.button', { query: query().trim() }) }}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary mb-3 lookup"
+          [disabled]="lookupLoading()"
+          [attr.aria-busy]="lookupLoading()"
+          (click)="searchWeb()"
+        >
+          @if (lookupLoading()) {
+            <app-spinner class="me-1" />
+          } @else {
+            <app-icon name="search" class="me-1" />
+          }
+          {{ i18n.t('lookup.button', { query: query().trim() }) }}
         </button>
       }
       @if (lookupLoading()) {
-        <p class="text-body-secondary" role="status">{{ i18n.t('lookup.searching') }}</p>
+        <app-loading class="mb-3 lookup-loading" [text]="i18n.t('lookup.searching')" />
       }
       @if (lookupError()) {
         <div class="alert alert-danger lookup-error" role="alert">{{ i18n.text(lookupError()) }}</div>
@@ -153,7 +164,7 @@
       }
 
       @if (loading()) {
-        <p class="text-body-secondary">{{ i18n.t('catalog.loading') }}</p>
+        <app-loading [text]="i18n.t('catalog.loading')" />
       } @else {
         <ul class="list-group">
           @for (plant of visiblePlants(); track plant.id) {
@@ -198,8 +209,19 @@
               @if (plant.user_id) {
                 <span class="badge text-bg-success">{{ i18n.t('catalog.yours') }}</span>
               } @else {
-                <button type="button" class="btn btn-sm btn-outline-secondary clone" (click)="cloneAndEdit(plant.id)">
-                  <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary clone"
+                  [disabled]="cloningId() === plant.id"
+                  [attr.aria-busy]="cloningId() === plant.id"
+                  (click)="cloneAndEdit(plant.id)"
+                >
+                  @if (cloningId() === plant.id) {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="copy" class="me-1" />
+                  }
+                  {{ i18n.t('common.cloneToCustomize') }}
                 </button>
               }
               <!-- Same width on every row, so the buttons and badges above line up. -->
@@ -213,7 +235,11 @@
                     [title]="i18n.t('catalog.deleteLabel', { name: plantName(plant, i18n.lang()) })"
                     (click)="deletePlant(plant)"
                   >
-                    <app-icon name="x-circle" />
+                    @if (deletingId() === plant.id) {
+                      <app-spinner />
+                    } @else {
+                      <app-icon name="x-circle" />
+                    }
                   </button>
                 }
               </span>
@@ -310,7 +336,12 @@
           <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeAddDialog()">
             {{ i18n.t('common.close') }}
           </button>
-          <button type="submit" class="btn btn-primary">{{ i18n.t('catalog.save') }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="savingPlant()" [attr.aria-busy]="savingPlant()">
+            @if (savingPlant()) {
+              <app-spinner class="me-1" />
+            }
+            {{ i18n.t('catalog.save') }}
+          </button>
         </div>
       </form>
     }

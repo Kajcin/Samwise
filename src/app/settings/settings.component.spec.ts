@@ -270,6 +270,24 @@ describe('SettingsComponent', () => {
     expect(el.textContent).toContain('Connected');
   });
 
+  it('shows a spinner while it finishes connecting', async () => {
+    sessionStorage.setItem(OAUTH_STATE_KEY, 'state-1');
+    let finish!: (result: { backfilled: number; failed: number }) => void;
+    calendar.connect.and.returnValue(new Promise((resolve) => (finish = resolve)));
+    const { fixture, el } = await render({ code: 'c-1', state: 'state-1' });
+
+    const busy = el.querySelector('.calendar-busy')!;
+    expect(busy.getAttribute('role')).toBe('status');
+    expect(busy.textContent).toContain('Connecting the calendar and adding your tasks to it…');
+    expect(busy.querySelector('.spinner-border')).not.toBeNull();
+    expect(el.querySelector<HTMLButtonElement>('button.connect')?.disabled ?? true).toBeTrue();
+
+    finish({ backfilled: 0, failed: 0 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('.calendar-busy')).toBeNull();
+  });
+
   it('explains when the user declined in Google', async () => {
     sessionStorage.setItem(OAUTH_STATE_KEY, 'state-1');
     const { el } = await render({ error: 'access_denied', state: 'state-1' });

@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
@@ -65,7 +67,7 @@ export const RECONNECT_MESSAGES: Partial<Record<CalendarStatus, string>> = {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './settings.component.html',
 })
 export class SettingsComponent {
@@ -89,7 +91,9 @@ export class SettingsComponent {
     const key = RECONNECT_MESSAGES[this.connection() ?? 'connected'];
     return key ? this.i18n.t(key) : '';
   });
-  busy = signal(false);
+  /** The calendar action running: going to Google, finishing the connection after it, or disconnecting. */
+  busyAction = signal<'connect' | 'finishing' | 'disconnect' | null>(null);
+  busy = computed(() => this.busyAction() !== null);
   status = signal<Message[] | null>(null);
   error = signal<Message[] | null>(null);
 
@@ -120,7 +124,7 @@ export class SettingsComponent {
   connectCalendar(): void {
     this.status.set(null);
     this.error.set(null);
-    this.busy.set(true);
+    this.busyAction.set('connect');
     const state = crypto.randomUUID();
     sessionStorage.setItem(OAUTH_STATE_KEY, state);
     this.redirectTo(googleAuthUrl(environment.googleClientId, `${window.location.origin}/settings`, state));
@@ -166,7 +170,7 @@ export class SettingsComponent {
 
     this.status.set(null);
     this.error.set(null);
-    this.busy.set(true);
+    this.busyAction.set('disconnect');
     try {
       const { calendarDeleted } = await this.calendar.disconnect();
       this.status.set([
@@ -179,14 +183,14 @@ export class SettingsComponent {
           : [msg('settings.calendar.errors.disconnectFailed')],
       );
     } finally {
-      this.busy.set(false);
+      this.busyAction.set(null);
     }
     await this.refreshStatus();
   }
 
 
   private async finishConnect(code: string): Promise<void> {
-    this.busy.set(true);
+    this.busyAction.set('finishing');
     try {
       const { backfilled, failed } = await this.calendar.connect(code);
       this.status.set([
@@ -196,7 +200,7 @@ export class SettingsComponent {
     } catch (e) {
       this.error.set(connectErrorMessage(e instanceof CalendarError ? e.code : 'connect_failed'));
     } finally {
-      this.busy.set(false);
+      this.busyAction.set(null);
     }
   }
 }

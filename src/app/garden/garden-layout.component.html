@@ -11,7 +11,7 @@
   }
 
   @if (loading()) {
-    <p class="text-body-secondary">{{ i18n.t('garden.loading') }}</p>
+    <app-loading [text]="i18n.t('garden.loading')" />
   } @else {
     @for (bed of beds(); track bed.id) {
       <section class="card mb-4">
@@ -72,8 +72,13 @@
                 </div>
                 @if (s.planting; as p) {
                   <p>{{ i18n.t('garden.plantedOn', { plant: plantLabel(p.plant_id), date: p.planted_date }) }}</p>
-                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy()" (click)="remove()">
-                    <app-icon name="trash" class="me-1" />{{ i18n.t('garden.remove') }}
+                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy()" [attr.aria-busy]="busy()" (click)="remove()">
+                    @if (busy()) {
+                      <app-spinner class="me-1" />
+                    } @else {
+                      <app-icon name="trash" class="me-1" />
+                    }
+                    {{ i18n.t('garden.remove') }}
                   </button>
                 } @else {
                   <form class="row g-2 align-items-end" (submit)="assign($event)">
@@ -103,8 +108,13 @@
                       />
                     </div>
                     <div class="col-sm-2 d-grid">
-                      <button type="submit" class="btn btn-primary" [disabled]="busy()">
-                        <app-icon name="flower1" class="me-1" />{{ i18n.t('garden.plantButton') }}
+                      <button type="submit" class="btn btn-primary" [disabled]="busy()" [attr.aria-busy]="busy()">
+                        @if (busy()) {
+                          <app-spinner class="me-1" />
+                        } @else {
+                          <app-icon name="flower1" class="me-1" />
+                        }
+                        {{ i18n.t('garden.plantButton') }}
                       </button>
                     </div>
                   </form>
@@ -181,7 +191,12 @@
           <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeBedDialog()">
             {{ i18n.t('common.close') }}
           </button>
-          <button type="submit" class="btn btn-primary" [disabled]="savingBed()">{{ i18n.t('bedEditor.save') }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="savingBed()" [attr.aria-busy]="savingBed()">
+            @if (savingBed()) {
+              <app-spinner class="me-1" />
+            }
+            {{ i18n.t('bedEditor.save') }}
+          </button>
         </div>
       </form>
     }

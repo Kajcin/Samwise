@@ -18,7 +18,8 @@ file. When a new pattern is needed, add it here in the same change.
   for icons. An icon next to text is decorative; an icon-only button needs `aria-label`
   and `title`.
 - **Shared components:** before writing markup, look for one that exists:
-  `app-modal` (dialogs), `ConfirmDialogService` (confirmations), `app-plant-chips`,
+  `app-modal` (dialogs), `ConfirmDialogService` (confirmations), `app-loading` and
+  `app-spinner` (waiting), `app-plant-chips`,
   `app-month-strip` (a season's months, shown or picked), `app-plant-traits-fields`,
   `app-plant-photos`.
 
@@ -90,8 +91,23 @@ file. When a new pattern is needed, add it here in the same change.
   `visually-hidden`): colour is never the only cue.
 - Status messages: `alert-success`/`alert-info` with `role="status"`, problems
   `alert-danger`/`alert-warning` with `role="alert"`.
-- Loading: a `text-body-secondary` line such as "Načítání rostlin…". Empty states say what
-  to do next and offer the button or link for it.
+- Empty states say what to do next and offer the button or link for it.
+
+## Waiting
+
+Never leave people guessing whether something is happening.
+
+- **A wait of unknown length** (a page loading its data, a web search, connecting the
+  calendar): `<app-loading [text]="…" />`, a spinner with a line such as "Načítání
+  rostlin…" (`role="status"`, so screen readers hear it).
+- **A button whose action runs** (saving, deleting, searching, connecting): disable it,
+  set `[attr.aria-busy]`, and show `<app-spinner class="me-1" />` in place of its icon
+  (or before the text of a text-only button). Only the clicked button spins; the others
+  that would conflict are disabled. A form's submit button is disabled while it saves, so
+  nothing is saved twice.
+- **A wait whose progress is known** (uploading several photos): a Bootstrap
+  `.progress` bar with the count in text ("Nahrávání 2 z 3…").
+- The data that's already there stays visible while more loads; don't blank the page.
 - Extras that fail (thumbnails, photos) fall back to a placeholder and are only logged;
   the page still works.
 

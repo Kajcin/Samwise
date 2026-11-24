@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalComponent } from '../core/modal/modal.component';
 import { parseNumberInput } from '../core/number-input';
@@ -32,7 +34,7 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 @Component({
   selector: 'app-garden-layout',
   standalone: true,
-  imports: [IconComponent, ModalComponent],
+  imports: [IconComponent, ModalComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './garden-layout.component.html',
   styles: `
     .bed-grid { border-collapse: separate; border-spacing: 4px; }

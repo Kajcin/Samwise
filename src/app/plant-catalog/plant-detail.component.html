@@ -5,6 +5,10 @@
     <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
   }
 
+  @if (loading()) {
+    <app-loading [text]="i18n.t('plant.loading')" />
+  }
+
   @if (plant(); as p) {
     <div class="d-flex justify-content-between align-items-start gap-3">
       <div class="d-flex flex-wrap align-items-center column-gap-3 row-gap-2 mb-1">
@@ -16,15 +20,31 @@
           type="button"
           class="btn btn-outline-danger delete-plant"
           [disabled]="deleting()"
+          [attr.aria-busy]="deleting()"
           [attr.aria-label]="i18n.t('plant.deletePlant')"
           [title]="i18n.t('plant.deletePlant')"
           (click)="deletePlant()"
         >
-          <app-icon name="trash" />
+          @if (deleting()) {
+            <app-spinner />
+          } @else {
+            <app-icon name="trash" />
+          }
         </button>
       } @else {
-        <button type="button" class="btn btn-outline-primary clone" (click)="cloneAndEdit()">
-          <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
+        <button
+          type="button"
+          class="btn btn-outline-primary clone"
+          [disabled]="cloning()"
+          [attr.aria-busy]="cloning()"
+          (click)="cloneAndEdit()"
+        >
+          @if (cloning()) {
+            <app-spinner class="me-1" />
+          } @else {
+            <app-icon name="copy" class="me-1" />
+          }
+          {{ i18n.t('common.cloneToCustomize') }}
         </button>
       }
     </div>
@@ -138,8 +158,13 @@
                 <div class="alert alert-danger mt-3 mb-0" role="alert">{{ i18n.text(editError()) }}</div>
               }
               <div class="d-flex flex-wrap gap-2 mt-3">
-                <button type="submit" class="btn btn-primary save" [disabled]="saving()">
-                  <app-icon name="check-lg" class="me-1" />{{ i18n.t('plant.save') }}
+                <button type="submit" class="btn btn-primary save" [disabled]="saving()" [attr.aria-busy]="saving()">
+                  @if (saving()) {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="check-lg" class="me-1" />
+                  }
+                  {{ i18n.t('plant.save') }}
                 </button>
                 <button type="button" class="btn btn-outline-secondary cancel" [disabled]="saving()" (click)="cancelEditing()">
                   {{ i18n.t('plant.cancel') }}
@@ -346,7 +371,12 @@
               <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeRuleDialog()">
                 {{ i18n.t('common.close') }}
               </button>
-              <button type="submit" class="btn btn-primary">{{ i18n.t('plant.saveRule') }}</button>
+              <button type="submit" class="btn btn-primary" [disabled]="savingRule()" [attr.aria-busy]="savingRule()">
+                @if (savingRule()) {
+                  <app-spinner class="me-1" />
+                }
+                {{ i18n.t('plant.saveRule') }}
+              </button>
             </div>
           </form>
         }

@@ -6,7 +6,7 @@
   }
 
   @if (loading()) {
-    <p class="text-body-secondary">{{ i18n.t('common.loading') }}</p>
+    <app-loading [text]="i18n.t('common.loading')" />
   } @else {
     <div class="row g-4">
       <section class="col-lg-8">
@@ -40,8 +40,16 @@
                   type="button"
                   class="btn btn-sm btn-outline-primary"
                   [disabled]="busyTaskId() === task.id"
+                  [attr.aria-busy]="busyTaskId() === task.id"
                   (click)="markDone(task)"
-                ><app-icon name="check-lg" class="me-1" />{{ i18n.t('common.done') }}</button>
+                >
+                  @if (busyTaskId() === task.id) {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="check-lg" class="me-1" />
+                  }
+                  {{ i18n.t('common.done') }}
+                </button>
               </li>
             } @empty {
               <li class="list-group-item text-body-secondary">{{ i18n.t('dashboard.nothingToDo', { days }) }}</li>

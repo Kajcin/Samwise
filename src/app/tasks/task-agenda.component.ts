@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { filterTasks, isOverdue, TaskService, TaskWithContext } from './task.service';
 import { formatDue, groupByDueDate, taskLocation, taskTitle } from './task-format';
@@ -21,7 +23,7 @@ export function filterByStatus<T extends TaskWithContext>(tasks: T[], status: St
 @Component({
   selector: 'app-task-agenda',
   standalone: true,
-  imports: [IconComponent, ModalComponent],
+  imports: [IconComponent, ModalComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './task-agenda.component.html',
 })
 export class TaskAgendaComponent {
@@ -60,6 +62,7 @@ export class TaskAgendaComponent {
   busyTaskId = signal<string | null>(null);
   /** The "add a task" dialog. */
   addDialogOpen = signal(false);
+  savingTask = signal(false);
 
   constructor() {
     this.load();
@@ -124,12 +127,15 @@ export class TaskAgendaComponent {
       return;
     }
     this.newTaskError.set(null);
+    this.savingTask.set(true);
     try {
       await this.taskService.addManualTask(this.newTaskType(), this.newTaskDue());
       this.addDialogOpen.set(false);
       await this.refresh();
     } catch (e) {
       this.newTaskError.set(msg('tasks.errors.add', { detail: messageOf(e) }));
+    } finally {
+      this.savingTask.set(false);
     }
   }
 }

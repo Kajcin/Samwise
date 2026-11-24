@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 import { LanguageService } from '../core/i18n/language.service';
@@ -38,7 +40,7 @@ function hostOf(url: string): string {
  */
 @Component({
   selector: 'app-plant-photos',
-  imports: [IconComponent, ModalComponent],
+  imports: [IconComponent, ModalComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './plant-photos.component.html',
   styles: `
     .photo-placeholder {

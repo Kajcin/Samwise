@@ -49,24 +49,38 @@
             <div class="alert alert-danger" role="alert">{{ i18n.text(error()) }}</div>
           }
 
+          @if (busyAction() === 'finishing') {
+            <app-loading class="mb-3 calendar-busy" [text]="i18n.t('settings.calendar.connecting')" />
+          } @else if (busyAction() === 'disconnect') {
+            <app-loading class="mb-3 calendar-busy" [text]="i18n.t('settings.calendar.disconnecting')" />
+          }
+
           @switch (connection()) {
             @case (null) {
-              <p class="text-body-secondary mb-0">{{ i18n.t('settings.calendar.checking') }}</p>
+              <app-loading [text]="i18n.t('settings.calendar.checking')" />
             }
             @case ('connected') {
               <p>
                 <span class="badge text-bg-success me-1">{{ i18n.t('settings.calendar.connected') }}</span>
                 {{ i18n.t('settings.calendar.connectedText') }}
               </p>
-              <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-                <app-icon name="calendar-x" class="me-1" />{{ i18n.t('settings.calendar.disconnect') }}
+              <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" [attr.aria-busy]="busyAction() === 'disconnect'" (click)="disconnectCalendar()">
+                @if (busyAction() === 'disconnect') {
+                  <app-spinner class="me-1" />
+                } @else {
+                  <app-icon name="calendar-x" class="me-1" />
+                }{{ i18n.t('settings.calendar.disconnect') }}
               </button>
               <p class="form-text mb-0">{{ i18n.t('settings.calendar.disconnectHint') }}</p>
             }
             @case ('not_connected') {
               <p><span class="badge text-bg-secondary">{{ i18n.t('settings.calendar.notConnected') }}</span></p>
-              <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
-                <app-icon name="calendar-plus" class="me-1" />{{ i18n.t('settings.calendar.connect') }}
+              <button type="button" class="btn btn-primary connect" [disabled]="busy()" [attr.aria-busy]="busyAction() === 'connect'" (click)="connectCalendar()">
+                @if (busyAction() === 'connect') {
+                  <app-spinner class="me-1" />
+                } @else {
+                  <app-icon name="calendar-plus" class="me-1" />
+                }{{ i18n.t('settings.calendar.connect') }}
               </button>
             }
             @default {
@@ -75,11 +89,19 @@
                 {{ reconnectMessage() }}
               </div>
               <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-primary connect" [disabled]="busy()" (click)="connectCalendar()">
-                  <app-icon name="arrow-repeat" class="me-1" />{{ i18n.t('settings.calendar.reconnect') }}
+                <button type="button" class="btn btn-primary connect" [disabled]="busy()" [attr.aria-busy]="busyAction() === 'connect'" (click)="connectCalendar()">
+                  @if (busyAction() === 'connect') {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="arrow-repeat" class="me-1" />
+                  }{{ i18n.t('settings.calendar.reconnect') }}
                 </button>
-                <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" (click)="disconnectCalendar()">
-                  <app-icon name="calendar-x" class="me-1" />{{ i18n.t('settings.calendar.disconnect') }}
+                <button type="button" class="btn btn-outline-danger disconnect" [disabled]="busy()" [attr.aria-busy]="busyAction() === 'disconnect'" (click)="disconnectCalendar()">
+                  @if (busyAction() === 'disconnect') {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="calendar-x" class="me-1" />
+                  }{{ i18n.t('settings.calendar.disconnect') }}
                 </button>
               </div>
             }

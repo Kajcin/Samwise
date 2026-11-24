@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { TASK_TYPE_ICONS } from '../plant-catalog/labels';
 import { RouterLink } from '@angular/router';
 import { isOverdue, TaskService, TaskWithContext } from './task.service';
@@ -24,7 +26,7 @@ const UPCOMING_DAYS = 7;
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink, IconComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {

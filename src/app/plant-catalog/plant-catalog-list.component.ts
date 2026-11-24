@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { SpinnerComponent } from '../core/loading/spinner.component';
+import { LoadingComponent } from '../core/loading/loading.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { Router, RouterLink } from '@angular/router';
 import { Plant, PlantCatalogService, PlantInGardenError } from './plant-catalog.service';
@@ -108,7 +110,7 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
 @Component({
   selector: 'app-plant-catalog-list',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent, PlantChipsComponent, MonthStripComponent, PlantTraitsFieldsComponent],
+  imports: [RouterLink, IconComponent, ModalComponent, PlantChipsComponent, MonthStripComponent, PlantTraitsFieldsComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './plant-catalog-list.component.html',
   styles: `
     .lookup-thumb {
@@ -185,6 +187,8 @@ export class PlantCatalogListComponent {
   loading = signal(true);
   error = signal<Message | null>(null);
   deletingId = signal<string | null>(null);
+  cloningId = signal<string | null>(null);
+  savingPlant = signal(false);
   /** Your main photo of each plant, by plant id; empty until loaded (or if that fails). */
   mainPhotos = signal<ReadonlyMap<string, PlantPhoto>>(new Map());
   /** Thumbnails whose picture didn't load: they show the placeholder. */
@@ -293,12 +297,15 @@ export class PlantCatalogListComponent {
 
   async cloneAndEdit(plantId: string): Promise<void> {
     this.error.set(null);
+    this.cloningId.set(plantId);
     try {
       const clone = await this.service.cloneToCustom(plantId, this.i18n.lang());
       this.plants.update((list) => [...list, clone]);
       await this.router.navigate(['/plants', clone.id]);
     } catch (e) {
       this.error.set(msg('catalog.errors.clone', { detail: messageOf(e) }));
+    } finally {
+      this.cloningId.set(null);
     }
   }
 
@@ -394,6 +401,7 @@ export class PlantCatalogListComponent {
     const validation = validateNewPlantForm(this.newPlantName(), this.newPlantSun(), this.newPlantSourceUrl());
     this.newPlantError.set(validation);
     if (validation) return;
+    this.savingPlant.set(true);
     try {
       const plant = await this.service.addCustom({
         name: this.newPlantName().trim(),
@@ -416,6 +424,8 @@ export class PlantCatalogListComponent {
       await this.router.navigate(['/plants', plant.id]);
     } catch (e) {
       this.newPlantError.set(msg('catalog.errors.save', { detail: messageOf(e) }));
+    } finally {
+      this.savingPlant.set(false);
     }
   }
 }

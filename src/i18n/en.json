@@ -209,6 +209,7 @@
     }
   },
   "plant": {
+    "loading": "Loading the plant…",
     "back": "← Plant catalog",
     "about": "About",
     "sun": "Position",
@@ -383,6 +384,8 @@
       "heading": "Google Calendar",
       "intro": "Samwise can put your garden tasks on a separate “Samwise” calendar in your Google account. It can only see and change that calendar, none of your others.",
       "checking": "Checking…",
+      "connecting": "Connecting the calendar and adding your tasks to it…",
+      "disconnecting": "Disconnecting the calendar…",
       "connected": "Connected",
       "connectedText": "New and changed tasks appear on your “Samwise” calendar.",
       "disconnect": "Disconnect",

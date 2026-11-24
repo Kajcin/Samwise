@@ -209,6 +209,7 @@
     }
   },
   "plant": {
+    "loading": "Načítání rostliny…",
     "back": "← Katalog rostlin",
     "about": "O rostlině",
     "sun": "Stanoviště",
@@ -383,6 +384,8 @@
       "heading": "Kalendář Google",
       "intro": "Samwise může vaše zahradní úkoly zapisovat do samostatného kalendáře „Samwise“ ve vašem účtu Google. Vidí a mění jen tento kalendář, žádný jiný.",
       "checking": "Ověřování…",
+      "connecting": "Připojuji kalendář a přidávám do něj úkoly…",
+      "disconnecting": "Odpojuji kalendář…",
       "connected": "Připojeno",
       "connectedText": "Nové a změněné úkoly se zobrazují ve vašem kalendáři „Samwise“.",
       "disconnect": "Odpojit",
