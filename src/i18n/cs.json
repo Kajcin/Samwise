@@ -302,7 +302,6 @@
       "ornamental": "okrasná"
     }
   },
-  "monthInitials": { "1": "L", "2": "Ú", "3": "B", "4": "D", "5": "K", "6": "Č", "7": "Č", "8": "S", "9": "Z", "10": "Ř", "11": "L", "12": "P" },
   "lookup": {
     "button": "Hledat „{query}“ na webu",
     "searching": "Hledám na Wikipedii…",

@@ -5,7 +5,7 @@ import { floweringIn } from './traits';
 /**
  * The year as 12 cells, the flowering months highlighted:
  *   <app-flowering-strip [start]="5" [end]="9" />             small, for lists
- *   <app-flowering-strip [start]="5" [end]="9" size="lg" />   with the months' initials
+ *   <app-flowering-strip [start]="5" [end]="9" size="lg" />   with the months' numbers (1.-12.), the same in every language
  * Screen readers get the range as one sentence.
  */
 @Component({
@@ -16,7 +16,7 @@ import { floweringIn } from './traits';
       @for (cell of cells(); track cell.month) {
         <span class="month" [class.on]="cell.on" aria-hidden="true">
           @if (size() === 'lg') {
-            {{ i18n.t('monthInitials.' + cell.month) }}
+            {{ cell.month }}.
           }
         </span>
       }
@@ -52,7 +52,7 @@ import { floweringIn } from './traits';
       align-items: center;
       justify-content: center;
       border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #5f675a;
       background: #eef0eb;

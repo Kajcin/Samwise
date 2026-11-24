@@ -272,7 +272,7 @@ get no growth-form chip, since most plants are herbaceous. Within a filter group
 matches any picked value; every group with picked values has to match.
 
 The catalog list also shows each plant's sun (icon), watering interval and flowering months
-(a 12-month strip); the plant page shows the strip with the months' initials.
+(a 12-month strip); the plant page shows the strip with the months numbered 1. to 12.
 
 ## Security decisions
 

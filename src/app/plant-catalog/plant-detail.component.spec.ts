@@ -194,6 +194,9 @@ describe('PlantDetailComponent', () => {
     const strip = el.querySelector('app-flowering-strip [role=img]')!;
     expect(strip.getAttribute('aria-label')).toBe('Flowers from June to September');
     expect(strip.querySelectorAll('.month.on').length).toBe(4);
+    // Numbered, not initials, so it reads the same in every language.
+    expect(Array.from(strip.querySelectorAll('.month')).map((m) => m.textContent!.trim()))
+      .toEqual(['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.']);
     expect(el.querySelector('app-icon.sun-full_sun')).not.toBeNull();
   });
 
