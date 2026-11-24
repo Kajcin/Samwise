@@ -52,16 +52,19 @@ try {
 
   await send('Page.enable');
   await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+  // A roomy viewport: headless Chrome won't really shrink to 16 px, which once left the
+  // tiny icons showing a zoomed-in corner. The screenshot clips each icon out of it.
+  await send('Emulation.setDeviceMetricsOverride', { width: 400, height: 400, deviceScaleFactor: 1, mobile: false });
   const png = {};
   for (const r of renders) {
-    await send('Emulation.setDeviceMetricsOverride', { width: r.size, height: r.size, deviceScaleFactor: 1, mobile: false });
     const pad = Math.round(r.size * (r.inset ?? 0));
+    const inner = r.size - 2 * pad;
     const { frameTree } = await send('Page.getFrameTree');
     await send('Page.setDocumentContent', {
       frameId: frameTree.frame.id,
-      html: `<!doctype html><html><body style="margin:0;background:${r.background ?? 'transparent'}">
-        <div style="width:${r.size}px;height:${r.size}px;box-sizing:border-box;padding:${pad}px">
-          ${r.svg.replace('<svg ', '<svg width="100%" height="100%" ')}
+      html: `<!doctype html><html><body style="margin:0;background:transparent">
+        <div style="width:${r.size}px;height:${r.size}px;padding:${pad}px;box-sizing:border-box;background:${r.background ?? 'transparent'}">
+          ${r.svg.replace('<svg ', `<svg width="${inner}" height="${inner}" style="display:block" `)}
         </div></body></html>`,
     });
     await sleep(200);

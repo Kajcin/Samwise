@@ -16,7 +16,8 @@ file. When a new pattern is needed, add it here in the same change.
 - **Logo:** a root with a face, in the style of a medieval herbal, in `public/`:
   `logo.svg` (full detail, from about 64 px: the login page), `logo-mark.svg` (the
   navbar, 32-48 px), `favicon.svg` (browser tabs, on a parchment tile so it shows on dark tab bars too). After changing them, run
-  `npm run favicons` to redraw `favicon.ico` and `apple-touch-icon.png`. The name
+  `npm run favicons` to redraw `favicon.ico` and `apple-touch-icon.png`,
+  and raise the `?v=` on the icon links in `src/index.html` so browsers refetch them. The name
   "Samwise" next to it is set in Uncial Antiqua (`.wordmark`, or the navbar brand); use
   that font for the name only, never for other text. Its colours (ink #2b2418, azure
   #7b93c4, leaf greens, cream highlights) belong to the logo, not the UI.
