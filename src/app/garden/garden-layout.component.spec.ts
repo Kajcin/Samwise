@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { buildGrid, GardenLayoutComponent } from './garden-layout.component';
 import { Bed, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
+import { PlantPhoto, PlantPhotosService } from '../plant-catalog/plant-photos.service';
 
 const planting = (row: number, col: number, plantId = 'plant-1'): Planting => ({
   id: `${row}-${col}`, user_id: 'me', bed_id: 'bed-1', cell_row: row, cell_col: col,
@@ -29,6 +30,7 @@ describe('buildGrid', () => {
 describe('GardenLayoutComponent', () => {
   let garden: jasmine.SpyObj<GardenService>;
   let catalog: jasmine.SpyObj<PlantCatalogService>;
+  let photos: jasmine.SpyObj<PlantPhotosService>;
 
   const bed: Bed = { id: 'bed-1', user_id: 'me', name: 'Herbs', rows: 1, cols: 2 };
   const plants = [
@@ -58,12 +60,15 @@ describe('GardenLayoutComponent', () => {
     garden.listBeds.and.resolveTo([bed]);
     garden.listActivePlantings.and.resolveTo([planting(0, 0)]);
     catalog.list.and.resolveTo(plants);
+    photos = jasmine.createSpyObj<PlantPhotosService>('PlantPhotosService', ['mainPhotos']);
+    photos.mainPhotos.and.resolveTo(new Map());
     TestBed.configureTestingModule({
       imports: [GardenLayoutComponent],
       providers: [provideI18n(), 
         provideRouter([]),
         { provide: GardenService, useValue: garden },
         { provide: PlantCatalogService, useValue: catalog },
+        { provide: PlantPhotosService, useValue: photos },
       ],
     });
   });
@@ -145,5 +150,31 @@ describe('GardenLayoutComponent', () => {
 
     expect(el.textContent).toContain('No beds yet');
     expect(el.querySelector('a[href="/garden/new"]')).not.toBeNull();
+  });
+
+  it('shows the plant’s main photo in its cells, with the name over it', async () => {
+    photos.mainPhotos.and.resolveTo(new Map([['plant-1', { plant_id: 'plant-1', displayUrl: 'https://storage.test/basil.jpg' } as PlantPhoto]]));
+    const { settle, cells } = await render();
+    await settle();
+
+    const [basil, empty] = cells();
+    expect(basil.classList).toContain('with-photo');
+    expect(basil.querySelector('img')!.getAttribute('src')).toBe('https://storage.test/basil.jpg');
+    expect(basil.textContent!.trim()).toBe('Basil'); // the name stays, over the photo
+    expect(empty.querySelector('img')).toBeNull();
+
+    basil.querySelector('img')!.dispatchEvent(new Event('error')); // a link that's gone
+    await settle();
+    expect(cells()[0].classList).not.toContain('with-photo');
+    expect(cells()[0].textContent!.trim()).toBe('Basil');
+  });
+
+  it('still shows the garden when the photos can’t be loaded', async () => {
+    photos.mainPhotos.and.rejectWith(new Error('offline'));
+    spyOn(console, 'error');
+    const { settle, cells } = await render();
+    await settle();
+
+    expect(cells().map((c) => c.textContent!.trim())).toEqual(['Basil', '+']);
   });
 });

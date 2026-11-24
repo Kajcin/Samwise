@@ -29,6 +29,8 @@
                       <button
                         type="button"
                         [class.planted]="!!cell"
+                        [class.with-photo]="!!cell && !!cellPhoto(cell.plant_id)"
+                        [title]="cell ? plantLabel(cell.plant_id) : ''"
                         [class.selected]="isSelected(bed, r, c)"
                         [attr.aria-label]="
                           i18n.t('garden.cellLabel', {
@@ -39,7 +41,18 @@
                         "
                         (click)="selectCell(bed, r, c, cell)"
                       >
-                        {{ cell ? plantLabel(cell.plant_id) : '+' }}
+                        @if (cell && cellPhoto(cell.plant_id); as photo) {
+                          <img
+                            [src]="photo.displayUrl"
+                            alt=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer"
+                            (error)="markPhotoBroken(cell.plant_id)"
+                          />
+                          <span class="cell-name">{{ plantLabel(cell.plant_id) }}</span>
+                        } @else {
+                          {{ cell ? plantLabel(cell.plant_id) : '+' }}
+                        }
                       </button>
                     </td>
                   }

@@ -75,7 +75,7 @@ storage), links, and Wikimedia Commons pictures with their credit, also on built
 (each user's own). Plants added from the lookup get the article's picture.
 
 Possible follow-ups:
-- The main photo as a thumbnail in the plant catalog and the garden grid.
+- Done: the main photo as a thumbnail in the plant catalog and in the garden grid's cells.
 - A photo per planting (how it's doing this year), not just per plant.
 
 ## Going live

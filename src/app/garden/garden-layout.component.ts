@@ -8,6 +8,7 @@ import { toIsoDate } from '../core/dates';
 import { Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
 import { plantName } from '../plant-catalog/labels';
+import { PlantPhoto, PlantPhotosService } from '../plant-catalog/plant-photos.service';
 
 type Grid = (Planting | null)[][];
 
@@ -48,6 +49,28 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
     }
     .bed-grid button:hover { border-color: #3b6e22; }
     .bed-grid button.planted { background: #cfe3b0; color: #2f5a1b; font-weight: 600; }
+    /* With a photo: the picture fills the cell, the name sits on a dark band at the bottom. */
+    .bed-grid button.with-photo { position: relative; padding: 0; color: #fff; }
+    .bed-grid button.with-photo img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .bed-grid button.with-photo .cell-name {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0.1rem 0.2rem;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
+      font-size: 0.75rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
     .bed-grid button.selected { outline: 3px solid #3b6e22; outline-offset: 1px; }
     .bed-grid button:focus-visible { outline: 3px solid #3b6e22; outline-offset: 1px; }
   `,
@@ -55,6 +78,11 @@ export function buildGrid(rows: number, cols: number, plantings: Planting[]): Gr
 export class GardenLayoutComponent {
   private garden = inject(GardenService);
   private catalog = inject(PlantCatalogService);
+  private photosService = inject(PlantPhotosService);
+  /** Your main photo of each plant, by plant id; empty until loaded (or if that fails). */
+  mainPhotos = signal<ReadonlyMap<string, PlantPhoto>>(new Map());
+  /** Plants whose photo didn't load: their cells look as without one. */
+  brokenPhotos = signal<ReadonlySet<string>>(new Set());
   protected i18n = inject(LanguageService);
 
   loading = signal(true);
@@ -93,7 +121,26 @@ export class GardenLayoutComponent {
     this.load();
   }
 
+  /** The garden works without photos, so a failure here is only logged. */
+  private async loadMainPhotos(): Promise<void> {
+    try {
+      this.mainPhotos.set(await this.photosService.mainPhotos());
+    } catch (e) {
+      console.error('Could not load the plant photos:', messageOf(e));
+    }
+  }
+
+  /** A planted cell's photo, unless it failed to load. */
+  cellPhoto(plantId: string): PlantPhoto | null {
+    return this.brokenPhotos().has(plantId) ? null : (this.mainPhotos().get(plantId) ?? null);
+  }
+
+  markPhotoBroken(plantId: string): void {
+    this.brokenPhotos.update((set) => new Set(set).add(plantId));
+  }
+
   private async load(): Promise<void> {
+    this.loadMainPhotos();
     try {
       const [beds, plants] = await Promise.all([this.garden.listBeds(), this.catalog.list()]);
       this.plants.set(plants);
