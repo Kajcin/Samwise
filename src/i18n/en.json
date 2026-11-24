@@ -188,7 +188,7 @@
     "yours": "yours",
     "deleteLabel": "Delete {name}",
     "addHeading": "Add a custom plant",
-    "sun": "Sun",
+    "sun": "Position",
     "selectSun": "Select sun requirement",
     "save": "Save plant",
     "filters": "Filters",
@@ -211,7 +211,7 @@
   "plant": {
     "back": "← Plant catalog",
     "about": "About",
-    "sun": "Sun",
+    "sun": "Position",
     "watering": "Watering",
     "flowering": "Flowering",
     "floweringRange": "{from} to {to}",

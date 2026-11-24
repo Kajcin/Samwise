@@ -188,7 +188,7 @@
     "yours": "vlastní",
     "deleteLabel": "Smazat {name}",
     "addHeading": "Přidat vlastní rostlinu",
-    "sun": "Slunce",
+    "sun": "Stanoviště",
     "selectSun": "Vyberte nároky na slunce",
     "save": "Uložit rostlinu",
     "filters": "Filtry",
@@ -211,7 +211,7 @@
   "plant": {
     "back": "← Katalog rostlin",
     "about": "O rostlině",
-    "sun": "Slunce",
+    "sun": "Stanoviště",
     "watering": "Zalévání",
     "flowering": "Kvetení",
     "floweringRange": "{from} až {to}",
