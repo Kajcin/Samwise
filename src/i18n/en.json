@@ -210,6 +210,7 @@
     "notes": "Notes",
     "notesLabel": "{type} notes",
     "noRules": "No care rules yet.",
+    "noPhoto": "No photo yet",
     "readOnly": "This is a built-in plant, so its care rules are read-only.",
     "addRuleHeading": "Add a care rule",
     "task": "Task",

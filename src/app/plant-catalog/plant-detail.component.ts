@@ -1,5 +1,6 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { ModalComponent } from '../core/modal/modal.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -126,8 +127,17 @@ function ruleOrder(a: CareRule, b: CareRule): number {
 @Component({
   selector: 'app-plant-detail',
   standalone: true,
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink, IconComponent, ModalComponent],
   templateUrl: './plant-detail.component.html',
+  styles: `
+    .plant-image-placeholder {
+      background: linear-gradient(160deg, #f4f7ec, #e2ecd2);
+    }
+    .plant-image-icon {
+      font-size: 4.5rem;
+      opacity: 0.6;
+    }
+  `,
 })
 export class PlantDetailComponent {
   private route = inject(ActivatedRoute);
@@ -169,6 +179,8 @@ export class PlantDetailComponent {
   newRuleMonth = signal<number | null>(null);
   /** null = the whole month. */
   newRuleMonthPart = signal<MonthPart | null>(null);
+  /** The "add a care rule" dialog. */
+  ruleDialogOpen = signal(false);
   protected readonly monthParts: { id: string; value: MonthPart | null; label: string }[] = [
     { id: 'whole', value: null, label: 'plant.monthWhole' },
     { id: 'early', value: 'early', label: 'plant.monthEarly' },
@@ -213,6 +225,27 @@ export class PlantDetailComponent {
     }
   }
 
+  openRuleDialog(): void {
+    this.resetRuleForm();
+    this.ruleDialogOpen.set(true);
+  }
+
+  /** Closes the dialog; what was typed is dropped. */
+  closeRuleDialog(): void {
+    this.ruleDialogOpen.set(false);
+    this.resetRuleForm();
+  }
+
+  private resetRuleForm(): void {
+    this.newRuleTaskType.set('seed_start');
+    this.newRuleTimingType.set('offset_from_planting');
+    this.newRuleOffsetDays.set(null);
+    this.newRuleRecurrenceDays.set(null);
+    this.newRuleMonth.set(null);
+    this.newRuleMonthPart.set(null);
+    this.newRuleError.set(null);
+  }
+
   async addCareRule(event: Event): Promise<void> {
     event.preventDefault();
     const timing = this.newRuleTimingType();
@@ -232,10 +265,7 @@ export class PlantDetailComponent {
         month_part: timing === 'yearly' ? this.newRuleMonthPart() : null,
         notes: null,
       });
-      this.newRuleOffsetDays.set(null);
-      this.newRuleRecurrenceDays.set(null);
-      this.newRuleMonth.set(null);
-      this.newRuleMonthPart.set(null);
+      this.closeRuleDialog();
       await this.refreshCareRules();
     } catch (e) {
       this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));

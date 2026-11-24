@@ -166,6 +166,8 @@ describe('PlantDetailComponent', () => {
   it('lets the owner add a recurring rule, sending only the recurrence days', async () => {
     service.addCareRule.and.resolveTo(rules[0]);
     const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
 
     const timing = el.querySelector<HTMLSelectElement>('select[name=timing]')!;
     timing.value = 'recurring';
@@ -184,12 +186,14 @@ describe('PlantDetailComponent', () => {
 
   it('shows a validation error for a rule without days', async () => {
     const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
 
     el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(el.querySelector('[role=alert]')!.textContent).toContain('Offset days is required');
+    expect(el.querySelector('.rule-form [role=alert]')!.textContent).toContain('Offset days is required');
     expect(service.addCareRule).not.toHaveBeenCalled();
   });
 
@@ -337,6 +341,8 @@ describe('PlantDetailComponent', () => {
   it('adds a yearly rule for a month, with the new perennial task types', async () => {
     service.addCareRule.and.resolveTo(rules[0]);
     const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
     const set = (name: string, value: string) => {
       const field = el.querySelector<HTMLSelectElement>(`select[name=${name}]`)!;
       field.value = value;
@@ -361,6 +367,8 @@ describe('PlantDetailComponent', () => {
   it('adds a yearly rule for the end of a month', async () => {
     service.addCareRule.and.resolveTo(rules[0]);
     const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
     const set = (name: string, value: string) => {
       const field = el.querySelector<HTMLSelectElement>(`select[name=${name}]`)!;
       field.value = value;
@@ -402,5 +410,72 @@ describe('PlantDetailComponent', () => {
       'Mulch — every year in late October',
       'Winter protection — every year in November',
     ]);
+  });
+
+  it('adds rules in a dialog opened from the + in the rules card (own plants only)', async () => {
+    expect((await render(seeded)).el.querySelector('button.add-rule')).toBeNull();
+    TestBed.resetTestingModule();
+    const { fixture, el } = await render(custom);
+    expect(el.querySelector('[role=dialog]')).toBeNull();
+
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
+
+    const dialog = el.querySelector('[role=dialog]')!;
+    expect(dialog.querySelector('.modal-title')!.textContent).toContain('Add a care rule');
+    expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
+      .toEqual(['Close', 'Add rule']);
+  });
+
+  it('closing the dialog (✕, Close or Escape) drops what was typed', async () => {
+    const { fixture, el } = await render(custom);
+    const open = () => {
+      el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+      fixture.detectChanges();
+    };
+    const closers = [
+      () => el.querySelector<HTMLButtonElement>('[role=dialog] .btn-close')!.click(),
+      () => el.querySelector<HTMLButtonElement>('[role=dialog] button.close-dialog')!.click(),
+      () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })),
+    ];
+    for (const close of closers) {
+      open();
+      const days = el.querySelector<HTMLInputElement>('input[name=offset]')!;
+      days.value = '30';
+      days.dispatchEvent(new Event('input'));
+      close();
+      fixture.detectChanges();
+      expect(el.querySelector('[role=dialog]')).toBeNull();
+      open();
+      expect(el.querySelector<HTMLInputElement>('input[name=offset]')!.value).toBe('');
+      el.querySelector<HTMLButtonElement>('[role=dialog] button.close-dialog')!.click();
+      fixture.detectChanges();
+    }
+    expect(service.addCareRule).not.toHaveBeenCalled();
+  });
+
+  it('closes the dialog after adding the rule', async () => {
+    service.addCareRule.and.resolveTo(rules[0]);
+    const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
+
+    const days = el.querySelector<HTMLInputElement>('input[name=offset]')!;
+    days.value = '30';
+    days.dispatchEvent(new Event('input'));
+    el.querySelector<HTMLFormElement>('form.rule-form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(service.addCareRule).toHaveBeenCalled();
+    expect(el.querySelector('[role=dialog]')).toBeNull();
+  });
+
+  it('shows a picture placeholder, and for built-in plants the copy button by the title', async () => {
+    const { el } = await render(seeded);
+
+    expect(el.querySelector('.plant-image')!.textContent).toContain('No photo yet');
+    expect(el.querySelector('button.clone')!.textContent).toContain('Clone to customize');
+    expect(el.querySelector('.card-footer')!.textContent).toContain('built-in plant');
   });
 });

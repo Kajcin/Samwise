@@ -19,6 +19,10 @@
         >
           <app-icon name="trash" />
         </button>
+      } @else {
+        <button type="button" class="btn btn-outline-primary clone" (click)="cloneAndEdit()">
+          <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
+        </button>
       }
     </div>
     @if (p.species) {
@@ -179,8 +183,19 @@
         </section>
 
         <section class="card">
-          <div class="card-header">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">{{ i18n.t('plant.careRules') }}</h2>
+            @if (isEditable()) {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary add-rule"
+                [attr.aria-label]="i18n.t('plant.addRule')"
+                [title]="i18n.t('plant.addRule')"
+                (click)="openRuleDialog()"
+              >
+                <app-icon name="plus-lg" />
+              </button>
+            }
           </div>
           <ul class="list-group list-group-flush">
             @for (rule of careRules(); track rule.id) {
@@ -214,17 +229,30 @@
               <p class="list-group-item text-body-secondary mb-0">{{ i18n.t('plant.noRules') }}</p>
             }
           </ul>
-          @if (isEditable()) {
-            <div class="card-footer small text-body-secondary">{{ i18n.t('plant.rulesNote') }}</div>
-          }
+          <div class="card-footer small text-body-secondary">
+            {{ i18n.t(isEditable() ? 'plant.rulesNote' : 'plant.readOnly') }}
+          </div>
         </section>
       </div>
 
-      <div class="col-lg-4">
-        @if (isEditable()) {
-          <form class="card" (submit)="addCareRule($event)">
-            <div class="card-body">
-              <h3 class="h5 card-title">{{ i18n.t('plant.addRuleHeading') }}</h3>
+      <div class="col-lg-4 order-first order-lg-last">
+        <figure class="card plant-image mb-0">
+          <div class="ratio ratio-4x3 plant-image-placeholder rounded">
+            <div class="d-flex flex-column align-items-center justify-content-center text-primary">
+              <app-icon name="flower2" class="plant-image-icon" />
+              <figcaption class="small text-body-secondary mt-2">{{ i18n.t('plant.noPhoto') }}</figcaption>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </div>
+
+    @if (isEditable()) {
+      <app-modal [open]="ruleDialogOpen()" [title]="i18n.t('plant.addRuleHeading')" (closed)="closeRuleDialog()">
+        <!-- Created on each opening, so the fields always start empty. -->
+        @if (ruleDialogOpen()) {
+          <form class="rule-form" novalidate (submit)="addCareRule($event)">
+            <div class="modal-body">
               <div class="mb-3">
                 <label class="form-label" for="rule-task">{{ i18n.t('plant.task') }}</label>
                 <select id="rule-task" class="form-select" name="task" (change)="onTaskTypeChange($any($event.target).value)">
@@ -307,21 +335,19 @@
               @if (newRuleError()) {
                 <div class="alert alert-danger" role="alert">{{ i18n.text(newRuleError()) }}</div>
               }
-              <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('plant.addRule') }}</button>
             </div>
-          </form>
-        } @else {
-          <div class="card">
-            <div class="card-body">
-              <p>{{ i18n.t('plant.readOnly') }}</p>
-              <button type="button" class="btn btn-outline-primary" (click)="cloneAndEdit()">
-                <app-icon name="copy" class="me-1" />{{ i18n.t('common.cloneToCustomize') }}
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeRuleDialog()">
+                {{ i18n.t('common.close') }}
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <app-icon name="plus-lg" class="me-1" />{{ i18n.t('plant.addRule') }}
               </button>
             </div>
-          </div>
+          </form>
         }
-      </div>
-    </div>
+      </app-modal>
+    }
   } @else if (!error()) {
     <p class="text-body-secondary">{{ i18n.t('common.loading') }}</p>
   }

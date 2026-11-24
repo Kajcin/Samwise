@@ -210,6 +210,7 @@
     "notes": "Poznámky",
     "notesLabel": "{type} – poznámky",
     "noRules": "Zatím žádná pravidla péče.",
+    "noPhoto": "Zatím bez fotky",
     "readOnly": "Toto je vestavěná rostlina, její pravidla péče proto nejdou měnit.",
     "addRuleHeading": "Přidat pravidlo péče",
     "task": "Úkon",
