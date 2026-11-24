@@ -97,12 +97,20 @@ file. When a new pattern is needed, add it here in the same change.
 
 Never leave people guessing whether something is happening.
 
-- **A wait of unknown length** (a page loading its data, a web search, connecting the
-  calendar): `<app-loading [text]="…" />`, a spinner with a line such as "Načítání
-  rostlin…" (`role="status"`, so screen readers hear it).
-- **Results on their way** (the web search): `<app-loading size="lg" … />`, a large
-  spinner centered with the text below it, in the spot where the results will appear;
-  what's already on the page (the catalog matches) stays below it.
+- **Loaders are large and centered** by default: `<app-loading size="lg" [text]="…" />`,
+  a large spinner with a line of text below it ("Načítání rostlin…", "Hledám na
+  Wikipedii…"), centered in the spot where the content or the results will appear. Use it
+  for a page or section loading its data, a web search, a search in a dialog, connecting
+  or disconnecting the calendar. It has `role="status"`, so screen readers hear the text.
+  What's already on the page stays where it is (the catalog matches stay below the web
+  search's spinner).
+- **The small inline loader** (`<app-loading [text]="…" />` without `size`) only where a
+  large one would get in the way: a quick check on one line of a card, where a large
+  spinner would make the card jump in height (the calendar status in Nastavení). Say why
+  in a comment next to it.
+- **Don't contradict a loader:** while something loads, hide the empty-state messages
+  about it ("Hledání … neodpovídá žádná rostlina", "Zatím žádné úkoly"); show them once
+  it's done.
 - **A button whose action runs** (saving, deleting, searching, connecting): disable it,
   set `[attr.aria-busy]`, and show `<app-spinner class="me-1" />` in place of its icon
   (or before the text of a text-only button). Only the clicked button spins; the others

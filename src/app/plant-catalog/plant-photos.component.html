@@ -16,14 +16,14 @@
         </div>
       }
     } @else {
-      <div class="d-flex flex-column align-items-center justify-content-center text-primary">
-        <app-icon name="flower2" class="photo-placeholder-icon" />
-        @if (loading()) {
-          <app-loading class="small mt-2 photos-loading" [text]="i18n.t('common.loading')" />
-        } @else {
+      @if (loading()) {
+        <app-loading class="h-100 photos-loading" size="lg" [text]="i18n.t('common.loading')" />
+      } @else {
+        <div class="d-flex flex-column align-items-center justify-content-center text-primary">
+          <app-icon name="flower2" class="photo-placeholder-icon" />
           <span class="small text-body-secondary mt-2 no-photo">{{ i18n.t('plant.noPhoto') }}</span>
-        }
-      </div>
+        </div>
+      }
     }
   </div>
 
@@ -172,7 +172,7 @@
           }
           @case ('wikipedia') {
             @if (wikiLoading()) {
-              <app-loading class="wiki-loading" [text]="i18n.t('photos.wikipediaSearching')" />
+              <app-loading class="wiki-loading" size="lg" [text]="i18n.t('photos.wikipediaSearching')" />
             } @else if (wikiResults(); as results) {
               <ul class="list-unstyled mb-0 wiki-results">
                 @for (candidate of results; track candidate.wikidataId) {

@@ -164,7 +164,7 @@
       }
 
       @if (loading()) {
-        <app-loading [text]="i18n.t('catalog.loading')" />
+        <app-loading size="lg" [text]="i18n.t('catalog.loading')" />
       } @else {
         <ul class="list-group">
           @for (plant of visiblePlants(); track plant.id) {

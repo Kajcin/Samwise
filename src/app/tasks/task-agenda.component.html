@@ -42,7 +42,7 @@
   <div class="row g-4">
     <div class="col-12">
       @if (loading()) {
-        <app-loading [text]="i18n.t('tasks.loading')" />
+        <app-loading size="lg" [text]="i18n.t('tasks.loading')" />
       } @else {
         @for (day of days(); track day.date + (day.until ?? '')) {
           <section class="day card mb-3">

@@ -11,7 +11,7 @@
   }
 
   @if (loading()) {
-    <app-loading [text]="i18n.t('garden.loading')" />
+    <app-loading size="lg" [text]="i18n.t('garden.loading')" />
   } @else {
     @for (bed of beds(); track bed.id) {
       <section class="card mb-4">

@@ -6,7 +6,7 @@
   }
 
   @if (loading()) {
-    <app-loading [text]="i18n.t('plant.loading')" />
+    <app-loading size="lg" [text]="i18n.t('plant.loading')" />
   }
 
   @if (plant(); as p) {

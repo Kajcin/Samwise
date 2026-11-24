@@ -50,13 +50,14 @@
           }
 
           @if (busyAction() === 'finishing') {
-            <app-loading class="mb-3 calendar-busy" [text]="i18n.t('settings.calendar.connecting')" />
+            <app-loading class="mb-3 calendar-busy" size="lg" [text]="i18n.t('settings.calendar.connecting')" />
           } @else if (busyAction() === 'disconnect') {
-            <app-loading class="mb-3 calendar-busy" [text]="i18n.t('settings.calendar.disconnecting')" />
+            <app-loading class="mb-3 calendar-busy" size="lg" [text]="i18n.t('settings.calendar.disconnecting')" />
           }
 
           @switch (connection()) {
             @case (null) {
+              <!-- Small on purpose: a quick check on one line; a large one would make the card jump. -->
               <app-loading [text]="i18n.t('settings.calendar.checking')" />
             }
             @case ('connected') {
