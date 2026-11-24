@@ -431,7 +431,7 @@ describe('PlantDetailComponent', () => {
     const dialog = el.querySelector('[role=dialog]')!;
     expect(dialog.querySelector('.modal-title')!.textContent).toContain('Add a care rule');
     expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
-      .toEqual(['Close', 'Add rule']);
+      .toEqual(['Close', 'Save rule']);
   });
 
   it('closing the dialog (✕, Close or Escape) drops what was typed', async () => {

@@ -229,6 +229,7 @@
     "monthPartHint": "Začátek = 1.–15., konec = od 16. do konce měsíce.",
     "offsetDays": "Dní po výsadbě",
     "recurrenceDays": "Každých N dní",
+    "saveRule": "Uložit pravidlo",
     "addRule": "Přidat pravidlo",
     "edit": "Upravit",
     "editHeading": "Upravit rostlinu",

@@ -229,6 +229,7 @@
     "monthPartHint": "Beginning = 1st–15th, end = 16th to the last day.",
     "offsetDays": "Days after planting",
     "recurrenceDays": "Every N days",
+    "saveRule": "Save rule",
     "addRule": "Add rule",
     "edit": "Edit",
     "editHeading": "Edit plant",
