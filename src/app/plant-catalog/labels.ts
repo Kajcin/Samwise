@@ -39,10 +39,15 @@ export const sunKey = (sun: SunRequirement) => `sun.${sun}`;
 export const monthKey = (month: number) => `months.${month}`;
 
 export function describeRuleTiming(
-  rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days' | 'month'>,
+  rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days' | 'month' | 'month_part'>,
 ): Message {
-  // One text per month: Czech says "v červenci", "v září", … (each month its own form).
-  if (rule.timing_type === 'yearly') return msg(`rules.yearly.${rule.month}`);
+  if (rule.timing_type === 'yearly') {
+    // "every year in early May" / "každý rok začátkem května" (the month as "of May").
+    if (rule.month_part === 'early') return msg('rules.yearlyEarly', { month: msg(`dates.monthOf.${rule.month}`) });
+    if (rule.month_part === 'late') return msg('rules.yearlyLate', { month: msg(`dates.monthOf.${rule.month}`) });
+    // One text per month: Czech says "v červenci", "v září", … (each month its own form).
+    return msg(`rules.yearly.${rule.month}`);
+  }
   if (rule.timing_type === 'recurring') return msg('rules.everyDays', { days: rule.recurrence_days });
   if (rule.offset_days === 0) return msg('rules.onPlantingDay');
   return msg('rules.daysAfterPlanting', { days: rule.offset_days });

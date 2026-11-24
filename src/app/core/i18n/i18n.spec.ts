@@ -98,6 +98,13 @@ describe('LanguageService', () => {
     expect(document.documentElement.lang).toBe('en');
   });
 
+  it('translates a message given as a parameter first', () => {
+    const early = { key: 'rules.yearlyEarly', params: { month: { key: 'dates.monthOf.5' } } };
+    expect(i18n.text(early)).toBe('every year in early May');
+    i18n.use('cs');
+    expect(i18n.text(early)).toBe('každý rok začátkem května');
+  });
+
   it('joins several messages into one text', () => {
     expect(i18n.text([{ key: 'nav.tasks' }, { key: 'nav.garden' }])).toBe('Tasks Garden');
     expect(i18n.text(null)).toBeNull();

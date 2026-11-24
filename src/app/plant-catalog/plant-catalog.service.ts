@@ -72,12 +72,16 @@ export interface CareRule {
   recurrence_days: number | null;
   /** 1-12, yearly rules only. */
   month?: number | null;
+  /** Yearly rules: early = 1st-15th, late = 16th-last day, null = the whole month (migration 0013). */
+  month_part?: MonthPart | null;
   notes: string | null;
   /** Czech notes; rules of built-in plants only. */
   notes_cs?: string | null;
 }
 
 export type NewCareRule = Omit<CareRule, 'id' | 'plant_id' | 'notes_cs'>;
+
+export type MonthPart = 'early' | 'late';
 
 @Injectable({ providedIn: 'root' })
 export class PlantCatalogService {

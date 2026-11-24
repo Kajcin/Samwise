@@ -36,7 +36,8 @@ export function formatDueDate(isoDate: string, i18n: Translator, today: Date = n
 
 /**
  * When a task is due: a day as formatDueDate() gives it, or for a month-long task
- * "This month" (while it runs) or e.g. "July 2027" / "Červenec 2027".
+ * "This month" (while it runs) or e.g. "July 2027" / "Červenec 2027"; for half a month
+ * "Early this month", "Late May 2027" / "Konec května 2027".
  */
 export function formatDue(
   dueDate: string,
@@ -45,10 +46,19 @@ export function formatDue(
   today: Date = new Date(),
 ): string {
   if (!dueUntil) return formatDueDate(dueDate, i18n, today);
+  // A yearly rule's half month: early = 1st-15th, late = from the 16th (migration 0013).
+  const part = dueDate.endsWith('-16') ? 'late' : dueUntil.endsWith('-15') ? 'early' : null;
   const todayIso = toIsoDate(today);
-  if (dueDate <= todayIso && todayIso <= dueUntil) return i18n.t('dates.thisMonth');
+  if (dueDate <= todayIso && todayIso <= dueUntil) {
+    return i18n.t(part === 'early' ? 'dates.earlyThisMonth' : part === 'late' ? 'dates.lateThisMonth' : 'dates.thisMonth');
+  }
   const [y, m] = dueDate.split('-').map(Number);
-  const text = i18n.t('dates.monthYear', { month: i18n.t(`months.${m}`), year: String(y) });
+  const text = part
+    ? i18n.t(part === 'early' ? 'dates.earlyMonthYear' : 'dates.lateMonthYear', {
+        month: i18n.t(`dates.monthOf.${m}`),
+        year: String(y),
+      })
+    : i18n.t('dates.monthYear', { month: i18n.t(`months.${m}`), year: String(y) });
   return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
 

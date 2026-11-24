@@ -178,7 +178,7 @@ describe('PlantDetailComponent', () => {
     await fixture.whenStable();
 
     expect(service.addCareRule).toHaveBeenCalledWith('p2', {
-      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, month: null, notes: null,
+      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, month: null, month_part: null, notes: null,
     });
   });
 
@@ -354,14 +354,42 @@ describe('PlantDetailComponent', () => {
     await fixture.whenStable();
 
     expect(service.addCareRule).toHaveBeenCalledWith('p2', {
-      task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, notes: null,
+      task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, month_part: null, notes: null,
     });
+  });
+
+  it('adds a yearly rule for the end of a month', async () => {
+    service.addCareRule.and.resolveTo(rules[0]);
+    const { fixture, el } = await render(custom);
+    const set = (name: string, value: string) => {
+      const field = el.querySelector<HTMLSelectElement>(`select[name=${name}]`)!;
+      field.value = value;
+      field.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+    set('task', 'mulch');
+    set('timing', 'yearly');
+    set('month', '10');
+    const parts = Array.from(el.querySelectorAll<HTMLInputElement>('input[name=monthPart]'));
+    expect(parts.map((p) => p.labels![0].textContent!.trim())).toEqual(['Whole month', 'Beginning', 'End']);
+    expect(parts[0].checked).toBeTrue(); // the whole month unless chosen otherwise
+
+    parts[2].click();
+    fixture.detectChanges();
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(service.addCareRule).toHaveBeenCalledWith('p2', jasmine.objectContaining({
+      task_type: 'mulch', timing_type: 'yearly', month: 10, month_part: 'late',
+    }));
   });
 
   it('shows yearly rules last, by month, as "every year in …"', async () => {
     service.listCareRules.and.resolveTo([
       { id: 'y2', plant_id: 'p1', task_type: 'winter_protection', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 11, notes: null },
       { id: 'y1', plant_id: 'p1', task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, notes: null },
+      { id: 'y3', plant_id: 'p1', task_type: 'prune', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 5, month_part: 'early', notes: null },
+      { id: 'y4', plant_id: 'p1', task_type: 'mulch', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 10, month_part: 'late', notes: null },
       ...rules,
     ]);
     const { el } = await render(seeded);
@@ -369,7 +397,9 @@ describe('PlantDetailComponent', () => {
     expect(Array.from(el.querySelectorAll('li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
       'Harvest — 75 days after planting',
       'Fertilize — every 14 days',
+      'Prune — every year in early May',
       'Cut back — every year in July',
+      'Mulch — every year in late October',
       'Winter protection — every year in November',
     ]);
   });

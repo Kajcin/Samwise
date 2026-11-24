@@ -73,8 +73,19 @@ describe('formatDue', () => {
     expect(formatDue('2026-11-25', null, en, today)).toBe('Tomorrow'); // one-day tasks as before
   });
 
+  it('names half a month (a yearly rule\'s early or late part)', () => {
+    const en = i18nIn('en');
+    expect(formatDue('2027-05-01', '2027-05-15', en, today)).toBe('Early May 2027');
+    expect(formatDue('2027-10-16', '2027-10-31', en, today)).toBe('Late October 2027');
+    expect(formatDue('2026-11-16', '2026-11-30', en, today)).toBe('Late this month');
+    expect(formatDue('2026-11-01', '2026-11-15', en, new Date(2026, 10, 3))).toBe('Early this month');
+  });
+
   it('in Czech too', () => {
     const cs = i18nIn('cs');
+    expect(formatDue('2027-05-01', '2027-05-15', cs, today)).toBe('Začátek května 2027');
+    expect(formatDue('2027-10-16', '2027-10-31', cs, today)).toBe('Konec října 2027');
+    expect(formatDue('2026-11-16', '2026-11-30', cs, today)).toBe('Konec tohoto měsíce');
     expect(formatDue('2027-07-01', '2027-07-31', cs, today)).toBe('Červenec 2027');
     expect(formatDue('2026-11-01', '2026-11-30', cs, today)).toBe('Tento měsíc');
   });

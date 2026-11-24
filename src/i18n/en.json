@@ -52,6 +52,24 @@
     "yesterday": "Yesterday",
     "thisMonth": "This month",
     "monthYear": "{month} {year}",
+    "earlyThisMonth": "Early this month",
+    "lateThisMonth": "Late this month",
+    "earlyMonthYear": "Early {month} {year}",
+    "lateMonthYear": "Late {month} {year}",
+    "monthOf": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
     "weekdays": { "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat" },
     "monthsInDate": {
       "1": "Jan", "2": "Feb", "3": "Mar", "4": "Apr", "5": "May", "6": "Jun",
@@ -76,7 +94,9 @@
       "10": "every year in October",
       "11": "every year in November",
       "12": "every year in December"
-    }
+    },
+    "yearlyEarly": "every year in early {month}",
+    "yearlyLate": "every year in late {month}"
   },
   "tasks": {
     "title": "{type} — {plant}",
@@ -198,6 +218,11 @@
     "timingRecurring": "Repeats every N days",
     "timingYearly": "Every year in a month",
     "month": "Month",
+    "monthPart": "Part of the month",
+    "monthWhole": "Whole month",
+    "monthEarly": "Beginning",
+    "monthLate": "End",
+    "monthPartHint": "Beginning = 1st–15th, end = 16th to the last day.",
     "offsetDays": "Days after planting",
     "recurrenceDays": "Every N days",
     "addRule": "Add rule",

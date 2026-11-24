@@ -32,12 +32,13 @@ Done (migration 0012): yearly rules, "every year in July" / "každý rok v červ
 gives a task due during the whole month (`tasks.due_until`), created 12 months ahead and
 topped up nightly; it's overdue only after its month, shows as "This month" / "July 2027"
 in the app and as a month-long, non-blocking event in Google Calendar. New task types for
-perennials: divide, mulch, winter protection, cut back.
+perennials: divide, mulch, winter protection, cut back. A yearly rule can also name half
+of its month (migration 0013): "every year in early May" (1st-15th) / "late May" (16th-last).
 
 Possible follow-ups:
 - "Every N years" (e.g. divide every 3 years), counted from the planting year.
 - Seasonal rules for the built-in plants (they're vegetables and an annual flower today).
-- A period other than a calendar month ("early spring", "after the first bloom").
+- A period other than a calendar month or its half ("early spring", "after the first bloom").
 
 ## Flowering calendar
 

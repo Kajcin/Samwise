@@ -52,6 +52,24 @@
     "yesterday": "Včera",
     "thisMonth": "Tento měsíc",
     "monthYear": "{month} {year}",
+    "earlyThisMonth": "Začátek tohoto měsíce",
+    "lateThisMonth": "Konec tohoto měsíce",
+    "earlyMonthYear": "Začátek {month} {year}",
+    "lateMonthYear": "Konec {month} {year}",
+    "monthOf": {
+      "1": "ledna",
+      "2": "února",
+      "3": "března",
+      "4": "dubna",
+      "5": "května",
+      "6": "června",
+      "7": "července",
+      "8": "srpna",
+      "9": "září",
+      "10": "října",
+      "11": "listopadu",
+      "12": "prosince"
+    },
     "weekdays": { "0": "Ne", "1": "Po", "2": "Út", "3": "St", "4": "Čt", "5": "Pá", "6": "So" },
     "monthsInDate": {
       "1": "ledna", "2": "února", "3": "března", "4": "dubna", "5": "května", "6": "června",
@@ -76,7 +94,9 @@
       "10": "každý rok v říjnu",
       "11": "každý rok v listopadu",
       "12": "každý rok v prosinci"
-    }
+    },
+    "yearlyEarly": "každý rok začátkem {month}",
+    "yearlyLate": "každý rok koncem {month}"
   },
   "tasks": {
     "title": "{type} — {plant}",
@@ -198,6 +218,11 @@
     "timingRecurring": "Opakovat každých N dní",
     "timingYearly": "Každý rok v určitém měsíci",
     "month": "Měsíc",
+    "monthPart": "Část měsíce",
+    "monthWhole": "Celý měsíc",
+    "monthEarly": "Začátek",
+    "monthLate": "Konec",
+    "monthPartHint": "Začátek = 1.–15., konec = od 16. do konce měsíce.",
     "offsetDays": "Dní po výsadbě",
     "recurrenceDays": "Každých N dní",
     "addRule": "Přidat pravidlo",

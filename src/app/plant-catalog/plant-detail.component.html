@@ -271,6 +271,24 @@
                     }
                   </select>
                 </div>
+                <div class="mb-3">
+                  <span class="form-label d-block" id="rule-month-part-label">{{ i18n.t('plant.monthPart') }}</span>
+                  <div class="btn-group w-100" role="group" aria-labelledby="rule-month-part-label">
+                    @for (part of monthParts; track part.id) {
+                      <input
+                        type="radio"
+                        class="btn-check"
+                        name="monthPart"
+                        [id]="'month-part-' + part.id"
+                        [value]="part.id"
+                        [checked]="newRuleMonthPart() === part.value"
+                        (change)="newRuleMonthPart.set(part.value)"
+                      />
+                      <label class="btn btn-outline-primary btn-sm" [for]="'month-part-' + part.id">{{ i18n.t(part.label) }}</label>
+                    }
+                  </div>
+                  <div class="form-text">{{ i18n.t('plant.monthPartHint') }}</div>
+                </div>
               } @else {
                 <div class="mb-3">
                   <label class="form-label" for="rule-recurrence">{{ i18n.t('plant.recurrenceDays') }}</label>

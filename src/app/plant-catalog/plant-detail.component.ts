@@ -2,7 +2,15 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CareRule, Plant, PlantCatalogService, PlantChanges, PlantInUseError, TaskType } from './plant-catalog.service';
+import {
+  CareRule,
+  MonthPart,
+  Plant,
+  PlantCatalogService,
+  PlantChanges,
+  PlantInUseError,
+  TaskType,
+} from './plant-catalog.service';
 import {
   describeRuleTiming,
   monthKey,
@@ -159,6 +167,13 @@ export class PlantDetailComponent {
   newRuleOffsetDays = signal<number | null>(null);
   newRuleRecurrenceDays = signal<number | null>(null);
   newRuleMonth = signal<number | null>(null);
+  /** null = the whole month. */
+  newRuleMonthPart = signal<MonthPart | null>(null);
+  protected readonly monthParts: { id: string; value: MonthPart | null; label: string }[] = [
+    { id: 'whole', value: null, label: 'plant.monthWhole' },
+    { id: 'early', value: 'early', label: 'plant.monthEarly' },
+    { id: 'late', value: 'late', label: 'plant.monthLate' },
+  ];
   newRuleError = signal<Message | null>(null);
 
   private plantId = '';
@@ -214,11 +229,13 @@ export class PlantDetailComponent {
         offset_days: offset,
         recurrence_days: recurrence,
         month,
+        month_part: timing === 'yearly' ? this.newRuleMonthPart() : null,
         notes: null,
       });
       this.newRuleOffsetDays.set(null);
       this.newRuleRecurrenceDays.set(null);
       this.newRuleMonth.set(null);
+      this.newRuleMonthPart.set(null);
       await this.refreshCareRules();
     } catch (e) {
       this.newRuleError.set(msg('plant.errors.saveRule', { detail: messageOf(e) }));

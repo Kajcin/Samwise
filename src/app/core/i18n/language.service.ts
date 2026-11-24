@@ -2,6 +2,10 @@ import { DOCUMENT, inject, Injectable, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { Lang, LANGS, Message, Params } from './i18n';
 
+function isMessage(value: unknown): value is Message {
+  return typeof value === 'object' && value !== null && typeof (value as Message).key === 'string';
+}
+
 /**
  * The current language and translation. `t()` reads the language signal, so
  * templates (and computed signals) that translate re-render on a switch.
@@ -27,9 +31,18 @@ export class LanguageService {
     this.document.documentElement.lang = lang;
   }
 
+  /** A parameter may itself be a Message: it's translated first ("early {month}" → "early May"). */
   t(key: string, params?: Params): string {
     this.current(); // track the language
-    return this.transloco.translate(key, params ?? {});
+    return this.transloco.translate(key, params ? this.resolve(params) : {});
+  }
+
+  private resolve(params: Params): Params {
+    const out: Params = {};
+    for (const [name, value] of Object.entries(params)) {
+      out[name] = isMessage(value) ? this.t(value.key, value.params) : value;
+    }
+    return out;
   }
 
   /**
