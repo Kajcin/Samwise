@@ -117,9 +117,13 @@ injected into Edge Functions automatically.
 
 ```bash
 npx supabase start          # prints API URL, anon key, DB URL
-npx supabase db reset       # applies migrations + seed data
+npx supabase migration up   # applies new migrations, keeping your data
 npx supabase functions serve
 ```
+
+The first time, `npx supabase db reset` sets the database up (migrations + seed data).
+After that, avoid it: a reset deletes everything, including your accounts, beds,
+plants, tasks and calendar connection, and there's no undo.
 
 **Point the tasks webhook at the local function.** Run once after
 `npx supabase start`, and again after every `db reset`, which wipes Vault:
@@ -153,7 +157,13 @@ npm run dev:user         # dev@samwise.local / samwise-dev
 ```
 
 Then sign in with those credentials. `npx supabase db reset` deletes all
-users, so run `npm run dev:user` again after a reset. Google sign-in works
+users, so run `npm run dev:user` again after a reset.
+
+**SQL tests.** Each file in `supabase/tests/sql` rolls itself back, so it can run
+against your database: `npm run db:psql -- -f supabase/tests/sql/<file>`.
+`npm run test:sql` runs them all after a reset, so it refuses while the database has
+accounts; `npm run test:sql -- --reset` deletes everything and runs them anyway. CI
+starts from an empty database. Google sign-in works
 locally too, once `supabase/.env` holds the OAuth client from step 2.
 
 ### 4. Hosted Supabase (production)

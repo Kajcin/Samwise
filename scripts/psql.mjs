@@ -60,19 +60,29 @@ export function runPsql(args, options = {}) {
   const fileArgs = input ? ['-f', '-'] : [];
   const stdio = [input ? 'pipe' : 'inherit', 'inherit', 'inherit'];
 
-  const result = hasLocalPsql()
-    ? spawnSync('psql', [localDbUrl(), '-v', 'ON_ERROR_STOP=1', ...rest, ...fileArgs], { input, stdio })
-    : spawnSync(
-        'docker',
-        ['exec', '-i', dbContainerName(), 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', ...rest, ...fileArgs],
-        { input, stdio },
-      );
-
+  const result = spawnPsql([...rest, ...fileArgs], { input, stdio });
   if (result.error) {
     console.error(`Failed to start psql: ${result.error.message}`);
     return 1;
   }
   return result.status ?? 1;
+}
+
+/** Runs one query and returns its result as plain text (no headers), or null if it failed. */
+export function queryPsql(sql) {
+  const result = spawnPsql(['-t', '-A', '-c', sql], { stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8' });
+  if (result.error || result.status !== 0) return null;
+  return result.stdout.trim();
+}
+
+function spawnPsql(args, options) {
+  return hasLocalPsql()
+    ? spawnSync('psql', [localDbUrl(), '-v', 'ON_ERROR_STOP=1', ...args], options)
+    : spawnSync(
+        'docker',
+        ['exec', '-i', dbContainerName(), 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', ...args],
+        options,
+      );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

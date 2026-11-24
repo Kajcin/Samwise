@@ -12,8 +12,9 @@ a pattern it doesn't cover, add the pattern to DESIGN.md in the same change.
 
 ## Data safety
 
-- **Never reset the local database** (`supabase db reset`, `npm run test:sql`,
-  `npm run test:all`). It holds the owner's real data, and there is no backup.
+- **Never reset the local database** (`supabase db reset`, `npm run test:sql -- --reset`).
+  It holds the owner's real data, and there is no backup. `npm run test:sql` refuses
+  while the database has accounts; never get around that.
 - Apply new migrations with `npx supabase migration up`.
 - Run SQL tests one file at a time: `npm run db:psql -- -f supabase/tests/sql/<file>`.
   Each one rolls itself back.

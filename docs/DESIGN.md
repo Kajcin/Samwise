@@ -123,5 +123,5 @@ file. When a new pattern is needed, add it here in the same change.
   and with errors showing.
 - **Never reset the local database.** It holds the owner's real data. Apply migrations
   with `npx supabase migration up`; run SQL tests one file at a time with
-  `npm run db:psql -- -f supabase/tests/sql/<file>`. `npm run test:sql` and `test:all`
-  reset the database first.
+  `npm run db:psql -- -f supabase/tests/sql/<file>`. `npm run test:sql` resets the
+  database first, so it refuses while there are accounts.
