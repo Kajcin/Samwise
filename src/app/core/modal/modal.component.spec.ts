@@ -19,6 +19,27 @@ class HostComponent {
   closedCount = 0;
 }
 
+/** A dialog whose form is taller than the window, with an error that can appear at its end. */
+@Component({
+  imports: [ModalComponent],
+  template: `
+    <app-modal [open]="true" title="Add a plant" (closed)="0">
+      <form>
+        <div class="modal-body">
+          <div style="height: 3000px">Lots of fields</div>
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">Choose the sun.</div>
+          }
+        </div>
+        <div class="modal-footer"><button type="submit">Save plant</button></div>
+      </form>
+    </app-modal>
+  `,
+})
+class LongFormHostComponent {
+  error = signal(false);
+}
+
 describe('ModalComponent', () => {
   async function setup() {
     TestBed.configureTestingModule({ imports: [HostComponent], providers: [provideI18n()] });
@@ -78,6 +99,39 @@ describe('ModalComponent', () => {
 
     expect(host.closedCount).toBe(0);
     expect(el.querySelector('[role=dialog]')).not.toBeNull();
+  });
+
+  it('scrolls a body taller than the window, keeping the buttons in view', async () => {
+    TestBed.configureTestingModule({ imports: [LongFormHostComponent], providers: [provideI18n()] });
+    const fixture = TestBed.createComponent(LongFormHostComponent);
+    document.body.appendChild(fixture.nativeElement);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const body = el.querySelector<HTMLElement>('.modal-body')!;
+    expect(getComputedStyle(body).overflowY).toBe('auto');
+    expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+    expect(el.querySelector('.modal-footer button')!.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+    fixture.destroy();
+  });
+
+  it('brings an error that appears into view', async () => {
+    TestBed.configureTestingModule({ imports: [LongFormHostComponent], providers: [provideI18n()] });
+    const fixture = TestBed.createComponent(LongFormHostComponent);
+    document.body.appendChild(fixture.nativeElement);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const scrolled = spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    fixture.componentInstance.error.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve)); // the observer reports after the change
+
+    expect(scrolled).toHaveBeenCalled();
+    expect(scrolled.calls.mostRecent().object).toBe(fixture.nativeElement.querySelector('[role=alert]'));
+    fixture.destroy();
   });
 
   it('releases the page when destroyed while open (e.g. after navigating away)', async () => {

@@ -195,3 +195,14 @@ $life-cycle-colors: (
 .flowering-icon {
   color: #a83f84;
 }
+
+// --- Dialogs (app-modal) --------------------------------------------------------
+// Pages project a <form> holding .modal-body and .modal-footer. Bootstrap's scrollable
+// dialog only scrolls a .modal-body sitting right in .modal-content, so the form passes
+// the height on: a long body scrolls, the title and the buttons stay in view.
+.modal-dialog-scrollable .modal-content > form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}

@@ -24,7 +24,7 @@ import { ConfirmDialogService } from './confirm-dialog.service';
         aria-describedby="confirm-dialog-message"
         (click)="onBackdropClick($event)"
       >
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content">
             <div class="modal-header">
               <h2 class="modal-title h5" id="confirm-dialog-title">{{ d.title }}</h2>

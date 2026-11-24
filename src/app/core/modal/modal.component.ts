@@ -18,6 +18,9 @@ let nextId = 0;
  * The ✕ and Escape ask to close (`closed`); a click outside does nothing, so a stray click
  * can't throw away a half-filled form. On opening, the first field gets the focus; on
  * closing, it goes back to where it was.
+ *
+ * A body taller than the window scrolls while the title and the footer's buttons stay in
+ * view (styles.scss, "Dialogs"); an error (role=alert) appearing in it scrolls into view.
  */
 @Component({
   selector: 'app-modal',
@@ -72,6 +75,23 @@ export class ModalComponent {
     effect(() => {
       const content = this.content()?.nativeElement;
       content?.querySelector<HTMLElement>('.modal-body input, .modal-body select, .modal-body textarea')?.focus();
+    });
+    // A long dialog scrolls its body, so an error appearing at its end may be out of
+    // sight: bring it into view.
+    effect((onCleanup) => {
+      const content = this.content()?.nativeElement;
+      if (!content) return;
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of Array.from(mutation.addedNodes)) {
+            if (!(node instanceof HTMLElement)) continue;
+            const alert = node.matches('[role=alert]') ? node : node.querySelector<HTMLElement>('[role=alert]');
+            if (alert) return alert.scrollIntoView({ block: 'nearest' });
+          }
+        }
+      });
+      observer.observe(content, { childList: true, subtree: true });
+      onCleanup(() => observer.disconnect());
     });
   }
 
