@@ -255,6 +255,25 @@ built-in ones; either way they're visible only to you.
 - **From Wikipedia:** looks the plant up by its Latin name (or name) and offers the free
   pictures found, credited as above.
 
+## Plant types
+
+Each plant can say what kind of plant it is (migration 0015), shown as chips next to its
+name and used by the catalog's filters (the **Filters** button):
+
+| Attribute | Values (en / cs) | Per plant |
+|---|---|---|
+| Life cycle, how it's grown here | annual, biennial, perennial, bulb / letnička, dvouletka, trvalka, cibulovina | one |
+| Growth form | herbaceous, subshrub, shrub, tree, climber / bylina, polokeř, keř, strom, popínavka | one |
+| Use | vegetable, fruit, herb, ornamental / zelenina, ovoce, bylinka, okrasná | any |
+
+All are optional. Shrubs and trees have no life cycle (in Czech gardening a *trvalka* is a
+herbaceous perennial); the form disables it and the database refuses one. Herbaceous plants
+get no growth-form chip, since most plants are herbaceous. Within a filter group a plant
+matches any picked value; every group with picked values has to match.
+
+The catalog list also shows each plant's sun (icon), watering interval and flowering months
+(a 12-month strip); the plant page shows the strip with the months' initials.
+
 ## Security decisions
 
 - **Samwise uses its own calendar.** Connecting creates a "Samwise"

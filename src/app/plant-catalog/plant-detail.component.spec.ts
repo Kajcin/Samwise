@@ -48,6 +48,7 @@ describe('validatePlantForm', () => {
   const valid: PlantForm = {
     name: 'Catmint', species: '', sun: 'full_sun', wateringDays: null,
     floweringStart: null, floweringEnd: null, notes: '', sourceUrl: '',
+    lifeCycle: null, growthForm: null, uses: [],
   };
 
   it('accepts a plant with only a name and sun', () => {
@@ -86,11 +87,23 @@ describe('formToChanges', () => {
       formToChanges({
         name: ' Catmint ', species: ' ', sun: 'full_sun', wateringDays: 7,
         floweringStart: 5, floweringEnd: 9, notes: '  ', sourceUrl: ' https://x.cz/a ',
+        lifeCycle: 'perennial', growthForm: 'subshrub', uses: ['herb', 'ornamental'],
       }),
     ).toEqual({
       name: 'Catmint', species: null, sun_requirements: 'full_sun', watering_frequency_days: 7,
       flowering_start_month: 5, flowering_end_month: 9, notes: null, source_url: 'https://x.cz/a',
+      life_cycle: 'perennial', growth_form: 'subshrub', uses: ['herb', 'ornamental'],
     });
+  });
+
+  it('drops the life cycle of shrubs and trees', () => {
+    const form: PlantForm = {
+      name: 'Currant', species: '', sun: 'partial_shade', wateringDays: null, floweringStart: null, floweringEnd: null,
+      notes: '', sourceUrl: '', lifeCycle: 'perennial', growthForm: 'shrub', uses: ['fruit'],
+    };
+    expect(formToChanges(form).life_cycle).toBeNull();
+    expect(formToChanges({ ...form, growthForm: 'tree' }).life_cycle).toBeNull();
+    expect(formToChanges({ ...form, growthForm: 'climber' }).life_cycle).toBe('perennial');
   });
 });
 
@@ -119,6 +132,7 @@ describe('PlantDetailComponent', () => {
   const seeded: Plant = {
     id: 'p1', user_id: null, name: 'Tomato', species: 'Solanum lycopersicum', sun_requirements: 'full_sun',
     watering_frequency_days: 2, flowering_start_month: 6, flowering_end_month: 9, notes: null,
+    life_cycle: 'annual', growth_form: 'herbaceous', uses: ['vegetable'],
   };
   const custom: Plant = { ...seeded, id: 'p2', user_id: 'me', name: 'My Tomato' };
   const rules: CareRule[] = [
@@ -165,6 +179,22 @@ describe('PlantDetailComponent', () => {
     ]);
     expect(el.querySelector('form')).toBeNull();
     expect(el.textContent).toContain('Clone to customize');
+  });
+
+  it('shows what kind of plant it is as chips, and when it flowers on a strip', async () => {
+    const { el } = await render(seeded);
+
+    const chips = el.querySelector('app-plant-chips')!;
+    expect(chips.querySelector('.life-cycle-chip')!.textContent!.trim()).toBe('annual');
+    expect(chips.querySelector('.life-cycle-chip')!.classList).toContain('chip-annual');
+    // Herbaceous is what most plants are: no chip for it.
+    expect(chips.querySelector('.growth-form-chip')).toBeNull();
+    expect(Array.from(chips.querySelectorAll('.use-chip')).map((c) => c.textContent!.trim())).toEqual(['vegetable']);
+
+    const strip = el.querySelector('app-flowering-strip [role=img]')!;
+    expect(strip.getAttribute('aria-label')).toBe('Flowers from June to September');
+    expect(strip.querySelectorAll('.month.on').length).toBe(4);
+    expect(el.querySelector('app-icon.sun-full_sun')).not.toBeNull();
   });
 
   it('lets the owner add a recurring rule, sending only the recurrence days', async () => {
@@ -233,6 +263,11 @@ describe('PlantDetailComponent', () => {
     setField(el, 'floweringTo', '9');
     setField(el, 'notes', 'Cut back after flowering.');
     setField(el, 'sourceUrl', 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
+    setField(el, 'lifeCycle', 'perennial');
+    setField(el, 'growthForm', 'subshrub');
+    el.querySelector<HTMLInputElement>('input[name=uses][value=vegetable]')!.click(); // was on: now off
+    el.querySelector<HTMLInputElement>('input[name=uses][value=ornamental]')!.click();
+    el.querySelector<HTMLInputElement>('input[name=uses][value=herb]')!.click();
     el.querySelector<HTMLFormElement>('form.plant-form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
     fixture.detectChanges();
@@ -241,6 +276,7 @@ describe('PlantDetailComponent', () => {
       name: 'Catmint', species: 'Nepeta × faassenii', sun_requirements: 'full_sun', watering_frequency_days: 7,
       flowering_start_month: 5, flowering_end_month: 9, notes: 'Cut back after flowering.',
       source_url: 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low',
+      life_cycle: 'perennial', growth_form: 'subshrub', uses: ['ornamental', 'herb'],
     });
     expect(el.querySelector('form.plant-form')).toBeNull(); // back to viewing
     expect(el.querySelector('h1')!.textContent).toContain('Catmint');
@@ -250,6 +286,25 @@ describe('PlantDetailComponent', () => {
     expect(link.href).toBe('https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
     expect(link.rel).toBe('noopener noreferrer');
     expect(link.target).toBe('_blank');
+  });
+
+  it('clears and disables the life cycle when the plant is a shrub or a tree', async () => {
+    const { fixture, el } = await render(custom);
+    el.querySelector<HTMLButtonElement>('button.edit')!.click();
+    fixture.detectChanges();
+    const lifeCycle = el.querySelector<HTMLSelectElement>('select[name=lifeCycle]')!;
+    expect(lifeCycle.value).toBe('annual');
+
+    setField(el, 'growthForm', 'shrub');
+    fixture.detectChanges();
+
+    expect(lifeCycle.disabled).toBeTrue();
+    expect(lifeCycle.value).toBe('');
+    expect(el.querySelector('form.plant-form')!.textContent).toContain('Shrubs and trees have no life cycle here.');
+
+    setField(el, 'growthForm', 'climber');
+    fixture.detectChanges();
+    expect(lifeCycle.disabled).toBeFalse();
   });
 
   it('keeps the form open with a message when the input is invalid', async () => {

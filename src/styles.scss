@@ -61,3 +61,137 @@ main h1 {
     font-size: 2.1rem;
   }
 }
+
+// --- Plant traits (migration 0015) ----------------------------------------------
+// Life cycle: a filled chip in its own colour. Growth form: soft grey. Use: outlined.
+// Every chip carries its name, so colour is never the only cue.
+
+$life-cycle-colors: (
+  // name: (background, text)
+  annual: (#f6d27a, #4a3500),
+  biennial: (#f0a060, #3d1c00),
+  perennial: (#2e7d5b, #fff),
+  bulb: (#6f42c1, #fff),
+);
+
+.plant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.3em 0.7em;
+  border: 1px solid transparent;
+  border-radius: 50rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@each $name, $colors in $life-cycle-colors {
+  .chip-#{$name} {
+    background: nth($colors, 1);
+    color: nth($colors, 2);
+  }
+}
+
+.chip-form {
+  background: #e9ece4;
+  color: #3b4a35;
+  font-weight: 500;
+}
+
+.chip-use {
+  background: #fff;
+  border-color: #9bb88a;
+  color: $green-700;
+  font-weight: 500;
+}
+
+// The catalog's filter buttons: outlined until pressed, then filled like the chips.
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 0.9rem;
+  border: 1px solid #c9cfc2;
+  border-radius: 50rem;
+  background: #fff;
+  color: $body-color;
+
+  &:hover {
+    border-color: $primary;
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: $focus-ring-box-shadow;
+  }
+
+  .filter-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+  }
+
+  .filter-check {
+    display: none;
+  }
+
+  &[aria-pressed='true'] {
+    border-color: transparent;
+    background: $primary;
+    color: #fff;
+
+    .filter-dot {
+      display: none;
+    }
+
+    .filter-check {
+      display: inline;
+    }
+  }
+
+  &.pill-form[aria-pressed='true'] {
+    background: #4b5446;
+  }
+
+  @each $name, $colors in $life-cycle-colors {
+    &.pill-#{$name} {
+      .filter-dot {
+        background: nth($colors, 1);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+      }
+
+      &[aria-pressed='true'] {
+        background: nth($colors, 1);
+        color: nth($colors, 2);
+      }
+    }
+  }
+}
+
+// An active filter, removable with its ✕.
+.filter-chip {
+  min-height: 2rem;
+  padding: 0 0.6rem 0 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+// Sun icons in their own colours.
+.sun-full_sun {
+  color: #b07b00;
+}
+.sun-partial_shade {
+  color: #a37200;
+}
+.sun-full_shade {
+  color: #5f6b78;
+}
+.water-icon {
+  color: #2f6fa8;
+}
+.flowering-icon {
+  color: #a83f84;
+}

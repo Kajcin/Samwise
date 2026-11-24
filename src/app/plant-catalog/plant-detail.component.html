@@ -7,7 +7,10 @@
 
   @if (plant(); as p) {
     <div class="d-flex justify-content-between align-items-start gap-3">
-      <h1 class="mb-1">{{ plantName(p, i18n.lang()) }}</h1>
+      <div class="d-flex flex-wrap align-items-center column-gap-3 row-gap-2 mb-1">
+        <h1 class="mb-0">{{ plantName(p, i18n.lang()) }}</h1>
+        <app-plant-chips [plant]="p" />
+      </div>
       @if (isEditable()) {
         <button
           type="button"
@@ -50,6 +53,16 @@
                     (input)="setDraft('species', $any($event.target).value)"
                   />
                 </div>
+                <app-plant-traits-fields
+                  class="col-12"
+                  idPrefix="plant"
+                  [lifeCycle]="d.lifeCycle"
+                  (lifeCycleChange)="setDraft('lifeCycle', $event)"
+                  [growthForm]="d.growthForm"
+                  (growthFormChange)="setDraft('growthForm', $event)"
+                  [uses]="d.uses"
+                  (usesChange)="setDraft('uses', $event)"
+                />
                 <div class="col-md-6">
                   <label class="form-label" for="plant-sun">{{ i18n.t('plant.sun') }}</label>
                   <select id="plant-sun" class="form-select" name="sun" (change)="setDraft('sun', $any($event.target).value)">
@@ -150,22 +163,27 @@
               </div>
               <dl class="row mb-0">
                 @if (p.sun_requirements) {
-                  <dt class="col-sm-4"><app-icon name="sun" class="text-primary me-1" />{{ i18n.t('plant.sun') }}</dt>
+                  <dt class="col-sm-4">
+                    <app-icon [name]="sunIcons[p.sun_requirements]" class="sun-{{ p.sun_requirements }} me-1" />{{ i18n.t('plant.sun') }}
+                  </dt>
                   <dd class="col-sm-8">{{ i18n.t(sunKey(p.sun_requirements)) }}</dd>
                 }
                 @if (p.watering_frequency_days) {
-                  <dt class="col-sm-4"><app-icon name="droplet" class="text-primary me-1" />{{ i18n.t('plant.watering') }}</dt>
+                  <dt class="col-sm-4"><app-icon name="droplet" class="water-icon me-1" />{{ i18n.t('plant.watering') }}</dt>
                   <dd class="col-sm-8">{{ i18n.t('rules.everyDays', { days: p.watering_frequency_days }) }}</dd>
                 }
                 @if (p.flowering_start_month && p.flowering_end_month) {
-                  <dt class="col-sm-4"><app-icon name="flower1" class="text-primary me-1" />{{ i18n.t('plant.flowering') }}</dt>
+                  <dt class="col-sm-4"><app-icon name="flower1" class="flowering-icon me-1" />{{ i18n.t('plant.flowering') }}</dt>
                   <dd class="col-sm-8">
-                    {{
-                      i18n.t('plant.floweringRange', {
-                        from: i18n.t(monthKey(p.flowering_start_month)),
-                        to: i18n.t(monthKey(p.flowering_end_month)),
-                      })
-                    }}
+                    <div class="mb-1">
+                      {{
+                        i18n.t('plant.floweringRange', {
+                          from: i18n.t(monthKey(p.flowering_start_month)),
+                          to: i18n.t(monthKey(p.flowering_end_month)),
+                        })
+                      }}
+                    </div>
+                    <app-flowering-strip class="d-block" size="lg" [start]="p.flowering_start_month" [end]="p.flowering_end_month" />
                   </dd>
                 }
                 @if (p.source_url) {

@@ -14,6 +14,64 @@ import { isWebAddress } from '../core/web-address';
 import { environment } from '../../environments/environment';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
 import { PlantPhoto, PlantPhotosService } from './plant-photos.service';
+import { PlantChipsComponent } from './plant-chips.component';
+import { FloweringStripComponent } from './flowering-strip.component';
+import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
+import {
+  activeFilterCount,
+  GROWTH_FORMS,
+  GrowthForm,
+  growthFormKey,
+  hasLifeCycle,
+  LIFE_CYCLES,
+  LifeCycle,
+  lifeCycleKey,
+  matchesFilters,
+  NO_FILTERS,
+  PLANT_USES,
+  PlantFilters,
+  PlantUse,
+  SUN_ICONS,
+  toggled,
+  useKey,
+} from './traits';
+
+type FilterGroup = keyof PlantFilters;
+
+/** One filter button in the filter panel. */
+interface FilterOption {
+  value: string;
+  labelKey: string;
+  pressed: boolean;
+  /** Its colours (the filter-pill classes in styles.scss). */
+  cssClass: string;
+  /** Life cycles show their chip colour as a dot before they're picked. */
+  dot: boolean;
+}
+
+/** An active filter, shown as a removable chip. */
+interface ActiveFilter {
+  group: FilterGroup;
+  value: string;
+  labelKey: string;
+  chipClass: string;
+}
+
+const FILTER_GROUPS: { key: FilterGroup; label: string; values: readonly string[]; labelKey: (value: never) => string }[] = [
+  { key: 'lifeCycles', label: 'traits.lifeCycle', values: LIFE_CYCLES, labelKey: lifeCycleKey },
+  { key: 'growthForms', label: 'traits.growthForm', values: GROWTH_FORMS, labelKey: growthFormKey },
+  { key: 'uses', label: 'traits.use', values: PLANT_USES, labelKey: useKey },
+];
+
+function filterCssClass(group: FilterGroup, value: string): string {
+  if (group === 'lifeCycles') return `pill-${value}`;
+  return group === 'growthForms' ? 'pill-form' : 'pill-use';
+}
+
+function chipCssClass(group: FilterGroup, value: string): string {
+  if (group === 'lifeCycles') return `chip-${value}`;
+  return group === 'growthForms' ? 'chip-form' : 'chip-use';
+}
 
 /** Matches the English and the Czech name, so "tomato" finds Rajče too. */
 export function filterPlants(plants: Plant[], query: string): Plant[] {
@@ -49,7 +107,7 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
 @Component({
   selector: 'app-plant-catalog-list',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent],
+  imports: [RouterLink, IconComponent, ModalComponent, PlantChipsComponent, FloweringStripComponent, PlantTraitsFieldsComponent],
   templateUrl: './plant-catalog-list.component.html',
   styles: `
     .lookup-thumb {
@@ -76,6 +134,28 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
       height: 100%;
       object-fit: cover;
     }
+    .plant-main {
+      flex: 1 1 16rem;
+      min-width: 0;
+    }
+    .fact-sun {
+      display: inline-flex;
+      width: 1.25rem;
+      font-size: 1.15rem;
+    }
+    .fact-water {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      width: 3.25rem;
+    }
+    /* Same width on every row (md and up), so the facts before it line up. */
+    @media (min-width: 768px) {
+      .plant-actions {
+        min-width: 15.5rem;
+        justify-content: flex-end;
+      }
+    }
     .delete-slot {
       display: inline-flex;
       justify-content: center;
@@ -96,6 +176,7 @@ export class PlantCatalogListComponent {
   protected readonly sunOptions = SUN_REQUIREMENTS;
   protected readonly sunKey = sunKey;
   protected readonly plantName = plantName;
+  protected readonly sunIcons = SUN_ICONS;
 
   private plants = signal<Plant[]>([]);
   loading = signal(true);
@@ -106,7 +187,50 @@ export class PlantCatalogListComponent {
   /** Thumbnails whose picture didn't load: they show the placeholder. */
   brokenThumbs = signal<ReadonlySet<string>>(new Set());
   query = signal('');
-  visiblePlants = computed(() => sortByName(filterPlants(this.plants(), this.query()), this.i18n.lang()));
+  /** The catalog's filters, and whether their panel is open. */
+  filters = signal<PlantFilters>(NO_FILTERS);
+  filtersOpen = signal(false);
+  activeFilterCount = computed(() => activeFilterCount(this.filters()));
+  visiblePlants = computed(() =>
+    sortByName(
+      filterPlants(this.plants(), this.query()).filter((p) => matchesFilters(p, this.filters())),
+      this.i18n.lang(),
+    ),
+  );
+  totalCount = computed(() => this.plants().length);
+
+  filterGroups = computed(() => {
+    const filters = this.filters();
+    return FILTER_GROUPS.map((group) => ({
+      key: group.key,
+      label: group.label,
+      options: group.values.map(
+        (value): FilterOption => ({
+          value,
+          labelKey: group.labelKey(value as never),
+          pressed: (filters[group.key] as readonly string[]).includes(value),
+          cssClass: filterCssClass(group.key, value),
+          dot: group.key === 'lifeCycles',
+        }),
+      ),
+    }));
+  });
+
+  /** In the panel's order, so the chips don't jump around as filters are picked. */
+  activeFilters = computed(() =>
+    this.filterGroups().flatMap((group) =>
+      group.options
+        .filter((option) => option.pressed)
+        .map(
+          (option): ActiveFilter => ({
+            group: group.key,
+            value: option.value,
+            labelKey: option.labelKey,
+            chipClass: chipCssClass(group.key, option.value),
+          }),
+        ),
+    ),
+  );
 
   newPlantName = signal('');
   newPlantSun = signal<SunRequirement | null>(null);
@@ -115,6 +239,9 @@ export class PlantCatalogListComponent {
   newPlantSpecies = signal('');
   newPlantNotes = signal('');
   newPlantSourceUrl = signal('');
+  newPlantLifeCycle = signal<LifeCycle | null>(null);
+  newPlantGrowthForm = signal<GrowthForm | null>(null);
+  newPlantUses = signal<PlantUse[]>([]);
   /** The lookup result the form was pre-filled from. */
   prefilledFrom = signal<PlantCandidate | null>(null);
   /** The "add a custom plant" dialog. */
@@ -148,6 +275,14 @@ export class PlantCatalogListComponent {
     this.brokenThumbs.update((set) => new Set(set).add(plantId));
   }
 
+
+  toggleFilter(group: FilterGroup, value: string): void {
+    this.filters.update((filters) => ({ ...filters, [group]: toggled(filters[group] as readonly string[], value) }));
+  }
+
+  clearFilters(): void {
+    this.filters.set(NO_FILTERS);
+  }
 
   onSunChange(value: string): void {
     this.newPlantSun.set(value ? (value as SunRequirement) : null);
@@ -223,6 +358,9 @@ export class PlantCatalogListComponent {
   private resetAddForm(): void {
     this.newPlantName.set('');
     this.newPlantSun.set(null);
+    this.newPlantLifeCycle.set(null);
+    this.newPlantGrowthForm.set(null);
+    this.newPlantUses.set([]);
     this.newPlantError.set(null);
     this.clearPrefill();
   }
@@ -260,6 +398,9 @@ export class PlantCatalogListComponent {
         flowering_end_month: null,
         notes: this.newPlantNotes().trim() || null,
         source_url: this.newPlantSourceUrl().trim() || null,
+        life_cycle: hasLifeCycle(this.newPlantGrowthForm()) ? this.newPlantLifeCycle() : null,
+        growth_form: this.newPlantGrowthForm(),
+        uses: this.newPlantUses(),
       });
       // From a lookup: the article's picture (with its credit) becomes the plant's photo.
       const image = this.prefilledFrom()?.image;

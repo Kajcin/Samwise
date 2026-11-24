@@ -3,6 +3,7 @@ import { supabase } from '../core/supabase-client';
 import { currentUserId } from '../core/current-user';
 import type { Lang } from '../core/i18n/i18n';
 import { plantName, plantNotes, ruleNotes } from './labels';
+import type { GrowthForm, LifeCycle, PlantUse } from './traits';
 
 export interface Plant {
   id: string;
@@ -21,6 +22,10 @@ export interface Plant {
   notes_cs?: string | null;
   /** A page describing the plant (e.g. a nursery's product page); Samwise only links to it. */
   source_url?: string | null;
+  /** What kind of plant it is (migration 0015); see traits.ts. */
+  life_cycle?: LifeCycle | null;
+  growth_form?: GrowthForm | null;
+  uses?: PlantUse[];
 }
 
 export type NewPlant = Omit<Plant, 'id' | 'user_id' | 'name_cs' | 'notes_cs'>;
@@ -37,6 +42,9 @@ export type PlantChanges = Partial<
     | 'flowering_end_month'
     | 'notes'
     | 'source_url'
+    | 'life_cycle'
+    | 'growth_form'
+    | 'uses'
   >
 >;
 

@@ -9,15 +9,83 @@
   <div class="row g-4">
     <div class="col-12">
       <label class="visually-hidden" for="plant-search">{{ i18n.t('catalog.search') }}</label>
-      <input
-        id="plant-search"
-        class="form-control mb-3"
-        type="search"
-        [value]="query()"
-        (input)="query.set($any($event.target).value)"
-        (keydown.enter)="searchWeb()"
-        [placeholder]="i18n.t('catalog.searchPlaceholder')"
-      />
+      <div class="d-flex gap-2 mb-3">
+        <input
+          id="plant-search"
+          class="form-control"
+          type="search"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+          (keydown.enter)="searchWeb()"
+          [placeholder]="i18n.t('catalog.searchPlaceholder')"
+        />
+        <button
+          type="button"
+          class="btn btn-outline-primary d-inline-flex align-items-center gap-2 flex-shrink-0 filters-toggle"
+          [class.active]="filtersOpen()"
+          [attr.aria-expanded]="filtersOpen()"
+          aria-controls="catalog-filters"
+          (click)="filtersOpen.set(!filtersOpen())"
+        >
+          <app-icon name="funnel" />{{ i18n.t('catalog.filters') }}
+          @if (activeFilterCount()) {
+            <span class="badge rounded-pill filter-count" [class.text-bg-primary]="!filtersOpen()" [class.text-bg-light]="filtersOpen()">
+              {{ activeFilterCount() }}<span class="visually-hidden"> {{ i18n.t('catalog.filtersOn', { count: activeFilterCount() }) }}</span>
+            </span>
+          }
+        </button>
+      </div>
+
+      @if (filtersOpen()) {
+        <section id="catalog-filters" class="card card-body mb-3 filters-panel" [attr.aria-label]="i18n.t('catalog.filters')">
+          @for (group of filterGroups(); track group.key) {
+            <fieldset class="mb-3">
+              <legend class="fs-6 fw-semibold text-body-secondary mb-2">{{ i18n.t(group.label) }}</legend>
+              <div class="d-flex flex-wrap gap-2">
+                @for (option of group.options; track option.value) {
+                  <button
+                    type="button"
+                    class="filter-pill {{ option.cssClass }}"
+                    [attr.aria-pressed]="option.pressed"
+                    (click)="toggleFilter(group.key, option.value)"
+                  >
+                    @if (option.dot) {
+                      <span class="filter-dot" aria-hidden="true"></span>
+                    }
+                    <app-icon name="check-lg" class="filter-check" />{{ i18n.t(option.labelKey) }}
+                  </button>
+                }
+              </div>
+            </fieldset>
+          }
+          <div class="d-flex justify-content-between gap-2 border-top pt-3">
+            <button type="button" class="btn btn-outline-secondary clear-filters" [disabled]="!activeFilterCount()" (click)="clearFilters()">
+              {{ i18n.t('catalog.clearFilters') }}
+            </button>
+            <button type="button" class="btn btn-primary close-filters" (click)="filtersOpen.set(false)">
+              {{ i18n.t('catalog.filtersDone') }}
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (activeFilters().length) {
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3 active-filters">
+          <span class="small text-body-secondary me-1 shown-count">
+            {{ i18n.t('catalog.shownOf', { shown: visiblePlants().length, total: totalCount() }) }}
+          </span>
+          @for (filter of activeFilters(); track filter.group + filter.value) {
+            <button
+              type="button"
+              class="plant-chip filter-chip {{ filter.chipClass }}"
+              [attr.aria-label]="i18n.t('catalog.removeFilter', { name: i18n.t(filter.labelKey) })"
+              (click)="toggleFilter(filter.group, filter.value)"
+            >
+              {{ i18n.t(filter.labelKey) }}<app-icon name="x-lg" />
+            </button>
+          }
+        </div>
+      }
 
       @if (canLookUp()) {
         <button type="button" class="btn btn-sm btn-outline-primary mb-3 lookup" [disabled]="lookupLoading()" (click)="searchWeb()">
@@ -89,7 +157,8 @@
       } @else {
         <ul class="list-group">
           @for (plant of visiblePlants(); track plant.id) {
-            <li class="list-group-item d-flex align-items-center gap-2">
+            <li class="list-group-item d-flex flex-wrap align-items-center column-gap-3 row-gap-2">
+              <div class="d-flex align-items-center gap-2 plant-main">
               <span class="catalog-thumb" aria-hidden="true">
                 @if (mainPhotos().get(plant.id); as photo) {
                   @if (!brokenThumbs().has(plant.id)) {
@@ -101,7 +170,30 @@
                   <app-icon name="flower2" />
                 }
               </span>
-              <a class="flex-grow-1" [routerLink]="['/plants', plant.id]">{{ plantName(plant, i18n.lang()) }}</a>
+              <div class="d-flex flex-column gap-1">
+                <a [routerLink]="['/plants', plant.id]">{{ plantName(plant, i18n.lang()) }}</a>
+                <app-plant-chips [plant]="plant" />
+              </div>
+              </div>
+              <div class="d-flex align-items-center gap-3 small text-body-secondary plant-facts">
+                <span class="fact-sun" [title]="plant.sun_requirements ? i18n.t(sunKey(plant.sun_requirements)) : ''">
+                  @if (plant.sun_requirements; as sun) {
+                    <app-icon [name]="sunIcons[sun]" class="sun-{{ sun }}" [label]="i18n.t(sunKey(sun))" />
+                  }
+                </span>
+                <span
+                  class="fact-water"
+                  [title]="plant.watering_frequency_days ? i18n.t('plant.watering') + ': ' + i18n.t('rules.everyDays', { days: plant.watering_frequency_days }) : ''"
+                >
+                  @if (plant.watering_frequency_days; as days) {
+                    <app-icon name="droplet" class="water-icon" />
+                    <span aria-hidden="true">{{ i18n.t('catalog.wateringShort', { days }) }}</span>
+                    <span class="visually-hidden">{{ i18n.t('plant.watering') }}: {{ i18n.t('rules.everyDays', { days }) }}</span>
+                  }
+                </span>
+                <app-flowering-strip [start]="plant.flowering_start_month" [end]="plant.flowering_end_month" />
+              </div>
+              <div class="d-flex align-items-center gap-2 plant-actions">
               @if (plant.user_id) {
                 <span class="badge text-bg-success">{{ i18n.t('catalog.yours') }}</span>
               } @else {
@@ -124,9 +216,14 @@
                   </button>
                 }
               </span>
+              </div>
             </li>
           } @empty {
-            <p class="text-body-secondary">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>
+            @if (query().trim()) {
+              <p class="text-body-secondary">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>
+            } @else {
+              <p class="text-body-secondary no-filter-matches">{{ i18n.t('catalog.noFilterMatches') }}</p>
+            }
           }
         </ul>
       }
@@ -157,6 +254,13 @@
                 }
               </select>
             </div>
+            <app-plant-traits-fields
+              class="d-block mb-3"
+              idPrefix="new-plant"
+              [(lifeCycle)]="newPlantLifeCycle"
+              [(growthForm)]="newPlantGrowthForm"
+              [(uses)]="newPlantUses"
+            />
             @if (prefilledFrom()) {
               <div class="alert alert-info small py-2 prefill-notice" role="status">
                 {{ i18n.t('lookup.prefilled') }}

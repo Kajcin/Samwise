@@ -191,6 +191,14 @@
     "sun": "Sun",
     "selectSun": "Select sun requirement",
     "save": "Save plant",
+    "filters": "Filters",
+    "filtersOn": "{count, plural, one {# filter on} other {# filters on}}",
+    "filtersDone": "Done",
+    "clearFilters": "Clear filters",
+    "removeFilter": "Remove the filter {name}",
+    "shownOf": "Showing {shown} of {total, plural, one {# plant} other {# plants}}",
+    "noFilterMatches": "No plant matches the filters.",
+    "wateringShort": "{days} d",
     "add": "Add plant",
     "errors": {
       "nameRequired": "Name is required.",
@@ -267,6 +275,34 @@
       "deleteRule": "Could not delete the rule: {detail}"
     }
   },
+  "traits": {
+    "lifeCycle": "Life cycle",
+    "growthForm": "Growth form",
+    "use": "Use",
+    "noLifeCycle": "Shrubs and trees have no life cycle here.",
+    "floweringFromTo": "Flowers from {from} to {to}",
+    "floweringUnknown": "Flowering time not set",
+    "lifeCycles": {
+      "annual": "annual",
+      "biennial": "biennial",
+      "perennial": "perennial",
+      "bulb": "bulb"
+    },
+    "growthForms": {
+      "herbaceous": "herbaceous",
+      "subshrub": "subshrub",
+      "shrub": "shrub",
+      "tree": "tree",
+      "climber": "climber"
+    },
+    "uses": {
+      "vegetable": "vegetable",
+      "fruit": "fruit",
+      "herb": "herb",
+      "ornamental": "ornamental"
+    }
+  },
+  "monthInitials": { "1": "J", "2": "F", "3": "M", "4": "A", "5": "M", "6": "J", "7": "J", "8": "A", "9": "S", "10": "O", "11": "N", "12": "D" },
   "lookup": {
     "button": "Search “{query}” on the web",
     "searching": "Searching Wikipedia…",

@@ -2,6 +2,10 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { PlantPhotosComponent } from './plant-photos.component';
+import { PlantChipsComponent } from './plant-chips.component';
+import { FloweringStripComponent } from './flowering-strip.component';
+import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
+import { GrowthForm, hasLifeCycle, LifeCycle, PlantUse, SUN_ICONS } from './traits';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -64,6 +68,9 @@ export interface PlantForm {
   floweringEnd: number | null;
   notes: string;
   sourceUrl: string;
+  lifeCycle: LifeCycle | null;
+  growthForm: GrowthForm | null;
+  uses: PlantUse[];
 }
 
 export function plantToForm(plant: Plant): PlantForm {
@@ -76,6 +83,9 @@ export function plantToForm(plant: Plant): PlantForm {
     floweringEnd: plant.flowering_end_month,
     notes: plant.notes ?? '',
     sourceUrl: plant.source_url ?? '',
+    lifeCycle: plant.life_cycle ?? null,
+    growthForm: plant.growth_form ?? null,
+    uses: plant.uses ?? [],
   };
 }
 
@@ -100,6 +110,10 @@ export function formToChanges(form: PlantForm): PlantChanges {
     flowering_end_month: form.floweringEnd,
     notes: form.notes.trim() || null,
     source_url: form.sourceUrl.trim() || null,
+    // Shrubs and trees have no life cycle (the database refuses one).
+    life_cycle: hasLifeCycle(form.growthForm) ? form.lifeCycle : null,
+    growth_form: form.growthForm,
+    uses: form.uses,
   };
 }
 
@@ -128,7 +142,15 @@ function ruleOrder(a: CareRule, b: CareRule): number {
 @Component({
   selector: 'app-plant-detail',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent, PlantPhotosComponent],
+  imports: [
+    RouterLink,
+    IconComponent,
+    ModalComponent,
+    PlantPhotosComponent,
+    PlantChipsComponent,
+    FloweringStripComponent,
+    PlantTraitsFieldsComponent,
+  ],
   templateUrl: './plant-detail.component.html',
 })
 export class PlantDetailComponent {
@@ -150,6 +172,7 @@ export class PlantDetailComponent {
   protected readonly sunOptions = SUN_REQUIREMENTS;
   protected readonly months = MONTHS;
   protected readonly linkHost = linkHost;
+  protected readonly sunIcons = SUN_ICONS;
 
   /** The edit form's draft; null when not editing. */
   draft = signal<PlantForm | null>(null);

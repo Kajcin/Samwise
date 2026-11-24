@@ -16,7 +16,7 @@ const ICONS = [
   'check-lg', 'arrow-counterclockwise', 'plus-lg', 'trash', 'copy', 'google',
   'calendar-plus', 'calendar-x', 'calendar-check', 'arrow-repeat', 'pencil', 'box-arrow-up-right', 'x-circle', 'search', 'upload', 'link-45deg', 'star-fill',
   // status and plant facts
-  'exclamation-triangle', 'sun',
+  'exclamation-triangle', 'sun', 'sun-fill', 'cloud-sun', 'cloud', 'funnel', 'x-lg',
 ];
 
 const out = 'src/app/core/icons/icons.generated.ts';

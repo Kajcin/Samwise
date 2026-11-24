@@ -111,6 +111,122 @@ describe('PlantCatalogListComponent', () => {
     expect(Array.from(el.querySelectorAll('li a')).map((a) => a.textContent!.trim())).toEqual(['Tomato']);
   });
 
+  describe('filters', () => {
+    const garden: Plant[] = [
+      plant({ id: '1', name: 'Tomato', life_cycle: 'annual', growth_form: 'herbaceous', uses: ['vegetable'] }),
+      plant({ id: '2', name: 'Catmint', user_id: 'me', life_cycle: 'perennial', growth_form: 'herbaceous', uses: ['ornamental'] }),
+      plant({ id: '3', name: 'Sage', user_id: 'me', life_cycle: 'perennial', growth_form: 'subshrub', uses: ['herb', 'ornamental'] }),
+      plant({ id: '4', name: 'Currant', user_id: 'me', growth_form: 'shrub', uses: ['fruit'] }),
+      plant({ id: '5', name: 'Mystery', user_id: 'me' }),
+    ];
+    const names = (el: HTMLElement) => Array.from(el.querySelectorAll('li a')).map((a) => a.textContent!.trim());
+    const pill = (el: HTMLElement, text: string) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.filters-panel .filter-pill')).find((b) => b.textContent!.trim() === text)!;
+
+    beforeEach(() => service.list.and.resolveTo(garden));
+
+    it('open in a panel from the Filters button, grouped by life cycle, growth form and use', async () => {
+      const { fixture, el } = await render();
+      const toggle = el.querySelector<HTMLButtonElement>('button.filters-toggle')!;
+      expect(el.querySelector('.filters-panel')).toBeNull();
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      const groups = Array.from(el.querySelectorAll('.filters-panel fieldset'));
+      expect(groups.map((g) => g.querySelector('legend')!.textContent!.trim())).toEqual(['Life cycle', 'Growth form', 'Use']);
+      expect(Array.from(groups[1].querySelectorAll('.filter-pill')).map((b) => b.textContent!.trim()))
+        .toEqual(['herbaceous', 'subshrub', 'shrub', 'tree', 'climber']);
+      expect(pill(el, 'perennial').getAttribute('aria-pressed')).toBe('false');
+
+      el.querySelector<HTMLButtonElement>('button.close-filters')!.click();
+      fixture.detectChanges();
+      expect(el.querySelector('.filters-panel')).toBeNull();
+    });
+
+    it('match any value within a group and every group that has values', async () => {
+      const { fixture, el } = await render();
+      el.querySelector<HTMLButtonElement>('button.filters-toggle')!.click();
+      fixture.detectChanges();
+
+      pill(el, 'ornamental').click();
+      fixture.detectChanges();
+      expect(pill(el, 'ornamental').getAttribute('aria-pressed')).toBe('true');
+      expect(names(el)).toEqual(['Catmint', 'Sage']);
+
+      pill(el, 'fruit').click(); // ornamental or fruit
+      fixture.detectChanges();
+      expect(names(el)).toEqual(['Catmint', 'Currant', 'Sage']);
+
+      pill(el, 'subshrub').click(); // ... and a subshrub
+      fixture.detectChanges();
+      expect(names(el)).toEqual(['Sage']);
+      expect(el.querySelector('.filter-count')!.textContent).toContain('3');
+      expect(el.querySelector('.shown-count')!.textContent!.trim()).toBe('Showing 1 of 5 plants');
+    });
+
+    it('show the active ones as chips that remove them, and can all be cleared', async () => {
+      const { fixture, el } = await render();
+      el.querySelector<HTMLButtonElement>('button.filters-toggle')!.click();
+      fixture.detectChanges();
+      pill(el, 'perennial').click();
+      pill(el, 'herb').click();
+      fixture.detectChanges();
+      el.querySelector<HTMLButtonElement>('button.close-filters')!.click();
+      fixture.detectChanges();
+
+      const chips = () => Array.from(el.querySelectorAll<HTMLButtonElement>('.active-filters .filter-chip'));
+      expect(chips().map((c) => c.textContent!.trim())).toEqual(['perennial', 'herb']);
+      expect(chips()[0].getAttribute('aria-label')).toBe('Remove the filter perennial');
+      expect(names(el)).toEqual(['Sage']);
+
+      chips()[1].click(); // remove "herb"
+      fixture.detectChanges();
+      expect(chips().map((c) => c.textContent!.trim())).toEqual(['perennial']);
+      expect(names(el)).toEqual(['Catmint', 'Sage']);
+
+      el.querySelector<HTMLButtonElement>('button.filters-toggle')!.click();
+      fixture.detectChanges();
+      el.querySelector<HTMLButtonElement>('button.clear-filters')!.click();
+      fixture.detectChanges();
+      expect(chips()).toEqual([]);
+      expect(el.querySelector('.filter-count')).toBeNull();
+      expect(names(el).length).toBe(5);
+    });
+
+    it('say so when no plant matches', async () => {
+      const { fixture, el } = await render();
+      el.querySelector<HTMLButtonElement>('button.filters-toggle')!.click();
+      fixture.detectChanges();
+      pill(el, 'tree').click();
+      fixture.detectChanges();
+
+      expect(names(el)).toEqual([]);
+      expect(el.querySelector('.no-filter-matches')!.textContent).toContain('No plant matches the filters.');
+    });
+
+    it('rows show the chips, the sun, the watering and the flowering months', async () => {
+      service.list.and.resolveTo([
+        plant({
+          id: '2', name: 'Catmint', user_id: 'me', life_cycle: 'perennial', growth_form: 'subshrub', uses: ['ornamental', 'herb'],
+          sun_requirements: 'partial_shade', watering_frequency_days: 7, flowering_start_month: 5, flowering_end_month: 9,
+        }),
+      ]);
+      const { el } = await render();
+      const row = el.querySelector('li')!;
+
+      // Uses always in the same order, whatever order they were picked in.
+      expect(Array.from(row.querySelectorAll('.plant-chip')).map((c) => c.textContent!.trim()))
+        .toEqual(['perennial', 'subshrub', 'herb', 'ornamental']);
+      expect(row.querySelector('.fact-sun app-icon svg')!.getAttribute('aria-label')).toBe('Partial shade');
+      expect(row.querySelector('.fact-water')!.textContent).toContain('7 d');
+      expect(row.querySelector('.fact-water .visually-hidden')!.textContent!.trim()).toBe('Watering: every 7 days');
+      expect(row.querySelector('app-flowering-strip [role=img]')!.getAttribute('aria-label')).toBe('Flowers from May to September');
+    });
+  });
+
   it('shows a validation error instead of saving a plant without a sun requirement', async () => {
     const { fixture, el } = await render();
     el.querySelector<HTMLButtonElement>('button.add-plant')!.click();
@@ -140,10 +256,20 @@ describe('PlantCatalogListComponent', () => {
     const sun = el.querySelector<HTMLSelectElement>('select[name=sun]')!;
     sun.value = 'partial_shade';
     sun.dispatchEvent(new Event('change'));
+    for (const [field, value] of [['lifeCycle', 'biennial'], ['growthForm', 'herbaceous']]) {
+      const select = el.querySelector<HTMLSelectElement>(`select[name=${field}]`)!;
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+    }
+    el.querySelector<HTMLInputElement>('input[name=uses][value=vegetable]')!.click();
     el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
 
-    expect(service.addCustom).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Kale', sun_requirements: 'partial_shade' }));
+    expect(service.addCustom).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        name: 'Kale', sun_requirements: 'partial_shade', life_cycle: 'biennial', growth_form: 'herbaceous', uses: ['vegetable'],
+      }),
+    );
     expect(navigate).toHaveBeenCalledWith(['/plants', 'new-1']);
     expect(el.querySelector('[role=dialog]')).toBeNull(); // closed before leaving the page
   });

@@ -191,6 +191,14 @@
     "sun": "Slunce",
     "selectSun": "Vyberte nároky na slunce",
     "save": "Uložit rostlinu",
+    "filters": "Filtry",
+    "filtersOn": "{count, plural, one {# aktivní filtr} few {# aktivní filtry} other {# aktivních filtrů}}",
+    "filtersDone": "Hotovo",
+    "clearFilters": "Zrušit filtry",
+    "removeFilter": "Odebrat filtr {name}",
+    "shownOf": "Zobrazeno {shown} z {total, plural, one {# rostliny} few {# rostlin} other {# rostlin}}",
+    "noFilterMatches": "Filtrům neodpovídá žádná rostlina.",
+    "wateringShort": "{days} d",
     "add": "Přidat rostlinu",
     "errors": {
       "nameRequired": "Vyplňte název.",
@@ -267,6 +275,34 @@
       "deleteRule": "Pravidlo se nepodařilo smazat: {detail}"
     }
   },
+  "traits": {
+    "lifeCycle": "Životní cyklus",
+    "growthForm": "Forma růstu",
+    "use": "Využití",
+    "noLifeCycle": "U keřů a stromů se životní cyklus neuvádí.",
+    "floweringFromTo": "Kvete od {from} do {to}",
+    "floweringUnknown": "Doba kvetení není zadaná",
+    "lifeCycles": {
+      "annual": "letnička",
+      "biennial": "dvouletka",
+      "perennial": "trvalka",
+      "bulb": "cibulovina"
+    },
+    "growthForms": {
+      "herbaceous": "bylina",
+      "subshrub": "polokeř",
+      "shrub": "keř",
+      "tree": "strom",
+      "climber": "popínavka"
+    },
+    "uses": {
+      "vegetable": "zelenina",
+      "fruit": "ovoce",
+      "herb": "bylinka",
+      "ornamental": "okrasná"
+    }
+  },
+  "monthInitials": { "1": "L", "2": "Ú", "3": "B", "4": "D", "5": "K", "6": "Č", "7": "Č", "8": "S", "9": "Z", "10": "Ř", "11": "L", "12": "P" },
   "lookup": {
     "button": "Hledat „{query}“ na webu",
     "searching": "Hledám na Wikipedii…",

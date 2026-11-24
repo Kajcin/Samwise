@@ -65,6 +65,13 @@ tasks, the garden view) before adding columns.
   product page on a nursery site; edited and shown on the plant page.
 - Done: editing your own plants (name, Latin name, sun, watering, flowering months, notes,
   source link), deleting their care rules, and deleting plants that were never planted.
+- Done: **plant types** (migration 0015): life cycle (one of annual, biennial, perennial,
+  bulb), growth form (one of herbaceous, subshrub, shrub, tree, climber) and uses (any of
+  vegetable, fruit, herb, ornamental), as chips on the plant page and in the catalog, with
+  catalog filters. Shrubs and trees have no life cycle. The catalog rows also show the sun,
+  watering and flowering months at a glance.
+- Possible next: suggest care from the type (e.g. offer seasonal rules for perennials), fill
+  the types in from a lookup (Wikidata doesn't say how a plant is grown, so probably by hand).
 - Later: changing a care rule doesn't update tasks already generated for plants in the
   ground (the plant page says so); regenerating them is a possible follow-up.
 
