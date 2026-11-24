@@ -79,4 +79,16 @@ describe('ModalComponent', () => {
     expect(host.closedCount).toBe(0);
     expect(el.querySelector('[role=dialog]')).not.toBeNull();
   });
+
+  it('releases the page when destroyed while open (e.g. after navigating away)', async () => {
+    const { fixture, host } = await setup();
+    host.open.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.body.classList).toContain('modal-open');
+
+    fixture.destroy();
+
+    expect(document.body.classList).not.toContain('modal-open');
+  });
 });

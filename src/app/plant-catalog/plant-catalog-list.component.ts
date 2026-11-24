@@ -1,5 +1,6 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
+import { ModalComponent } from '../core/modal/modal.component';
 import { Router, RouterLink } from '@angular/router';
 import { Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
@@ -48,7 +49,7 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
 @Component({
   selector: 'app-plant-catalog-list',
   standalone: true,
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink, IconComponent, ModalComponent],
   templateUrl: './plant-catalog-list.component.html',
   styles: `
     .lookup-thumb {
@@ -116,7 +117,8 @@ export class PlantCatalogListComponent {
   newPlantSourceUrl = signal('');
   /** The lookup result the form was pre-filled from. */
   prefilledFrom = signal<PlantCandidate | null>(null);
-  private nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+  /** The "add a custom plant" dialog. */
+  addDialogOpen = signal(false);
 
   /** The web lookup: the search it ran, its results (null until run), its state. */
   canLookUp = computed(() => this.query().trim().length >= MIN_LOOKUP_LENGTH);
@@ -206,17 +208,34 @@ export class PlantCatalogListComponent {
     this.lookupError.set(null);
   }
 
-  /** Pre-fills the "Add a custom plant" form; the user checks it, picks the sun, and saves. */
+  /** Opens the "Add a custom plant" dialog empty. */
+  openAddDialog(): void {
+    this.resetAddForm();
+    this.addDialogOpen.set(true);
+  }
+
+  /** Closes the dialog; what was typed (or pre-filled) is dropped. */
+  closeAddDialog(): void {
+    this.addDialogOpen.set(false);
+    this.resetAddForm();
+  }
+
+  private resetAddForm(): void {
+    this.newPlantName.set('');
+    this.newPlantSun.set(null);
+    this.newPlantError.set(null);
+    this.clearPrefill();
+  }
+
+  /** Opens the dialog pre-filled from a lookup result; the user checks it, picks the sun, and saves. */
   applyCandidate(candidate: PlantCandidate): void {
+    this.resetAddForm();
     this.newPlantName.set(candidate.name);
     this.newPlantSpecies.set(candidate.latinName);
     this.newPlantNotes.set(lookupNotes(candidate, this.i18n.t('lookup.attribution')));
     this.newPlantSourceUrl.set(candidate.url);
-    this.newPlantError.set(null);
     this.prefilledFrom.set(candidate);
-    const input = this.nameInput()?.nativeElement;
-    input?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    input?.focus({ preventScroll: true });
+    this.addDialogOpen.set(true);
   }
 
   clearPrefill(): void {
@@ -248,6 +267,7 @@ export class PlantCatalogListComponent {
         await this.photos.addWikimedia(plant.id, image).catch((e) => console.error('Could not add the photo:', messageOf(e)));
       }
       this.plants.update((list) => [...list, plant]);
+      this.addDialogOpen.set(false);
       await this.router.navigate(['/plants', plant.id]);
     } catch (e) {
       this.newPlantError.set(msg('catalog.errors.save', { detail: messageOf(e) }));

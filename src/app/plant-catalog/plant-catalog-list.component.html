@@ -1,8 +1,13 @@
 <main class="container pb-5">
-  <h1 class="mb-4">{{ i18n.t('catalog.heading') }}</h1>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h1 class="mb-0">{{ i18n.t('catalog.heading') }}</h1>
+    <button type="button" class="btn btn-primary add-plant" (click)="openAddDialog()">
+      <app-icon name="plus-lg" class="me-1" />{{ i18n.t('catalog.add') }}
+    </button>
+  </div>
 
   <div class="row g-4">
-    <div class="col-lg-8">
+    <div class="col-12">
       <label class="visually-hidden" for="plant-search">{{ i18n.t('catalog.search') }}</label>
       <input
         id="plant-search"
@@ -126,77 +131,85 @@
         </ul>
       }
     </div>
+  </div>
 
-    <div class="col-lg-4">
-      <form class="card" novalidate (submit)="addCustomPlant($event)">
-        <div class="card-body">
-          <h2 class="h5 card-title">{{ i18n.t('catalog.addHeading') }}</h2>
-          <div class="mb-3">
-            <label class="form-label" for="new-plant-name">{{ i18n.t('common.name') }}</label>
-            <input
-              #nameInput
-              id="new-plant-name"
-              class="form-control"
-              name="name"
-              [value]="newPlantName()"
-              (input)="newPlantName.set($any($event.target).value)"
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="new-plant-sun">{{ i18n.t('catalog.sun') }}</label>
-            <select id="new-plant-sun" class="form-select" name="sun" (change)="onSunChange($any($event.target).value)">
-              <option value="" [selected]="!newPlantSun()">{{ i18n.t('catalog.selectSun') }}</option>
-              @for (sun of sunOptions; track sun) {
-                <option [value]="sun" [selected]="newPlantSun() === sun">{{ i18n.t(sunKey(sun)) }}</option>
-              }
-            </select>
-          </div>
-          @if (prefilledFrom()) {
-            <div class="alert alert-info small py-2 prefill-notice" role="status">
-              {{ i18n.t('lookup.prefilled') }}
-              <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="clearPrefill()">
-                {{ i18n.t('lookup.clearPrefill') }}
-              </button>
-            </div>
+  <app-modal [open]="addDialogOpen()" [title]="i18n.t('catalog.addHeading')" (closed)="closeAddDialog()">
+    <!-- Created on each opening, so the fields start as set by openAddDialog() / applyCandidate(). -->
+    @if (addDialogOpen()) {
+      <form class="add-plant-form" novalidate (submit)="addCustomPlant($event)">
+        <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label" for="new-plant-species">{{ i18n.t('plant.latinName') }}</label>
+              <label class="form-label" for="new-plant-name">{{ i18n.t('common.name') }}</label>
               <input
-                id="new-plant-species"
-                class="form-control fst-italic"
-                name="species"
-                [value]="newPlantSpecies()"
-                (input)="newPlantSpecies.set($any($event.target).value)"
+                id="new-plant-name"
+                class="form-control"
+                name="name"
+                [value]="newPlantName()"
+                (input)="newPlantName.set($any($event.target).value)"
               />
             </div>
             <div class="mb-3">
-              <label class="form-label" for="new-plant-notes">{{ i18n.t('plant.notes') }}</label>
-              <textarea
-                id="new-plant-notes"
-                class="form-control"
-                name="notes"
-                rows="4"
-                [value]="newPlantNotes()"
-                (input)="newPlantNotes.set($any($event.target).value)"
-              ></textarea>
+              <label class="form-label" for="new-plant-sun">{{ i18n.t('catalog.sun') }}</label>
+              <select id="new-plant-sun" class="form-select" name="sun" (change)="onSunChange($any($event.target).value)">
+                <option value="" [selected]="!newPlantSun()">{{ i18n.t('catalog.selectSun') }}</option>
+                @for (sun of sunOptions; track sun) {
+                  <option [value]="sun" [selected]="newPlantSun() === sun">{{ i18n.t(sunKey(sun)) }}</option>
+                }
+              </select>
             </div>
-            <div class="mb-3">
-              <label class="form-label" for="new-plant-source">{{ i18n.t('plant.sourceUrl') }}</label>
-              <input
-                id="new-plant-source"
-                class="form-control"
-                name="sourceUrl"
-                type="url"
-                [value]="newPlantSourceUrl()"
-                (input)="newPlantSourceUrl.set($any($event.target).value)"
-              />
-            </div>
-          }
-          @if (newPlantError()) {
-            <div class="alert alert-danger" role="alert">{{ i18n.text(newPlantError()) }}</div>
-          }
-          <button type="submit" class="btn btn-primary"><app-icon name="plus-lg" class="me-1" />{{ i18n.t('catalog.add') }}</button>
+            @if (prefilledFrom()) {
+              <div class="alert alert-info small py-2 prefill-notice" role="status">
+                {{ i18n.t('lookup.prefilled') }}
+                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="clearPrefill()">
+                  {{ i18n.t('lookup.clearPrefill') }}
+                </button>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="new-plant-species">{{ i18n.t('plant.latinName') }}</label>
+                <input
+                  id="new-plant-species"
+                  class="form-control fst-italic"
+                  name="species"
+                  [value]="newPlantSpecies()"
+                  (input)="newPlantSpecies.set($any($event.target).value)"
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="new-plant-notes">{{ i18n.t('plant.notes') }}</label>
+                <textarea
+                  id="new-plant-notes"
+                  class="form-control"
+                  name="notes"
+                  rows="4"
+                  [value]="newPlantNotes()"
+                  (input)="newPlantNotes.set($any($event.target).value)"
+                ></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="new-plant-source">{{ i18n.t('plant.sourceUrl') }}</label>
+                <input
+                  id="new-plant-source"
+                  class="form-control"
+                  name="sourceUrl"
+                  type="url"
+                  [value]="newPlantSourceUrl()"
+                  (input)="newPlantSourceUrl.set($any($event.target).value)"
+                />
+              </div>
+            }
+            @if (newPlantError()) {
+              <div class="alert alert-danger" role="alert">{{ i18n.text(newPlantError()) }}</div>
+            }
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-outline-secondary close-dialog" (click)="closeAddDialog()">
+            {{ i18n.t('common.close') }}
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <app-icon name="plus-lg" class="me-1" />{{ i18n.t('catalog.add') }}
+          </button>
         </div>
       </form>
-    </div>
-  </div>
+    }
+  </app-modal>
 </main>

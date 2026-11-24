@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, effect, ElementRef, inject, input, output, untracked, viewChild } from '@angular/core';
 import { LanguageService } from '../i18n/language.service';
 
 let nextId = 0;
@@ -50,6 +50,11 @@ export class ModalComponent {
   private returnFocusTo: HTMLElement | null = null;
 
   constructor() {
+    // Leaving the page with the dialog open (e.g. saving navigates away) mustn't keep
+    // the next page from scrolling.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.open()) document.body.classList.remove('modal-open');
+    });
     effect(() => {
       const open = this.open();
       untracked(() => {

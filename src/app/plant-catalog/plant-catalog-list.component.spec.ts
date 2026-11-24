@@ -113,6 +113,8 @@ describe('PlantCatalogListComponent', () => {
 
   it('shows a validation error instead of saving a plant without a sun requirement', async () => {
     const { fixture, el } = await render();
+    el.querySelector<HTMLButtonElement>('button.add-plant')!.click();
+    fixture.detectChanges();
     const name = el.querySelector<HTMLInputElement>('input[name=name]')!;
     name.value = 'Kale';
     name.dispatchEvent(new Event('input'));
@@ -120,7 +122,7 @@ describe('PlantCatalogListComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(el.querySelector('[role=alert]')!.textContent).toContain('Sun requirement is required.');
+    expect(el.querySelector('.add-plant-form [role=alert]')!.textContent).toContain('Sun requirement is required.');
     expect(service.addCustom).not.toHaveBeenCalled();
   });
 
@@ -129,6 +131,8 @@ describe('PlantCatalogListComponent', () => {
     service.addCustom.and.resolveTo(created);
     const { fixture, el } = await render();
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    el.querySelector<HTMLButtonElement>('button.add-plant')!.click();
+    fixture.detectChanges();
 
     const name = el.querySelector<HTMLInputElement>('input[name=name]')!;
     name.value = 'Kale';
@@ -141,6 +145,37 @@ describe('PlantCatalogListComponent', () => {
 
     expect(service.addCustom).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Kale', sun_requirements: 'partial_shade' }));
     expect(navigate).toHaveBeenCalledWith(['/plants', 'new-1']);
+    expect(el.querySelector('[role=dialog]')).toBeNull(); // closed before leaving the page
+  });
+
+  it('adds plants in a dialog opened from the top of the page; closing it drops what was typed', async () => {
+    const { fixture, el } = await render();
+    expect(el.querySelector('[role=dialog]')).toBeNull();
+    const open = () => {
+      el.querySelector<HTMLButtonElement>('button.add-plant')!.click();
+      fixture.detectChanges();
+    };
+
+    open();
+    const dialog = el.querySelector('[role=dialog]')!;
+    expect(dialog.querySelector('.modal-title')!.textContent).toContain('Add a custom plant');
+    expect(Array.from(dialog.querySelectorAll('.modal-footer button')).map((b) => b.textContent!.trim()))
+      .toEqual(['Close', 'Add plant']);
+
+    for (const close of [
+      () => el.querySelector<HTMLButtonElement>('[role=dialog] .btn-close')!.click(),
+      () => el.querySelector<HTMLButtonElement>('[role=dialog] button.close-dialog')!.click(),
+    ]) {
+      const name = el.querySelector<HTMLInputElement>('input[name=name]')!;
+      name.value = 'Kale';
+      name.dispatchEvent(new Event('input'));
+      close();
+      fixture.detectChanges();
+      expect(el.querySelector('[role=dialog]')).toBeNull();
+      open();
+      expect(el.querySelector<HTMLInputElement>('input[name=name]')!.value).toBe('');
+    }
+    expect(service.addCustom).not.toHaveBeenCalled();
   });
 
   it('deletes your own plant with the ✕, after confirmation', async () => {
