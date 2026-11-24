@@ -14,7 +14,7 @@ import {
   Plant,
   PlantCatalogService,
   PlantChanges,
-  PlantInUseError,
+  PlantInGardenError,
   TaskType,
 } from './plant-catalog.service';
 import {
@@ -35,7 +35,7 @@ import { isWebAddress } from '../core/web-address';
 import { Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
-import { askToDeletePlant } from './delete-plant';
+import { decidePlantDeletion, inGardenMessage } from './delete-plant';
 import { parseNumberInput } from '../core/number-input';
 
 type TimingType = CareRule['timing_type'];
@@ -330,17 +330,21 @@ export class PlantDetailComponent {
     }
   }
 
+  /** Not while the plant is in a bed: the page then says where. */
   async deletePlant(): Promise<void> {
     const plant = this.plant();
-    if (!plant || !(await askToDeletePlant(this.confirmDialog, this.i18n, plant.name))) return;
+    if (!plant) return;
     this.deleting.set(true);
     this.error.set(null);
     try {
+      const decision = await decidePlantDeletion(this.catalog, this.confirmDialog, this.i18n, this.plantId, plant.name);
+      if (decision.kind === 'blocked') this.error.set(decision.message);
+      if (decision.kind !== 'confirmed') return;
       await this.catalog.deletePlant(this.plantId);
       await this.router.navigate(['/plants']);
     } catch (e) {
       this.error.set(
-        e instanceof PlantInUseError ? msg('plant.errors.inUse') : msg('plant.errors.delete', { detail: messageOf(e) }),
+        e instanceof PlantInGardenError ? inGardenMessage(e.beds) : msg('plant.errors.delete', { detail: messageOf(e) }),
       );
     } finally {
       this.deleting.set(false);

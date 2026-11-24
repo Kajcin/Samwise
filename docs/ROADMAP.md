@@ -65,7 +65,9 @@ tasks, the garden view) before adding columns.
 - Done: **source link** (`source_url`), a link to a page describing the plant, e.g. its
   product page on a nursery site; edited and shown on the plant page.
 - Done: editing your own plants (name, Latin name, sun, watering, flowering months, notes,
-  source link), deleting their care rules, and deleting plants that were never planted.
+  source link), deleting their care rules, and deleting plants. A plant in a bed can't be
+  deleted (the app says which bed); one planted only in the past goes together with those
+  plantings and their completed tasks, also from the calendar (migration 0017).
 - Done: **plant types** (migration 0015): life cycle (one of annual, biennial, perennial,
   bulb), growth form (one of herbaceous, subshrub, shrub, tree, climber) and uses (any of
   vegetable, fruit, herb, ornamental), as chips on the plant page and in the catalog, with

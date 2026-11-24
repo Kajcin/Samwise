@@ -1,7 +1,7 @@
 import { provideI18n } from '../core/i18n/i18n';
 import { msg } from '../core/i18n/i18n';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
-import { PlantInUseError } from './plant-catalog.service';
+import { PlantInGardenError } from './plant-catalog.service';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
 import { FunctionError } from '../core/edge-functions';
 import { PlantPhotosService } from './plant-photos.service';
@@ -69,7 +69,10 @@ describe('PlantCatalogListComponent', () => {
   }
 
   beforeEach(() => {
-    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['list', 'addCustom', 'cloneToCustom', 'deletePlant']);
+    service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', [
+      'list', 'addCustom', 'cloneToCustom', 'deletePlant', 'deletionCheck',
+    ]);
+    service.deletionCheck.and.resolveTo({ activeBeds: [], completedTasks: 0 });
     service.list.and.resolveTo(plants);
     dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
     dialog.ask.and.resolveTo(true);
@@ -326,7 +329,8 @@ describe('PlantCatalogListComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(dialog.ask.calls.mostRecent().args[0].message).toContain('My Chili');
+    expect(service.deletionCheck).toHaveBeenCalledWith('3');
+    expect(dialog.ask.calls.mostRecent().args[0].message).toBe('“My Chili” will be deleted, together with its care rules.');
     expect(service.deletePlant).toHaveBeenCalledWith('3');
     expect(Array.from(el.querySelectorAll('li a')).map((a) => a.textContent!.trim())).toEqual(['Basil', 'Tomato']);
   });
@@ -341,15 +345,45 @@ describe('PlantCatalogListComponent', () => {
     expect(service.deletePlant).not.toHaveBeenCalled();
   });
 
-  it('explains why a planted plant can’t be deleted', async () => {
-    service.deletePlant.and.rejectWith(new PlantInUseError());
+  it('says which beds a plant is in instead of asking to delete it', async () => {
+    service.deletionCheck.and.resolveTo({ activeBeds: ['Herbs'], completedTasks: 0 });
     const { fixture, el } = await render();
 
     el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(el.querySelector('[role=alert]')!.textContent).toContain('planted in your garden');
+    expect(dialog.ask).not.toHaveBeenCalled();
+    expect(service.deletePlant).not.toHaveBeenCalled();
+    expect(el.querySelector('[role=alert]')!.textContent).toContain(
+      'This plant is in the bed Herbs right now. Remove it from the garden first, then you can delete it.',
+    );
+    expect(el.querySelectorAll('li').length).toBe(3);
+  });
+
+  it('mentions the completed tasks of past plantings that go with the plant', async () => {
+    service.deletionCheck.and.resolveTo({ activeBeds: [], completedTasks: 2 });
+    service.deletePlant.and.resolveTo();
+    const { fixture, el } = await render();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+
+    expect(dialog.ask.calls.mostRecent().args[0].message).toContain(
+      '2 completed tasks from earlier plantings will be deleted too, also from your calendar.',
+    );
+    expect(service.deletePlant).toHaveBeenCalledWith('3');
+  });
+
+  it('explains it when the plant got planted in the meantime', async () => {
+    service.deletePlant.and.rejectWith(new PlantInGardenError(['Herbs', 'Veg']));
+    const { fixture, el } = await render();
+
+    el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('in the beds Herbs, Veg right now');
     expect(el.querySelectorAll('li').length).toBe(3);
   });
 

@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of } from 'rxjs';
 import { formToChanges, linkHost, PlantDetailComponent, PlantForm, validateCareRuleForm, validatePlantForm } from './plant-detail.component';
 import { parseNumberInput } from '../core/number-input';
-import { CareRule, Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
+import { CareRule, Plant, PlantCatalogService } from './plant-catalog.service';
 import { Router } from '@angular/router';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
 import { PlantPhotosService } from './plant-photos.service';
@@ -160,7 +160,9 @@ describe('PlantDetailComponent', () => {
   beforeEach(() => {
     service = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', [
       'get', 'listCareRules', 'addCareRule', 'updateCareRule', 'cloneToCustom', 'updatePlant', 'deletePlant', 'deleteCareRule',
+      'deletionCheck',
     ]);
+    service.deletionCheck.and.resolveTo({ activeBeds: [], completedTasks: 0 });
     service.listCareRules.and.resolveTo(rules);
     dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
     dialog.ask.and.resolveTo(true);
@@ -370,15 +372,17 @@ describe('PlantDetailComponent', () => {
     expect(service.deletePlant).not.toHaveBeenCalled();
   });
 
-  it('explains why a planted plant can’t be deleted', async () => {
-    service.deletePlant.and.rejectWith(new PlantInUseError());
+  it('says which bed the plant is in instead of asking to delete it', async () => {
+    service.deletionCheck.and.resolveTo({ activeBeds: ['Herbs'], completedTasks: 0 });
     const { fixture, el } = await render(custom);
 
     el.querySelector<HTMLButtonElement>('button.delete-plant')!.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(el.querySelector('[role=alert]')!.textContent).toContain('planted in your garden');
+    expect(dialog.ask).not.toHaveBeenCalled();
+    expect(service.deletePlant).not.toHaveBeenCalled();
+    expect(el.querySelector('[role=alert]')!.textContent).toContain('This plant is in the bed Herbs right now.');
   });
 
   it('has no trash icon for built-in plants, and none in the edit form', async () => {

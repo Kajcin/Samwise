@@ -246,6 +246,7 @@
     "deletePlant": "Smazat rostlinu",
     "deleteTitle": "Smazat rostlinu?",
     "deleteMessage": "Rostlina „{name}“ se smaže i s pravidly péče.",
+    "deleteHistory": "{count, plural, one {Smaže se i # hotový úkol} few {Smažou se i # hotové úkoly} other {Smaže se i # hotových úkolů}} z dřívějších výsadeb, také z kalendáře.",
     "deleteConfirm": "Smazat",
     "latinName": "Latinský název",
     "wateringEvery": "Zalévat každých … dní",
@@ -269,7 +270,7 @@
       "sourceUrlInvalid": "Odkaz na zdroj musí být webová adresa začínající http:// nebo https://.",
       "save": "Rostlinu se nepodařilo uložit: {detail}",
       "delete": "Rostlinu se nepodařilo smazat: {detail}",
-      "inUse": "Tato rostlina je (nebo byla) zasazená ve vaší zahradě, proto ji nelze smazat: odkazují na ni vaše výsadby a jejich úkoly.",
+      "inGarden": "Rostlina je teď zasazená {count, plural, one {v záhonu} few {v záhonech} other {v záhonech}} {beds}. Nejdřív ji ze zahrady odeberte, pak ji půjde smazat.",
       "deleteRule": "Pravidlo se nepodařilo smazat: {detail}"
     }
   },

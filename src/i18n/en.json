@@ -246,6 +246,7 @@
     "deletePlant": "Delete plant",
     "deleteTitle": "Delete plant?",
     "deleteMessage": "“{name}” will be deleted, together with its care rules.",
+    "deleteHistory": "{count, plural, one {# completed task} other {# completed tasks}} from earlier plantings will be deleted too, also from your calendar.",
     "deleteConfirm": "Delete",
     "latinName": "Latin name",
     "wateringEvery": "Water every … days",
@@ -269,7 +270,7 @@
       "sourceUrlInvalid": "The source link must be a web address starting with http:// or https://.",
       "save": "Could not save the plant: {detail}",
       "delete": "Could not delete the plant: {detail}",
-      "inUse": "This plant is (or was) planted in your garden, so it can’t be deleted: your plantings and their tasks refer to it.",
+      "inGarden": "This plant is in {count, plural, one {the bed} other {the beds}} {beds} right now. Remove it from the garden first, then you can delete it.",
       "deleteRule": "Could not delete the rule: {detail}"
     }
   },

@@ -1,4 +1,4 @@
-import { PlantInUseError } from './plant-catalog.service';
+import { PlantInGardenError } from './plant-catalog.service';
 import { PlantCatalogService } from './plant-catalog.service';
 import { supabase } from '../core/supabase-client';
 
@@ -157,30 +157,44 @@ describe('PlantCatalogService editing', () => {
     expect(eq).toHaveBeenCalledWith('id', 'p2');
   });
 
-  /** plants_catalog.delete().eq() answers `deleted`; plant_photos lists `paths` as uploads. */
+  /** delete_plant answers `deleted`; plant_photos lists `paths` as uploads. */
   function fakeDelete(deleted: { data: null; error: unknown }, paths: string[] = []) {
-    const eq = jasmine.createSpy('eq').and.resolveTo(deleted);
+    const rpc = spyOn(supabase, 'rpc').and.resolveTo(deleted as any);
     const photos = { select: () => ({ eq: () => ({ not: () => Promise.resolve({ data: paths.map((storage_path) => ({ storage_path })), error: null }) }) }) };
-    spyOn(supabase, 'from').and.callFake(((table: string) => (table === 'plant_photos' ? photos : { delete: () => ({ eq }) })) as any);
+    spyOn(supabase, 'from').and.returnValue(photos as any);
     const remove = jasmine.createSpy('remove').and.resolveTo({ data: [], error: null });
     spyOn(supabase.storage, 'from').and.returnValue({ remove } as any);
-    return { eq, remove };
+    return { rpc, remove };
   }
 
-  it('deletePlant() deletes the plant, and the files of its uploaded photos', async () => {
-    const { eq, remove } = fakeDelete({ data: null, error: null }, ['me/p2/a.jpg', 'me/p2/b.jpg']);
+  it('deletePlant() deletes the plant through delete_plant, and the files of its uploaded photos', async () => {
+    const { rpc, remove } = fakeDelete({ data: null, error: null }, ['me/p2/a.jpg', 'me/p2/b.jpg']);
 
     await service.deletePlant('p2');
 
-    expect(eq).toHaveBeenCalledWith('id', 'p2');
+    expect(rpc).toHaveBeenCalledWith('delete_plant', { p_plant_id: 'p2' });
     expect(remove).toHaveBeenCalledWith(['me/p2/a.jpg', 'me/p2/b.jpg']);
   });
 
-  it('deletePlant() reports a planted plant as in use (foreign key violation), keeping its photos', async () => {
-    const { remove } = fakeDelete({ data: null, error: { code: '23503', message: 'violates foreign key' } }, ['me/p2/a.jpg']);
+  it('deletePlant() reports a plant that is in a bed, with the beds, keeping its photos', async () => {
+    const { remove } = fakeDelete(
+      { data: null, error: { code: 'P0001', message: 'plant_in_garden', details: 'Herbs, Veg' } },
+      ['me/p2/a.jpg'],
+    );
 
-    await expectAsync(service.deletePlant('p2')).toBeRejectedWithError(PlantInUseError);
+    const error = await service.deletePlant('p2').catch((e) => e);
+
+    expect(error).toEqual(jasmine.any(PlantInGardenError));
+    expect((error as PlantInGardenError).beds).toEqual(['Herbs', 'Veg']);
     expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('deletionCheck() says which beds the plant is in and what history would go', async () => {
+    const single = jasmine.createSpy('single').and.resolveTo({ data: { active_beds: ['Herbs'], completed_tasks: 2 }, error: null });
+    const rpc = spyOn(supabase, 'rpc').and.returnValue({ single } as any);
+
+    expect(await service.deletionCheck('p2')).toEqual({ activeBeds: ['Herbs'], completedTasks: 2 });
+    expect(rpc).toHaveBeenCalledWith('plant_deletion_check', { p_plant_id: 'p2' });
   });
 
   it('deleteCareRule() deletes the rule', async () => {

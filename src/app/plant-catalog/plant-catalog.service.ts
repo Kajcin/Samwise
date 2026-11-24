@@ -49,16 +49,21 @@ export type PlantChanges = Partial<
   >
 >;
 
-/** The plant is (or was) planted, so the database keeps it: plantings and tasks refer to it. */
-export class PlantInUseError extends Error {
-  constructor() {
-    super('This plant is (or was) planted, so it cannot be deleted.');
-    this.name = 'PlantInUseError';
+/** The plant is in a bed right now, so it can't be deleted (migration 0017). */
+export class PlantInGardenError extends Error {
+  constructor(readonly beds: string[]) {
+    super(`This plant is in a bed (${beds.join(', ')}), so it cannot be deleted.`);
+    this.name = 'PlantInGardenError';
   }
 }
 
-/** Postgres foreign_key_violation. */
-const FOREIGN_KEY_VIOLATION = '23503';
+/** What deleting a plant would mean (plant_deletion_check, migration 0017). */
+export interface PlantDeletionCheck {
+  /** The beds it's in now; while there are any, it can't be deleted. */
+  activeBeds: string[];
+  /** Completed tasks of its past plantings, deleted with it (also from the calendar). */
+  completedTasks: number;
+}
 
 export type TaskType =
   | 'seed_start'
@@ -175,7 +180,17 @@ export class PlantCatalogService {
     return data as Plant;
   }
 
-  /** Deletes one of your own plants with its care rules; refused if it is or was planted. */
+  async deletionCheck(plantId: string): Promise<PlantDeletionCheck> {
+    const { data, error } = await supabase.rpc('plant_deletion_check', { p_plant_id: plantId }).single();
+    if (error) throw error;
+    const row = data as { active_beds: string[] | null; completed_tasks: number };
+    return { activeBeds: row.active_beds ?? [], completedTasks: row.completed_tasks };
+  }
+
+  /**
+   * Deletes one of your own plants with its care rules, photos, past plantings and their
+   * tasks; refused (PlantInGardenError) while it's in a bed.
+   */
   async deletePlant(plantId: string): Promise<void> {
     // The photo rows go with the plant (cascade); their uploaded files are removed here.
     const { data: uploads } = await supabase
@@ -183,8 +198,10 @@ export class PlantCatalogService {
       .select('storage_path')
       .eq('plant_id', plantId)
       .not('storage_path', 'is', null);
-    const { error } = await supabase.from('plants_catalog').delete().eq('id', plantId);
-    if (error?.code === FOREIGN_KEY_VIOLATION) throw new PlantInUseError();
+    const { error } = await supabase.rpc('delete_plant', { p_plant_id: plantId });
+    if (error?.message === 'plant_in_garden') {
+      throw new PlantInGardenError((error.details ?? '').split(', ').filter(Boolean));
+    }
     if (error) throw error;
     const paths = (uploads ?? []).map((u) => u.storage_path as string);
     if (paths.length) await supabase.storage.from('plant-photos').remove(paths);

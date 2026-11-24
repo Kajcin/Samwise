@@ -2,9 +2,9 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { IconComponent } from '../core/icons/icon.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { Router, RouterLink } from '@angular/router';
-import { Plant, PlantCatalogService, PlantInUseError } from './plant-catalog.service';
+import { Plant, PlantCatalogService, PlantInGardenError } from './plant-catalog.service';
 import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
-import { askToDeletePlant } from './delete-plant';
+import { decidePlantDeletion, inGardenMessage } from './delete-plant';
 import { plantName, SUN_REQUIREMENTS, SunRequirement, sunKey } from './labels';
 import { messageOf } from '../core/errors';
 import { Lang, Message, msg } from '../core/i18n/i18n';
@@ -302,17 +302,20 @@ export class PlantCatalogListComponent {
     }
   }
 
-  /** Your own plants only (built-in ones have no ✕); refused if the plant is or was planted. */
+  /** Your own plants only (built-in ones have no ✕); not while the plant is in a bed. */
   async deletePlant(plant: Plant): Promise<void> {
-    if (!(await askToDeletePlant(this.confirmDialog, this.i18n, plantName(plant, this.i18n.lang())))) return;
     this.error.set(null);
     this.deletingId.set(plant.id);
     try {
+      const name = plantName(plant, this.i18n.lang());
+      const decision = await decidePlantDeletion(this.service, this.confirmDialog, this.i18n, plant.id, name);
+      if (decision.kind === 'blocked') this.error.set(decision.message);
+      if (decision.kind !== 'confirmed') return;
       await this.service.deletePlant(plant.id);
       this.plants.update((list) => list.filter((p) => p.id !== plant.id));
     } catch (e) {
       this.error.set(
-        e instanceof PlantInUseError ? msg('plant.errors.inUse') : msg('plant.errors.delete', { detail: messageOf(e) }),
+        e instanceof PlantInGardenError ? inGardenMessage(e.beds) : msg('plant.errors.delete', { detail: messageOf(e) }),
       );
     } finally {
       this.deletingId.set(null);
