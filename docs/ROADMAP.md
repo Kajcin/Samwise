@@ -42,16 +42,17 @@ Possible follow-ups:
 
 ## Flowering calendar
 
-A year overview showing when each plant flowers, month by month. It relies on the
-flowering range every plant should have (agreed: always stored as months, start to end):
+A year overview showing when each plant flowers (and when it's harvested), month by
+month. It relies on the seasons every plant can have:
 
-- Already there: `plants_catalog.flowering_start_month` / `flowering_end_month` (1-12),
-  filled in for the built-in plants. Ranges over the new year (e.g. December to March)
-  are allowed: the start month may be later than the end month.
-- Done: editing the months of your own plants (plant page → Edit).
-- To decide: plants that flower twice, e.g. catmint 'Walker's Low' in May-June and again
-  in September after being cut back. One range can't express that; consider several
-  ranges per plant.
+- Done: `plants_catalog.flowering_months` and `harvest_months` (migration 0016), each a
+  set of months 1-12, so a plant can flower or be harvested twice (catmint 'Walker's Low'
+  again in September after cutting back; spinach in spring and autumn), also over the new
+  year. Filled in for the built-in plants; edited on the plant page by clicking months.
+- Done: the plant page shows both seasons as 12-month strips; the catalog shows one per
+  plant, the harvest of vegetables, fruit and herbs, otherwise flowering.
+- Later: harvest months of perennials (rhubarb, strawberries) could create a yearly
+  harvest task.
 - Plant lookup: sources often give only a season ("Spring"), so the months are the
   user's input or an approximate mapping, to confirm in the form.
 
@@ -69,7 +70,7 @@ tasks, the garden view) before adding columns.
   bulb), growth form (one of herbaceous, subshrub, shrub, tree, climber) and uses (any of
   vegetable, fruit, herb, ornamental), as chips on the plant page and in the catalog, with
   catalog filters. Shrubs and trees have no life cycle. The catalog rows also show the sun,
-  watering and flowering months at a glance.
+  watering and flowering or harvest months at a glance.
 - Possible next: suggest care from the type (e.g. offer seasonal rules for perennials), fill
   the types in from a lookup (Wikidata doesn't say how a plant is grown, so probably by hand).
 - Later: changing a care rule doesn't update tasks already generated for plants in the

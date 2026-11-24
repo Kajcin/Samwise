@@ -15,10 +15,11 @@ import { environment } from '../../environments/environment';
 import { PlantCandidate, PlantLookupService } from './plant-lookup.service';
 import { PlantPhoto, PlantPhotosService } from './plant-photos.service';
 import { PlantChipsComponent } from './plant-chips.component';
-import { FloweringStripComponent } from './flowering-strip.component';
+import { MonthStripComponent } from './month-strip.component';
 import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
 import {
   activeFilterCount,
+  catalogSeason,
   GROWTH_FORMS,
   GrowthForm,
   growthFormKey,
@@ -107,7 +108,7 @@ export function sortByName(plants: Plant[], lang: Lang): Plant[] {
 @Component({
   selector: 'app-plant-catalog-list',
   standalone: true,
-  imports: [RouterLink, IconComponent, ModalComponent, PlantChipsComponent, FloweringStripComponent, PlantTraitsFieldsComponent],
+  imports: [RouterLink, IconComponent, ModalComponent, PlantChipsComponent, MonthStripComponent, PlantTraitsFieldsComponent],
   templateUrl: './plant-catalog-list.component.html',
   styles: `
     .lookup-thumb {
@@ -177,6 +178,8 @@ export class PlantCatalogListComponent {
   protected readonly sunKey = sunKey;
   protected readonly plantName = plantName;
   protected readonly sunIcons = SUN_ICONS;
+  /** One season per row: the harvest of edible plants, otherwise flowering. */
+  protected readonly catalogSeason = catalogSeason;
 
   private plants = signal<Plant[]>([]);
   loading = signal(true);
@@ -394,8 +397,6 @@ export class PlantCatalogListComponent {
         species: this.newPlantSpecies().trim() || null,
         sun_requirements: this.newPlantSun(),
         watering_frequency_days: null,
-        flowering_start_month: null,
-        flowering_end_month: null,
         notes: this.newPlantNotes().trim() || null,
         source_url: this.newPlantSourceUrl().trim() || null,
         life_cycle: hasLifeCycle(this.newPlantGrowthForm()) ? this.newPlantLifeCycle() : null,

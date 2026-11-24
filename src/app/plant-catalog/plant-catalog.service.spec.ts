@@ -52,7 +52,7 @@ describe('PlantCatalogService', () => {
 
     const result = await service.addCustom({
       name: 'Kale', species: null, sun_requirements: 'partial_shade', watering_frequency_days: 3,
-      flowering_start_month: null, flowering_end_month: null, notes: null,
+      notes: null,
     });
 
     expect(insert).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Kale', user_id: 'me' }));
@@ -63,7 +63,7 @@ describe('PlantCatalogService', () => {
     signedInAs('me');
     const seeded = {
       id: 'seed-1', user_id: null, name: 'Tomato', species: 'Solanum lycopersicum', sun_requirements: 'full_sun',
-      watering_frequency_days: 2, flowering_start_month: 6, flowering_end_month: 9, notes: null,
+      watering_frequency_days: 2, flowering_months: [6, 7, 8], harvest_months: [7, 8, 9, 10], notes: null,
     };
     const seededRules = [
       { task_type: 'harvest', timing_type: 'offset_from_planting', offset_days: 75, recurrence_days: null, notes: null },
@@ -92,6 +92,8 @@ describe('PlantCatalogService', () => {
     const insertedPlant = insertPlant.calls.mostRecent().args[0];
     expect(insertedPlant.user_id).toBe('me');
     expect(insertedPlant.name).toBe('Tomato');
+    expect(insertedPlant.flowering_months).toEqual([6, 7, 8]);
+    expect(insertedPlant.harvest_months).toEqual([7, 8, 9, 10]);
     expect('id' in insertedPlant).toBeFalse();
     expect(rulesEq).toHaveBeenCalledWith('plant_id', 'seed-1');
     expect(insertRules).toHaveBeenCalledWith([jasmine.objectContaining({ plant_id: 'clone-1', task_type: 'harvest', offset_days: 75 })]);
@@ -193,7 +195,7 @@ describe('PlantCatalogService editing', () => {
     spyOn(supabase.auth, 'getUser').and.resolveTo({ data: { user: { id: 'me' } }, error: null } as any);
     const seeded = {
       id: 'seed-1', user_id: null, name: 'Tomato', name_cs: 'Rajče', species: null, sun_requirements: 'full_sun',
-      watering_frequency_days: 2, flowering_start_month: 6, flowering_end_month: 9,
+      watering_frequency_days: 2, flowering_months: [6, 7, 8], harvest_months: [7, 8, 9, 10],
       notes: 'Stake it.', notes_cs: 'Vyvazujte.', source_url: null,
     };
     const rules = [{ task_type: 'transplant', timing_type: 'offset_from_planting', offset_days: 21, recurrence_days: null,

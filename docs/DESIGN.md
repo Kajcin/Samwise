@@ -19,7 +19,8 @@ file. When a new pattern is needed, add it here in the same change.
   and `title`.
 - **Shared components:** before writing markup, look for one that exists:
   `app-modal` (dialogs), `ConfirmDialogService` (confirmations), `app-plant-chips`,
-  `app-flowering-strip`, `app-plant-traits-fields`, `app-plant-photos`.
+  `app-month-strip` (a season's months, shown or picked), `app-plant-traits-fields`,
+  `app-plant-photos`.
 
 ## Page layout
 
@@ -104,8 +105,10 @@ file. When a new pattern is needed, add it here in the same change.
   "Zrušit", "Smazat …".
 - What people type (plant names, notes) is shown as typed, not translated. Built-in plants
   have Czech texts in `name_cs`/`notes_cs`.
-- Prefer forms that read the same in every language over abbreviations (the flowering
+- Prefer forms that read the same in every language over abbreviations (the month
   strip numbers its months 1.–12.).
+- Months: a season is a set of months, shown and picked with `app-month-strip`; in text,
+  runs of months read "květen až září, listopad" (`describeMonths`).
 
 ## Accessibility
 

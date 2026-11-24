@@ -85,35 +85,30 @@
                     (input)="setDraftNumber('wateringDays', $any($event.target).value)"
                   />
                 </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label" for="plant-flowering-from">{{ i18n.t('plant.floweringFrom') }}</label>
-                  <select
-                    id="plant-flowering-from"
-                    class="form-select"
-                    name="floweringFrom"
-                    (change)="setDraftNumber('floweringStart', $any($event.target).value)"
-                  >
-                    <option value="" [selected]="d.floweringStart == null">{{ i18n.t('plant.notSet') }}</option>
-                    @for (month of months; track month) {
-                      <option [value]="month" [selected]="d.floweringStart === month">{{ i18n.t(monthKey(month)) }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label" for="plant-flowering-to">{{ i18n.t('plant.floweringTo') }}</label>
-                  <select
-                    id="plant-flowering-to"
-                    class="form-select"
-                    name="floweringTo"
-                    (change)="setDraftNumber('floweringEnd', $any($event.target).value)"
-                  >
-                    <option value="" [selected]="d.floweringEnd == null">{{ i18n.t('plant.notSet') }}</option>
-                    @for (month of months; track month) {
-                      <option [value]="month" [selected]="d.floweringEnd === month">{{ i18n.t(monthKey(month)) }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="col-md-6">
+                <fieldset class="col-md-6">
+                  <legend class="form-label fs-6 mb-2">{{ i18n.t('plant.flowering') }}</legend>
+                  <app-month-strip
+                    class="d-block flowering-picker"
+                    kind="flowering"
+                    size="lg"
+                    editable
+                    [months]="d.floweringMonths"
+                    (monthsChange)="setDraft('floweringMonths', $any($event))"
+                  />
+                </fieldset>
+                <fieldset class="col-md-6">
+                  <legend class="form-label fs-6 mb-2">{{ i18n.t('plant.harvest') }}</legend>
+                  <app-month-strip
+                    class="d-block harvest-picker"
+                    kind="harvest"
+                    size="lg"
+                    editable
+                    [months]="d.harvestMonths"
+                    (monthsChange)="setDraft('harvestMonths', $any($event))"
+                  />
+                </fieldset>
+                <div class="col-12 form-text mt-1">{{ i18n.t('plant.pickMonths') }}</div>
+                <div class="col-12">
                   <label class="form-label" for="plant-source">{{ i18n.t('plant.sourceUrl') }}</label>
                   <input
                     id="plant-source"
@@ -172,18 +167,18 @@
                   <dt class="col-sm-4"><app-icon name="droplet" class="water-icon me-1" />{{ i18n.t('plant.watering') }}</dt>
                   <dd class="col-sm-8">{{ i18n.t('rules.everyDays', { days: p.watering_frequency_days }) }}</dd>
                 }
-                @if (p.flowering_start_month && p.flowering_end_month) {
+                @if (p.flowering_months?.length) {
                   <dt class="col-sm-4"><app-icon name="flower1" class="flowering-icon me-1" />{{ i18n.t('plant.flowering') }}</dt>
-                  <dd class="col-sm-8">
-                    <div class="mb-1">
-                      {{
-                        i18n.t('plant.floweringRange', {
-                          from: i18n.t(monthKey(p.flowering_start_month)),
-                          to: i18n.t(monthKey(p.flowering_end_month)),
-                        })
-                      }}
-                    </div>
-                    <app-flowering-strip class="d-block" size="lg" [start]="p.flowering_start_month" [end]="p.flowering_end_month" />
+                  <dd class="col-sm-8 flowering">
+                    <div class="mb-1">{{ describeMonths(p.flowering_months!) }}</div>
+                    <app-month-strip class="d-block" kind="flowering" size="lg" [months]="p.flowering_months!" />
+                  </dd>
+                }
+                @if (p.harvest_months?.length) {
+                  <dt class="col-sm-4"><app-icon name="basket" class="harvest-icon me-1" />{{ i18n.t('plant.harvest') }}</dt>
+                  <dd class="col-sm-8 harvest">
+                    <div class="mb-1">{{ describeMonths(p.harvest_months!) }}</div>
+                    <app-month-strip class="d-block" kind="harvest" size="lg" [months]="p.harvest_months!" />
                   </dd>
                 }
                 @if (p.source_url) {

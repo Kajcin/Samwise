@@ -3,9 +3,9 @@ import { IconComponent } from '../core/icons/icon.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { PlantPhotosComponent } from './plant-photos.component';
 import { PlantChipsComponent } from './plant-chips.component';
-import { FloweringStripComponent } from './flowering-strip.component';
+import { MonthStripComponent } from './month-strip.component';
 import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
-import { GrowthForm, hasLifeCycle, LifeCycle, PlantUse, SUN_ICONS } from './traits';
+import { describeMonths, GrowthForm, hasLifeCycle, LifeCycle, PlantUse, SUN_ICONS } from './traits';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -64,8 +64,8 @@ export interface PlantForm {
   species: string;
   sun: SunRequirement | '';
   wateringDays: number | null;
-  floweringStart: number | null;
-  floweringEnd: number | null;
+  floweringMonths: number[];
+  harvestMonths: number[];
   notes: string;
   sourceUrl: string;
   lifeCycle: LifeCycle | null;
@@ -79,8 +79,8 @@ export function plantToForm(plant: Plant): PlantForm {
     species: plant.species ?? '',
     sun: plant.sun_requirements ?? '',
     wateringDays: plant.watering_frequency_days,
-    floweringStart: plant.flowering_start_month,
-    floweringEnd: plant.flowering_end_month,
+    floweringMonths: plant.flowering_months ?? [],
+    harvestMonths: plant.harvest_months ?? [],
     notes: plant.notes ?? '',
     sourceUrl: plant.source_url ?? '',
     lifeCycle: plant.life_cycle ?? null,
@@ -95,7 +95,6 @@ export function validatePlantForm(form: PlantForm): Message | null {
   if (!form.sun) return msg('catalog.errors.sunRequired');
   const days = form.wateringDays;
   if (days != null && (!Number.isInteger(days) || days < 1 || days > 365)) return msg('plant.errors.wateringInvalid');
-  if ((form.floweringStart == null) !== (form.floweringEnd == null)) return msg('plant.errors.floweringBoth');
   if (form.sourceUrl.trim() && !isWebAddress(form.sourceUrl.trim())) return msg('plant.errors.sourceUrlInvalid');
   return null;
 }
@@ -106,8 +105,8 @@ export function formToChanges(form: PlantForm): PlantChanges {
     species: form.species.trim() || null,
     sun_requirements: form.sun || null,
     watering_frequency_days: form.wateringDays,
-    flowering_start_month: form.floweringStart,
-    flowering_end_month: form.floweringEnd,
+    flowering_months: form.floweringMonths,
+    harvest_months: form.harvestMonths,
     notes: form.notes.trim() || null,
     source_url: form.sourceUrl.trim() || null,
     // Shrubs and trees have no life cycle (the database refuses one).
@@ -148,7 +147,7 @@ function ruleOrder(a: CareRule, b: CareRule): number {
     ModalComponent,
     PlantPhotosComponent,
     PlantChipsComponent,
-    FloweringStripComponent,
+    MonthStripComponent,
     PlantTraitsFieldsComponent,
   ],
   templateUrl: './plant-detail.component.html',
@@ -173,6 +172,11 @@ export class PlantDetailComponent {
   protected readonly months = MONTHS;
   protected readonly linkHost = linkHost;
   protected readonly sunIcons = SUN_ICONS;
+
+  /** "květen až září", "duben až červen, září až říjen". */
+  protected describeMonths(months: readonly number[]): string {
+    return describeMonths(months, (key, params) => this.i18n.t(key, params));
+  }
 
   /** The edit form's draft; null when not editing. */
   draft = signal<PlantForm | null>(null);
@@ -304,7 +308,7 @@ export class PlantDetailComponent {
     this.draft.update((d) => (d ? { ...d, [field]: value } : d));
   }
 
-  setDraftNumber(field: 'wateringDays' | 'floweringStart' | 'floweringEnd', value: string): void {
+  setDraftNumber(field: 'wateringDays', value: string): void {
     this.setDraft(field, parseNumberInput(value));
   }
 

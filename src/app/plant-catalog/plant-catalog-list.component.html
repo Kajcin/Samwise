@@ -191,7 +191,8 @@
                     <span class="visually-hidden">{{ i18n.t('plant.watering') }}: {{ i18n.t('rules.everyDays', { days }) }}</span>
                   }
                 </span>
-                <app-flowering-strip [start]="plant.flowering_start_month" [end]="plant.flowering_end_month" />
+                @let season = catalogSeason(plant);
+                <app-month-strip [kind]="season.kind" [months]="season.months" />
               </div>
               <div class="d-flex align-items-center gap-2 plant-actions">
               @if (plant.user_id) {

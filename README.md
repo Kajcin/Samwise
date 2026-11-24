@@ -281,8 +281,12 @@ herbaceous perennial); the form disables it and the database refuses one. Herbac
 get no growth-form chip, since most plants are herbaceous. Within a filter group a plant
 matches any picked value; every group with picked values has to match.
 
-The catalog list also shows each plant's sun (icon), watering interval and flowering months
-(a 12-month strip); the plant page shows the strip with the months numbered 1. to 12.
+The catalog list also shows each plant's sun (icon), watering interval and one season as a
+12-month strip: the harvest of vegetables, fruit and herbs (orange), otherwise flowering
+(purple). The plant page shows both seasons with the months numbered 1. to 12.
+
+Flowering and harvest are sets of months (migration 0016), not ranges, so a plant can have
+two seasons (spinach: spring and autumn). You pick them by clicking months in the edit form.
 
 ## Security decisions
 

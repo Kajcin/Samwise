@@ -13,7 +13,7 @@ import { Plant, PlantCatalogService } from './plant-catalog.service';
 function plant(overrides: Partial<Plant>): Plant {
   return {
     id: 'x', user_id: null, name: 'X', species: null, sun_requirements: 'full_sun', watering_frequency_days: 2,
-    flowering_start_month: null, flowering_end_month: null, notes: null, ...overrides,
+    notes: null, ...overrides,
   };
 }
 
@@ -211,7 +211,7 @@ describe('PlantCatalogListComponent', () => {
       service.list.and.resolveTo([
         plant({
           id: '2', name: 'Catmint', user_id: 'me', life_cycle: 'perennial', growth_form: 'subshrub', uses: ['ornamental', 'herb'],
-          sun_requirements: 'partial_shade', watering_frequency_days: 7, flowering_start_month: 5, flowering_end_month: 9,
+          sun_requirements: 'partial_shade', watering_frequency_days: 7, flowering_months: [5, 6, 7, 8, 9],
         }),
       ]);
       const { el } = await render();
@@ -223,7 +223,19 @@ describe('PlantCatalogListComponent', () => {
       expect(row.querySelector('.fact-sun app-icon svg')!.getAttribute('aria-label')).toBe('Partial shade');
       expect(row.querySelector('.fact-water')!.textContent).toContain('7 d');
       expect(row.querySelector('.fact-water .visually-hidden')!.textContent!.trim()).toBe('Watering: every 7 days');
-      expect(row.querySelector('app-flowering-strip [role=img]')!.getAttribute('aria-label')).toBe('Flowers from May to September');
+      expect(row.querySelector('app-month-strip [role=img]')!.getAttribute('aria-label')).toBe('Flowering: May to September');
+    });
+
+    it('rows of edible plants show the harvest instead', async () => {
+      service.list.and.resolveTo([
+        plant({ id: '8', name: 'Spinach', uses: ['vegetable'], flowering_months: [], harvest_months: [4, 5, 6, 9, 10] }),
+      ]);
+      const { el } = await render();
+
+      const strip = el.querySelector('li app-month-strip [role=img]')!;
+      expect(strip.getAttribute('aria-label')).toBe('Harvest: April to June, September to October');
+      expect(strip.classList).toContain('harvest');
+      expect(strip.querySelectorAll('.month.on').length).toBe(5);
     });
   });
 

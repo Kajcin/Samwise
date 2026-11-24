@@ -69,8 +69,53 @@ export const SUN_ICONS: Record<SunRequirement, IconName> = {
   full_shade: 'cloud',
 };
 
-/** Whether the plant flowers in `month` (1-12); the range may run over the new year (Nov-Feb). */
-export function floweringIn(month: number, start: number | null, end: number | null): boolean {
-  if (start == null || end == null) return false;
-  return start <= end ? month >= start && month <= end : month >= start || month <= end;
+/** The two seasons a plant can have, each a set of months (migration 0016). */
+export type Season = 'flowering' | 'harvest';
+
+/**
+ * The months as runs of consecutive months, e.g. [4, 5, 6, 9, 10] -> [[4, 6], [9, 10]].
+ * A run may go over the new year: [1, 2, 12] -> [[12, 2]].
+ */
+export function monthRuns(months: readonly number[]): [number, number][] {
+  const set = new Set(months.filter((m) => m >= 1 && m <= 12));
+  if (set.size === 12) return [[1, 12]];
+  const next = (m: number) => (m % 12) + 1;
+  const previous = (m: number) => ((m + 10) % 12) + 1;
+  const runs: [number, number][] = [];
+  for (const start of [...set].sort((a, b) => a - b)) {
+    if (set.has(previous(start))) continue; // not the first month of its run
+    let end = start;
+    while (set.has(next(end))) end = next(end);
+    runs.push([start, end]);
+  }
+  return runs;
+}
+
+export type Translate = (key: string, params?: Record<string, unknown>) => string;
+
+/** "May to September", "April to June, September to October", "July". */
+export function describeMonths(months: readonly number[], t: Translate): string {
+  return monthRuns(months)
+    .map(([from, to]) =>
+      from === to ? t(`months.${from}`) : t('traits.monthRange', { from: t(`months.${from}`), to: t(`months.${to}`) }),
+    )
+    .join(', ');
+}
+
+/** Grown to be eaten (or used in the kitchen): harvest is the season that matters. */
+export function isEdible(plant: Pick<Plant, 'uses'>): boolean {
+  return (plant.uses ?? []).some((use) => use === 'vegetable' || use === 'fruit' || use === 'herb');
+}
+
+/**
+ * The one season the catalog shows for a plant: the harvest of edible plants (when it's
+ * known), otherwise flowering.
+ */
+export function catalogSeason(plant: Pick<Plant, 'uses' | 'flowering_months' | 'harvest_months'>): {
+  kind: Season;
+  months: readonly number[];
+} {
+  const harvest = plant.harvest_months ?? [];
+  if (isEdible(plant) && harvest.length) return { kind: 'harvest', months: harvest };
+  return { kind: 'flowering', months: plant.flowering_months ?? [] };
 }

@@ -15,8 +15,6 @@ export interface Plant {
   species: string | null;
   sun_requirements: 'full_sun' | 'partial_shade' | 'full_shade' | null;
   watering_frequency_days: number | null;
-  flowering_start_month: number | null;
-  flowering_end_month: number | null;
   notes: string | null;
   /** Czech notes; built-in plants only. */
   notes_cs?: string | null;
@@ -26,6 +24,9 @@ export interface Plant {
   life_cycle?: LifeCycle | null;
   growth_form?: GrowthForm | null;
   uses?: PlantUse[];
+  /** Months 1-12, sorted (migration 0016); a plant can have two seasons, e.g. spinach. */
+  flowering_months?: number[];
+  harvest_months?: number[];
 }
 
 export type NewPlant = Omit<Plant, 'id' | 'user_id' | 'name_cs' | 'notes_cs'>;
@@ -38,8 +39,8 @@ export type PlantChanges = Partial<
     | 'species'
     | 'sun_requirements'
     | 'watering_frequency_days'
-    | 'flowering_start_month'
-    | 'flowering_end_month'
+    | 'flowering_months'
+    | 'harvest_months'
     | 'notes'
     | 'source_url'
     | 'life_cycle'

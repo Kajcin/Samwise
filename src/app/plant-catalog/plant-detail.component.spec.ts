@@ -47,7 +47,7 @@ describe('validateCareRuleForm', () => {
 describe('validatePlantForm', () => {
   const valid: PlantForm = {
     name: 'Catmint', species: '', sun: 'full_sun', wateringDays: null,
-    floweringStart: null, floweringEnd: null, notes: '', sourceUrl: '',
+    floweringMonths: [], harvestMonths: [], notes: '', sourceUrl: '',
     lifeCycle: null, growthForm: null, uses: [],
   };
 
@@ -67,10 +67,8 @@ describe('validatePlantForm', () => {
     expect(validatePlantForm({ ...valid, wateringDays: 7 })).toBeNull();
   });
 
-  it('wants both flowering months or neither, allowing a range over the new year', () => {
-    expect(validatePlantForm({ ...valid, floweringStart: 5 })).toEqual(msg('plant.errors.floweringBoth'));
-    expect(validatePlantForm({ ...valid, floweringEnd: 9 })).toEqual(msg('plant.errors.floweringBoth'));
-    expect(validatePlantForm({ ...valid, floweringStart: 12, floweringEnd: 3 })).toBeNull();
+  it('accepts any months as seasons, e.g. two harvests or flowering over the new year', () => {
+    expect(validatePlantForm({ ...valid, harvestMonths: [4, 5, 9, 10], floweringMonths: [1, 2, 12] })).toBeNull();
   });
 
   it('accepts only web addresses as the source link', () => {
@@ -86,19 +84,19 @@ describe('formToChanges', () => {
     expect(
       formToChanges({
         name: ' Catmint ', species: ' ', sun: 'full_sun', wateringDays: 7,
-        floweringStart: 5, floweringEnd: 9, notes: '  ', sourceUrl: ' https://x.cz/a ',
+        floweringMonths: [5, 6], harvestMonths: [8], notes: '  ', sourceUrl: ' https://x.cz/a ',
         lifeCycle: 'perennial', growthForm: 'subshrub', uses: ['herb', 'ornamental'],
       }),
     ).toEqual({
       name: 'Catmint', species: null, sun_requirements: 'full_sun', watering_frequency_days: 7,
-      flowering_start_month: 5, flowering_end_month: 9, notes: null, source_url: 'https://x.cz/a',
+      flowering_months: [5, 6], harvest_months: [8], notes: null, source_url: 'https://x.cz/a',
       life_cycle: 'perennial', growth_form: 'subshrub', uses: ['herb', 'ornamental'],
     });
   });
 
   it('drops the life cycle of shrubs and trees', () => {
     const form: PlantForm = {
-      name: 'Currant', species: '', sun: 'partial_shade', wateringDays: null, floweringStart: null, floweringEnd: null,
+      name: 'Currant', species: '', sun: 'partial_shade', wateringDays: null, floweringMonths: [], harvestMonths: [],
       notes: '', sourceUrl: '', lifeCycle: 'perennial', growthForm: 'shrub', uses: ['fruit'],
     };
     expect(formToChanges(form).life_cycle).toBeNull();
@@ -131,7 +129,7 @@ describe('PlantDetailComponent', () => {
 
   const seeded: Plant = {
     id: 'p1', user_id: null, name: 'Tomato', species: 'Solanum lycopersicum', sun_requirements: 'full_sun',
-    watering_frequency_days: 2, flowering_start_month: 6, flowering_end_month: 9, notes: null,
+    watering_frequency_days: 2, flowering_months: [6, 7, 8], harvest_months: [7, 8, 9, 10], notes: null,
     life_cycle: 'annual', growth_form: 'herbaceous', uses: ['vegetable'],
   };
   const custom: Plant = { ...seeded, id: 'p2', user_id: 'me', name: 'My Tomato' };
@@ -172,7 +170,8 @@ describe('PlantDetailComponent', () => {
     const { el } = await render(seeded);
 
     expect(el.querySelector('h1')!.textContent).toContain('Tomato');
-    expect(el.textContent).toContain('June to September');
+    expect(el.querySelector('dd.flowering')!.textContent).toContain('June to August');
+    expect(el.querySelector('dd.harvest')!.textContent).toContain('July to October');
     expect(Array.from(el.querySelectorAll('li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim())).toEqual([
       'Harvest — 75 days after planting',
       'Fertilize — every 14 days',
@@ -191,9 +190,10 @@ describe('PlantDetailComponent', () => {
     expect(chips.querySelector('.growth-form-chip')).toBeNull();
     expect(Array.from(chips.querySelectorAll('.use-chip')).map((c) => c.textContent!.trim())).toEqual(['vegetable']);
 
-    const strip = el.querySelector('app-flowering-strip [role=img]')!;
-    expect(strip.getAttribute('aria-label')).toBe('Flowers from June to September');
-    expect(strip.querySelectorAll('.month.on').length).toBe(4);
+    const strip = el.querySelector('dd.flowering app-month-strip [role=img]')!;
+    expect(strip.getAttribute('aria-label')).toBe('Flowering: June to August');
+    expect(strip.querySelectorAll('.month.on').length).toBe(3);
+    expect(el.querySelector('dd.harvest app-month-strip [role=img]')!.getAttribute('aria-label')).toBe('Harvest: July to October');
     // Numbered, not initials, so it reads the same in every language.
     expect(Array.from(strip.querySelectorAll('.month')).map((m) => m.textContent!.trim()))
       .toEqual(['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.']);
@@ -250,7 +250,7 @@ describe('PlantDetailComponent', () => {
   it('edits a plant: all fields, including flowering months and a source link', async () => {
     const saved: Plant = {
       ...custom, name: 'Catmint', species: 'Nepeta × faassenii', watering_frequency_days: 7,
-      flowering_start_month: 5, flowering_end_month: 9, notes: 'Cut back after flowering.',
+      flowering_months: [5, 6, 7, 8, 9], harvest_months: [], notes: 'Cut back after flowering.',
       source_url: 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low',
     };
     service.updatePlant.and.resolveTo(saved);
@@ -262,8 +262,13 @@ describe('PlantDetailComponent', () => {
     setField(el, 'name', 'Catmint');
     setField(el, 'species', 'Nepeta × faassenii');
     setField(el, 'watering', '7');
-    setField(el, 'floweringFrom', '5');
-    setField(el, 'floweringTo', '9');
+    // Flowering June-August becomes May-September; the harvest months are cleared.
+    const pick = (picker: string, month: number) =>
+      el.querySelectorAll<HTMLButtonElement>(`app-month-strip.${picker} button.month`)[month - 1].click();
+    expect(el.querySelectorAll('app-month-strip.flowering-picker button[aria-pressed=true]').length).toBe(3);
+    pick('flowering-picker', 5);
+    pick('flowering-picker', 9);
+    for (const month of [7, 8, 9, 10]) pick('harvest-picker', month);
     setField(el, 'notes', 'Cut back after flowering.');
     setField(el, 'sourceUrl', 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
     setField(el, 'lifeCycle', 'perennial');
@@ -277,13 +282,14 @@ describe('PlantDetailComponent', () => {
 
     expect(service.updatePlant).toHaveBeenCalledWith('p2', {
       name: 'Catmint', species: 'Nepeta × faassenii', sun_requirements: 'full_sun', watering_frequency_days: 7,
-      flowering_start_month: 5, flowering_end_month: 9, notes: 'Cut back after flowering.',
+      flowering_months: [5, 6, 7, 8, 9], harvest_months: [], notes: 'Cut back after flowering.',
       source_url: 'https://www.loukykvet.cz/obchod/2166-santa-walkers-low',
       life_cycle: 'perennial', growth_form: 'subshrub', uses: ['ornamental', 'herb'],
     });
     expect(el.querySelector('form.plant-form')).toBeNull(); // back to viewing
     expect(el.querySelector('h1')!.textContent).toContain('Catmint');
-    expect(el.textContent).toContain('May to September');
+    expect(el.querySelector('dd.flowering')!.textContent).toContain('May to September');
+    expect(el.querySelector('dd.harvest')).toBeNull();
     const link = el.querySelector<HTMLAnchorElement>('a.source-link')!;
     expect(link.textContent).toBe('www.loukykvet.cz');
     expect(link.href).toBe('https://www.loukykvet.cz/obchod/2166-santa-walkers-low');
@@ -315,13 +321,13 @@ describe('PlantDetailComponent', () => {
     el.querySelector<HTMLButtonElement>('button.edit')!.click();
     fixture.detectChanges();
 
-    setField(el, 'floweringTo', ''); // "from" is still June
+    setField(el, 'watering', '0');
     el.querySelector<HTMLFormElement>('form.plant-form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(service.updatePlant).not.toHaveBeenCalled();
-    expect(el.querySelector('form.plant-form [role=alert]')!.textContent).toContain('Choose both flowering months');
+    expect(el.querySelector('form.plant-form [role=alert]')!.textContent).toContain('Watering must be');
   });
 
   it('cancels editing without saving', async () => {

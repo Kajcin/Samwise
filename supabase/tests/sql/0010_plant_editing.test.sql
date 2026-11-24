@@ -38,12 +38,9 @@ select pg_temp.expect_error(
 select pg_temp.expect_error(
   $$update plants_catalog set watering_frequency_days = 0 where id = 'e0000000-0000-0000-0000-000000000001'$$,
   'plants_catalog_watering_days');
-select pg_temp.expect_error(
-  $$update plants_catalog set flowering_start_month = 5 where id = 'e0000000-0000-0000-0000-000000000001'$$,
-  'plants_catalog_flowering_range');
--- Allowed: a link, and flowering over the new year.
+-- Allowed: a link. (Flowering months: migration 0016 and its test.)
 update plants_catalog
-   set source_url = 'https://www.example.com/plants/chilli', flowering_start_month = 12, flowering_end_month = 3
+   set source_url = 'https://www.example.com/plants/chilli'
  where id = 'e0000000-0000-0000-0000-000000000001';
 
 -- 2. Another user can't edit or delete them (RLS hides the rows: nothing changes).
