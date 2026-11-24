@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- The logo for browser tabs (16-32 px): only the leaves, the root, its eyes and a curl. -->
+  <path d="M47 52 C40 40, 30 26, 27 10 C37 18, 46 34, 50 50 Z" fill="#6f7d3c" stroke="#2b2418" stroke-width="4"/>
+  <path d="M53 52 C58 36, 66 22, 77 12 C76 28, 66 42, 55 52 Z" fill="#6f7d3c" stroke="#2b2418" stroke-width="4"/>
+  <path d="M50 52 C45 38, 45 20, 51 4 C57 20, 57 38, 52 52 Z" fill="#7d8c4a" stroke="#2b2418" stroke-width="4"/>
+  <path d="M52 80 C52 88, 56 93, 60 90 C64 87, 61 83, 57 85" stroke="#2b2418" stroke-width="8"/>
+  <path d="M50 52 C61 51, 67 59, 64 68 C62 74, 56 77, 54 82 L50 82 C46 77, 37 74, 36 66 C35 58, 41 52, 50 52 Z" fill="#7b93c4" stroke="#2b2418" stroke-width="4"/>
+  <circle cx="45" cy="64" r="2.6" fill="#2b2418"/>
+  <circle cx="54" cy="64" r="2.6" fill="#2b2418"/>
+</svg>

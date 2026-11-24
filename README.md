@@ -1,5 +1,7 @@
 # Samwise
 
+<img src="public/logo.svg" alt="" width="96" height="96">
+
 Personal garden organizer: plan garden beds on a grid, track plants and their
 care info, and auto-generate care tasks that sync to Google Calendar.
 

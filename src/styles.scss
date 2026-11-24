@@ -6,6 +6,8 @@ $green-600: #3b6e22; // white text on it passes WCAG AA (about 6:1)
 $green-50: #f4f7ec; // the original nav background
 
 $primary: $green-600;
+// Uncial Antiqua (OFL), bundled from @fontsource (angular.json styles), for the name only.
+$wordmark-font: 'Uncial Antiqua', Georgia, serif;
 $link-color: $green-700;
 $link-hover-color: darken($green-700, 8%);
 $body-bg: #fbfcf8;
@@ -51,9 +53,19 @@ $border-radius-lg: 0.75rem;
   border-bottom: 1px solid #c8d5b0;
 
   .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: $green-700;
-    font-weight: 600;
+    font-family: $wordmark-font;
+    font-size: 1.45rem;
   }
+}
+
+// The name next to the logo, in the logo's medieval hand (public/logo.svg).
+.wordmark {
+  color: $green-700;
+  font-family: $wordmark-font;
 }
 
 // Page titles a bit smaller than Bootstrap's default h1 on phones.

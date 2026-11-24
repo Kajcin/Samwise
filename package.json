@@ -14,7 +14,8 @@
     "test:app": "ng test --watch=false --browsers=ChromeHeadless",
     "test:functions": "node scripts/test-functions.mjs",
     "test:sql": "node scripts/test-sql.mjs",
-    "test:all": "npm run test:app && npm run test:functions && npm run test:sql"
+    "test:all": "npm run test:app && npm run test:functions && npm run test:sql",
+    "favicons": "node scripts/generate-favicons.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -25,6 +26,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@fontsource/uncial-antiqua": "^5.3.0",
     "@jsverse/transloco": "8.4.0",
     "@jsverse/transloco-messageformat": "8.4.0",
     "@supabase/supabase-js": "^2.119.0",

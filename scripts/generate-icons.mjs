@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const ICONS = [
   // navigation
-  'flower3', 'house', 'list-check', 'grid-3x3', 'flower2', 'gear', 'box-arrow-right',
+  'house', 'list-check', 'grid-3x3', 'flower2', 'gear', 'box-arrow-right',
   // task types (see TASK_TYPE_ICONS in plant-catalog/labels.ts)
   'flower1', 'bucket', 'scissors', 'droplet', 'basket', 'grid-1x2', 'layers', 'snow', 'arrows-collapse-vertical',
   // actions

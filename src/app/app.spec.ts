@@ -38,6 +38,19 @@ describe('App', () => {
     expect(nav.textContent).toContain('dev@samwise.local');
   });
 
+  it('shows the logo next to the name, as decoration (the name says it)', async () => {
+    user.set({ email: 'dev@samwise.local' } as User);
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const brand = fixture.nativeElement.querySelector('.navbar-brand') as HTMLElement;
+
+    const logo = brand.querySelector('img')!;
+    expect(logo.getAttribute('src')).toBe('logo-mark.svg');
+    expect(logo.getAttribute('alt')).toBe('');
+    expect(brand.textContent!.trim()).toBe('Samwise');
+  });
+
   it('opens and closes the menu on narrow screens', async () => {
     user.set({ email: 'dev@samwise.local' } as User);
     const fixture = TestBed.createComponent(App);

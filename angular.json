@@ -33,7 +33,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
+            "styles": ["node_modules/@fontsource/uncial-antiqua/latin-400.css", "src/styles.scss"],
             "allowedCommonJsDependencies": ["@messageformat/core"],
             "stylePreprocessorOptions": {
               "sass": {
