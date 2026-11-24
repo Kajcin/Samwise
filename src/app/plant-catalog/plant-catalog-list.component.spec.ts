@@ -463,9 +463,13 @@ describe('PlantCatalogListComponent', () => {
     expect(getComputedStyle(status).flexDirection).toBe('column');
     expect(status.compareDocumentPosition(el.querySelector('ul.list-group')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
+    // "No plant matches" would contradict the spinner: it waits until the search is done.
+    expect(el.querySelector('.no-matches')).toBeNull();
+
     answer([catmint]);
     await fixture.whenStable();
     fixture.detectChanges();
+    expect(el.querySelector('.no-matches')!.textContent).toContain('chřest');
     expect(el.querySelector('app-loading.lookup-loading')).toBeNull();
     expect(el.querySelector('button.lookup app-spinner')).toBeNull();
     expect(el.querySelector('.lookup-results .candidate')).not.toBeNull();

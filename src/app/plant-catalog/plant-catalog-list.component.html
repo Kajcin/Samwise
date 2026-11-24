@@ -246,8 +246,11 @@
               </div>
             </li>
           } @empty {
+            <!-- Not while the web search runs: its spinner says what's happening instead. -->
             @if (query().trim()) {
-              <p class="text-body-secondary">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>
+              @if (!lookupLoading()) {
+                <p class="text-body-secondary no-matches">{{ i18n.t('catalog.noMatches', { query: query() }) }}</p>
+              }
             } @else {
               <p class="text-body-secondary no-filter-matches">{{ i18n.t('catalog.noFilterMatches') }}</p>
             }
