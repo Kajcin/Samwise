@@ -321,6 +321,8 @@ how many there are and where, e.g. "Dělení trsů — Plicník lékařský (2×
   ("každých 7 dní v době sklizně"), followed when you change them on the plant. Within
   months, the count starts again on the 1st of each period (a run of consecutive months,
   also over the new year): every 7 days from July gives 1, 8, 15 … July every year.
+  Such rules plan a year ahead, like yearly rules (migration 0022); all-year repeating
+  rules plan 90 days ahead and are topped up nightly.
 - `sync_plant_tasks()` works the plant's tasks out again when you plant or take a plant
   out, and when its care rules change (migration 0020), and every night adds the next
   ones. Upcoming unfinished tasks follow the rules; completed and past ones stay.
