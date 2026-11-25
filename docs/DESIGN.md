@@ -30,7 +30,7 @@ file. When a new pattern is needed, add it here in the same change.
   `app-modal` (dialogs), `ConfirmDialogService` (confirmations), `app-loading` and
   `app-spinner` (waiting), `app-plant-chips`,
   `app-month-strip` (a season's months, shown or picked), `app-plant-traits-fields`,
-  `app-plant-photos`.
+  `app-plant-photos`, `app-task-text` (a task as "type — **plant** (_bed_: cell)").
 
 ## Page layout
 

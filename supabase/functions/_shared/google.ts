@@ -30,7 +30,7 @@ export interface EventTask {
   plant_name?: string | null;
   /** How many plants of it the task covers (migration 0019); shown as "(2×)" when more than one. */
   plant_count?: number;
-  /** Human-readable places, one per line, e.g. "Herbs, row 1 col 2". */
+  /** Human-readable places, one per line, e.g. "Herbs: row 1 col 2". */
   location?: string | null;
   /** Language of the event title; English if absent. */
   language?: Language;

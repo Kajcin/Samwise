@@ -68,7 +68,7 @@ describe('DashboardComponent', () => {
 
     expect(tasks.listUpcoming).toHaveBeenCalledWith(7);
     expect(items[0]).toContain('Fertilize — Basil');
-    expect(items[0]).toContain('Herbs, row 1 col 1');
+    expect(items[0]).toContain('(Herbs: row 1 col 1)');
     expect(items[0]).toContain('Overdue');
     expect(items[1]).toContain('Prune');
     expect(items[1]).toContain('Today');

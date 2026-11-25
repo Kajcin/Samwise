@@ -105,9 +105,7 @@
     "yearlyLate": "každý rok koncem {month}"
   },
   "tasks": {
-    "title": "{type} — {plant}",
-    "location": "{bed}, řádek {row}, sloupec {col}",
-    "locations": "{count}×: {places}",
+    "cell": "řádek {row}, sloupec {col}",
     "heading": "Úkoly",
     "filterType": "Typ",
     "allTypes": "Všechny typy",

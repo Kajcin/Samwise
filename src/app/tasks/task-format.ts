@@ -6,24 +6,28 @@ import { TaskWithContext, taskPlaces } from './task.service';
 /** What the formatting below needs: the current language and its texts. */
 export type Translator = Pick<LanguageService, 'lang' | 't'>;
 
-/** "Harvest — Tomato" for generated tasks, "Prune" for manual ones. */
-export function taskTitle(task: TaskWithContext, i18n: Translator): string {
-  const type = i18n.t(taskTypeKey(task.task_type));
-  if (!task.plant) return type;
-  return i18n.t('tasks.title', { type, plant: plantName(task.plant, i18n.lang()) });
+/**
+ * A task's text in parts, for <app-task-text>: "Harvest — Tomato (Herbs: row 1 col 2)",
+ * or for several plants "(2×: Herbs: row 1 col 2; Shade: row 3 col 1)". Manual tasks have
+ * just the type.
+ */
+export interface TaskText {
+  type: string;
+  /** null for manual tasks. */
+  plant: string | null;
+  /** Where the plants grow, by bed; cells 1-based for people. Empty for manual tasks. */
+  places: { bed: string; cell: string }[];
 }
 
-/**
- * Where the task's plants grow, 1-based for people: "Herbs, row 1 col 2", or for several
- * plants "2×: Herbs, row 1 col 2; Shade, row 3 col 1". null for manual tasks.
- */
-export function taskLocation(task: TaskWithContext, i18n: Translator): string | null {
-  const places = taskPlaces(task).map((p) =>
-    i18n.t('tasks.location', { bed: p.bed.name, row: p.cell_row + 1, col: p.cell_col + 1 }),
-  );
-  if (!places.length) return null;
-  if (places.length === 1) return places[0];
-  return i18n.t('tasks.locations', { count: places.length, places: places.join('; ') });
+export function taskText(task: TaskWithContext, i18n: Translator): TaskText {
+  return {
+    type: i18n.t(taskTypeKey(task.task_type)),
+    plant: task.plant ? plantName(task.plant, i18n.lang()) : null,
+    places: taskPlaces(task).map((p) => ({
+      bed: p.bed.name,
+      cell: i18n.t('tasks.cell', { row: p.cell_row + 1, col: p.cell_col + 1 }),
+    })),
+  };
 }
 
 /** "Today", "Tomorrow", "Yesterday", otherwise e.g. "Mon 16 Nov 2026" / "Po 16. listopadu 2026". */

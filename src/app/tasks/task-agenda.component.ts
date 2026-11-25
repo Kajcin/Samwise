@@ -4,7 +4,8 @@ import { SpinnerComponent } from '../core/loading/spinner.component';
 import { LoadingComponent } from '../core/loading/loading.component';
 import { ModalComponent } from '../core/modal/modal.component';
 import { filterTasks, isOverdue, TaskService, TaskWithContext } from './task.service';
-import { formatDue, groupByDueDate, taskLocation, taskTitle } from './task-format';
+import { formatDue, groupByDueDate } from './task-format';
+import { TaskTextComponent } from './task-text.component';
 import { Bed, GardenService } from '../garden/garden.service';
 import { TaskType } from '../plant-catalog/plant-catalog.service';
 import { TASK_TYPE_ICONS, TASK_TYPES, taskTypeKey } from '../plant-catalog/labels';
@@ -23,7 +24,7 @@ export function filterByStatus<T extends TaskWithContext>(tasks: T[], status: St
 @Component({
   selector: 'app-task-agenda',
   standalone: true,
-  imports: [IconComponent, ModalComponent, SpinnerComponent, LoadingComponent],
+  imports: [TaskTextComponent, IconComponent, ModalComponent, SpinnerComponent, LoadingComponent],
   templateUrl: './task-agenda.component.html',
 })
 export class TaskAgendaComponent {
@@ -34,8 +35,6 @@ export class TaskAgendaComponent {
   protected readonly taskTypes = TASK_TYPES;
   protected readonly taskTypeKey = taskTypeKey;
   protected readonly taskIcons = TASK_TYPE_ICONS;
-  protected readonly taskTitle = taskTitle;
-  protected readonly taskLocation = taskLocation;
   protected readonly formatDue = formatDue;
   protected readonly isOverdue = isOverdue;
 

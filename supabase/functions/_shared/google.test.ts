@@ -155,10 +155,10 @@ Deno.test('deleteCalendar treats an already-deleted calendar as deleted, and rep
 
 Deno.test('eventBody makes a free all-day event titled with the task and plant', () => {
   const event = eventBody({
-    ...task, plant_name: 'Tomato', location: 'Herbs, row 1 col 2', completed_at: null,
+    ...task, plant_name: 'Tomato', location: 'Herbs: row 1 col 2', completed_at: null,
   });
   assertEquals(event.summary, 'Harvest — Tomato');
-  assertEquals(event.description, 'Herbs, row 1 col 2');
+  assertEquals(event.description, 'Herbs: row 1 col 2');
   assertEquals(event.start, { date: '2026-08-20' });
   assertEquals(event.end, { date: '2026-08-21' }); // exclusive end date
   assertEquals(event.transparency, 'transparent');
@@ -168,10 +168,10 @@ Deno.test('eventBody makes a free all-day event titled with the task and plant',
 Deno.test('eventBody counts the plants a task covers, listing their places', () => {
   const event = eventBody({
     ...task, plant_name: 'Plicník lékařský', plant_count: 2, language: 'cs',
-    location: 'okrasné bylinky, řádek 3, sloupec 2\nstinný záhonek, řádek 1, sloupec 1',
+    location: 'okrasné bylinky: řádek 3, sloupec 2\nstinný záhonek: řádek 1, sloupec 1',
   });
   assertEquals(event.summary, 'Sklizeň — Plicník lékařský (2×)');
-  assertEquals(event.description, 'okrasné bylinky, řádek 3, sloupec 2\nstinný záhonek, řádek 1, sloupec 1');
+  assertEquals(event.description, 'okrasné bylinky: řádek 3, sloupec 2\nstinný záhonek: řádek 1, sloupec 1');
   assertEquals(eventBody({ ...task, plant_name: 'Tomato', plant_count: 1 }).summary, 'Harvest — Tomato');
 });
 

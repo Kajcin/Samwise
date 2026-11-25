@@ -30,10 +30,7 @@
                   </div>
                   <div>
                     <app-icon [name]="taskIcons[task.task_type]" class="text-primary me-1" />
-                    {{ taskTitle(task, i18n) }}
-                    @if (taskLocation(task, i18n); as where) {
-                      <small class="text-body-secondary">({{ where }})</small>
-                    }
+                    <app-task-text [task]="task" />
                   </div>
                 </div>
                 <button

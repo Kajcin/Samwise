@@ -33,11 +33,11 @@ export interface TaskEventRow {
 }
 
 /**
- * The place of a task, as the app writes it (tasks.location in src/i18n/*.json):
- * "Herbs, row 1 col 2" / "Herbs, řádek 1, sloupec 2", 1-based.
+ * The place of a task, as the app writes it ("{bed}: " and tasks.cell in src/i18n/*.json):
+ * "Herbs: row 1 col 2" / "Herbs: řádek 1, sloupec 2", 1-based.
  */
 export function formatLocation(bed: string, row: number, col: number, language: Language): string {
-  return language === 'cs' ? `${bed}, řádek ${row}, sloupec ${col}` : `${bed}, row ${row} col ${col}`;
+  return language === 'cs' ? `${bed}: řádek ${row}, sloupec ${col}` : `${bed}: row ${row} col ${col}`;
 }
 
 /** The task's places, by bed, then row, then column. */

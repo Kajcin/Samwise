@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { formatDue, formatDueDate, groupByDueDate, taskLocation, taskTitle } from './task-format';
+import { formatDue, formatDueDate, groupByDueDate, taskText } from './task-format';
 import { TaskWithContext } from './task.service';
 import { provideI18n } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
@@ -21,28 +21,26 @@ function i18nIn(lang: 'en' | 'cs'): LanguageService {
   return i18n;
 }
 
-describe('taskTitle / taskLocation', () => {
+describe('taskText', () => {
   it('names the plant and its place for generated tasks', () => {
-    const i18n = i18nIn('en');
-    expect(taskTitle(planted, i18n)).toBe('Harvest — Tomato');
-    expect(taskLocation(planted, i18n)).toBe('Herbs, row 1 col 2');
+    expect(taskText(planted, i18nIn('en'))).toEqual({
+      type: 'Harvest', plant: 'Tomato', places: [{ bed: 'Herbs', cell: 'row 1 col 2' }],
+    });
   });
 
-  it('uses just the task type for manual tasks', () => {
-    const i18n = i18nIn('en');
-    expect(taskTitle(base, i18n)).toBe('Prune');
-    expect(taskLocation(base, i18n)).toBeNull();
+  it('has just the task type for manual tasks', () => {
+    expect(taskText(base, i18nIn('en'))).toEqual({ type: 'Prune', plant: null, places: [] });
   });
 
   it('speaks Czech, with the Czech name of built-in plants', () => {
     const i18n = i18nIn('cs');
-    expect(taskTitle(planted, i18n)).toBe('Sklizeň — Rajče');
-    expect(taskLocation(planted, i18n)).toBe('Herbs, řádek 1, sloupec 2');
-    const own = { ...planted, plant: { name: 'Chilli', name_cs: null } };
-    expect(taskTitle(own, i18n)).toBe('Sklizeň — Chilli');
+    expect(taskText(planted, i18n)).toEqual({
+      type: 'Sklizeň', plant: 'Rajče', places: [{ bed: 'Herbs', cell: 'řádek 1, sloupec 2' }],
+    });
+    expect(taskText({ ...planted, plant: { name: 'Chilli', name_cs: null } }, i18n).plant).toBe('Chilli');
   });
 
-  it('counts the plants of a task covering several, listing their places by bed', () => {
+  it('lists the places of a task covering several plants by bed', () => {
     const shared: TaskWithContext = {
       ...planted,
       plantings: [
@@ -50,10 +48,10 @@ describe('taskTitle / taskLocation', () => {
         { planting: { cell_row: 2, cell_col: 1, bed: { id: 'b1', name: 'okrasné bylinky' } } },
       ],
     };
-    const i18n = i18nIn('cs');
-    expect(taskLocation(shared, i18n)).toBe('2×: okrasné bylinky, řádek 3, sloupec 2; stinný záhonek, řádek 1, sloupec 1');
-    i18n.use('en');
-    expect(taskLocation(shared, i18n)).toBe('2×: okrasné bylinky, row 3 col 2; stinný záhonek, row 1 col 1');
+    expect(taskText(shared, i18nIn('cs')).places).toEqual([
+      { bed: 'okrasné bylinky', cell: 'řádek 3, sloupec 2' },
+      { bed: 'stinný záhonek', cell: 'řádek 1, sloupec 1' },
+    ]);
   });
 });
 

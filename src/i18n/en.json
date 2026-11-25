@@ -105,9 +105,7 @@
     "yearlyLate": "every year in late {month}"
   },
   "tasks": {
-    "title": "{type} — {plant}",
-    "location": "{bed}, row {row} col {col}",
-    "locations": "{count}×: {places}",
+    "cell": "row {row} col {col}",
     "heading": "Tasks",
     "filterType": "Type",
     "allTypes": "All types",

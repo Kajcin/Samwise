@@ -92,7 +92,7 @@ Deno.test('a new task becomes an event with its plant and place, and the event i
   assertEquals(log.upserts[0].token, 'cached');
   assertEquals(log.upserts[0].calendarId, 'cal-1');
   assertEquals(log.upserts[0].task.plant_name, 'Tomato');
-  assertEquals(log.upserts[0].task.location, 'Herbs, row 1 col 2');
+  assertEquals(log.upserts[0].task.location, 'Herbs: row 1 col 2');
   assertEquals(log.upserts[0].task.task_id, TASK_ID);
   assertEquals(log.eventIds, [[TASK_ID, eventIdForTask(TASK_ID)]]);
   assertEquals(log.refreshed, 0);
@@ -120,7 +120,7 @@ Deno.test('events are written in the user’s language', async () => {
 
   assertEquals(log.upserts[0].task.language, 'cs');
   assertEquals(log.upserts[0].task.plant_name, 'Rajče');
-  assertEquals(log.upserts[0].task.location, 'Bylinky, řádek 1, sloupec 2');
+  assertEquals(log.upserts[0].task.location, 'Bylinky: řádek 1, sloupec 2');
 });
 
 Deno.test('a re-sync (after a language change) updates the event although the task is unchanged', async () => {

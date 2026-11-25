@@ -60,7 +60,7 @@ Deno.test('first connect creates the calendar, stores credentials and backfills 
   }]);
   assertEquals(log.listedFrom, ['2026-11-19']);
   assertEquals(log.upserted[0].plant_name, 'Tomato');
-  assertEquals(log.upserted[0].location, 'Herbs, row 1 col 1');
+  assertEquals(log.upserted[0].location, 'Herbs: row 1 col 1');
   assertEquals(log.upserted[1].plant_name, null);
   assertEquals([...log.eventIds], [['t1', 'evt-1'], ['t2', 'evt-2']]);
 });
