@@ -44,7 +44,13 @@ export function taskPlaces(task: Pick<TaskWithContext, 'plantings'>): TaskPlace[
   return (task.plantings ?? [])
     .map((link) => link.planting)
     .filter((p): p is TaskPlace => !!p?.bed)
-    .sort((a, b) => a.bed.name.localeCompare(b.bed.name) || a.cell_row - b.cell_row || a.cell_col - b.cell_col);
+    .sort(
+      (a, b) =>
+        a.bed.name.localeCompare(b.bed.name) ||
+        a.bed.id.localeCompare(b.bed.id) || // beds of the same name stay apart
+        a.cell_row - b.cell_row ||
+        a.cell_col - b.cell_col,
+    );
 }
 
 export interface TaskFilter {

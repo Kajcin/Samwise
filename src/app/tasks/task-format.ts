@@ -8,25 +8,33 @@ export type Translator = Pick<LanguageService, 'lang' | 't'>;
 
 /**
  * A task's text in parts, for <app-task-text>: "Harvest — Tomato (Herbs: row 1 col 2)",
- * or for several plants "(2×: Herbs: row 1 col 2; Shade: row 3 col 1)". Manual tasks have
- * just the type.
+ * or for several plants "(3×: Herbs: row 1 col 2; row 2 col 1; Shade: row 3 col 1)".
+ * Manual tasks have just the type.
  */
 export interface TaskText {
   type: string;
   /** null for manual tasks. */
   plant: string | null;
-  /** Where the plants grow, by bed; cells 1-based for people. Empty for manual tasks. */
-  places: { bed: string; cell: string }[];
+  /** How many plants the task covers (0 for manual tasks). */
+  count: number;
+  /** Where they grow: each bed once, with its cells (1-based for people). */
+  beds: { bed: string; cells: string[] }[];
 }
 
 export function taskText(task: TaskWithContext, i18n: Translator): TaskText {
+  const places = taskPlaces(task);
+  const beds: { id: string; bed: string; cells: string[] }[] = [];
+  for (const p of places) {
+    const cell = i18n.t('tasks.cell', { row: p.cell_row + 1, col: p.cell_col + 1 });
+    const last = beds[beds.length - 1];
+    if (last?.id === p.bed.id) last.cells.push(cell);
+    else beds.push({ id: p.bed.id, bed: p.bed.name, cells: [cell] });
+  }
   return {
     type: i18n.t(taskTypeKey(task.task_type)),
     plant: task.plant ? plantName(task.plant, i18n.lang()) : null,
-    places: taskPlaces(task).map((p) => ({
-      bed: p.bed.name,
-      cell: i18n.t('tasks.cell', { row: p.cell_row + 1, col: p.cell_col + 1 }),
-    })),
+    count: places.length,
+    beds: beds.map(({ bed, cells }) => ({ bed, cells })),
   };
 }
 

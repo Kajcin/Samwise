@@ -24,33 +24,51 @@ function i18nIn(lang: 'en' | 'cs'): LanguageService {
 describe('taskText', () => {
   it('names the plant and its place for generated tasks', () => {
     expect(taskText(planted, i18nIn('en'))).toEqual({
-      type: 'Harvest', plant: 'Tomato', places: [{ bed: 'Herbs', cell: 'row 1 col 2' }],
+      type: 'Harvest', plant: 'Tomato', count: 1, beds: [{ bed: 'Herbs', cells: ['row 1 col 2'] }],
     });
   });
 
   it('has just the task type for manual tasks', () => {
-    expect(taskText(base, i18nIn('en'))).toEqual({ type: 'Prune', plant: null, places: [] });
+    expect(taskText(base, i18nIn('en'))).toEqual({ type: 'Prune', plant: null, count: 0, beds: [] });
   });
 
   it('speaks Czech, with the Czech name of built-in plants', () => {
     const i18n = i18nIn('cs');
     expect(taskText(planted, i18n)).toEqual({
-      type: 'Sklizeň', plant: 'Rajče', places: [{ bed: 'Herbs', cell: 'řádek 1, sloupec 2' }],
+      type: 'Sklizeň', plant: 'Rajče', count: 1, beds: [{ bed: 'Herbs', cells: ['řádek 1, sloupec 2'] }],
     });
     expect(taskText({ ...planted, plant: { name: 'Chilli', name_cs: null } }, i18n).plant).toBe('Chilli');
   });
 
-  it('lists the places of a task covering several plants by bed', () => {
+  it('lists the places of a task covering several plants by bed, each bed once', () => {
     const shared: TaskWithContext = {
       ...planted,
       plantings: [
         { planting: { cell_row: 0, cell_col: 0, bed: { id: 'b2', name: 'stinný záhonek' } } },
         { planting: { cell_row: 2, cell_col: 1, bed: { id: 'b1', name: 'okrasné bylinky' } } },
+        { planting: { cell_row: 0, cell_col: 1, bed: { id: 'b1', name: 'okrasné bylinky' } } },
       ],
     };
-    expect(taskText(shared, i18nIn('cs')).places).toEqual([
-      { bed: 'okrasné bylinky', cell: 'řádek 3, sloupec 2' },
-      { bed: 'stinný záhonek', cell: 'řádek 1, sloupec 1' },
+    const text = taskText(shared, i18nIn('cs'));
+    expect(text.count).toBe(3);
+    expect(text.beds).toEqual([
+      { bed: 'okrasné bylinky', cells: ['řádek 1, sloupec 2', 'řádek 3, sloupec 2'] },
+      { bed: 'stinný záhonek', cells: ['řádek 1, sloupec 1'] },
+    ]);
+  });
+
+  it('keeps two beds of the same name apart', () => {
+    const twins: TaskWithContext = {
+      ...planted,
+      plantings: [
+        { planting: { cell_row: 0, cell_col: 0, bed: { id: 'b2', name: 'Herbs' } } },
+        { planting: { cell_row: 1, cell_col: 0, bed: { id: 'b1', name: 'Herbs' } } },
+        { planting: { cell_row: 0, cell_col: 1, bed: { id: 'b2', name: 'Herbs' } } },
+      ],
+    };
+    expect(taskText(twins, i18nIn('en')).beds).toEqual([
+      { bed: 'Herbs', cells: ['row 2 col 1'] },
+      { bed: 'Herbs', cells: ['row 1 col 1', 'row 1 col 2'] },
     ]);
   });
 });

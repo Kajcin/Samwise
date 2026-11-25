@@ -32,16 +32,19 @@ describe('TaskTextComponent', () => {
     expect(el.querySelector('small.task-places em.task-bed')!.textContent).toBe('bylinková spirála');
   });
 
-  it('counts the plants of a shared task and lists each place', async () => {
+  it('counts the plants of a shared task and names each bed once, before its cells', async () => {
     const { el, text } = await render({
       ...basil,
       plantings: [
         ...basil.plantings,
         { planting: { cell_row: 0, cell_col: 0, bed: { id: 'b2', name: 'okrasné bylinky' } } },
+        { planting: { cell_row: 2, cell_col: 0, bed: { id: 'b1', name: 'bylinková spirála' } } },
       ],
     });
 
-    expect(text).toBe('Sklizeň — Bazalka (2×: bylinková spirála: řádek 2, sloupec 2; okrasné bylinky: řádek 1, sloupec 1)');
+    expect(text).toBe(
+      'Sklizeň — Bazalka (3×: bylinková spirála: řádek 2, sloupec 2; řádek 3, sloupec 1; okrasné bylinky: řádek 1, sloupec 1)',
+    );
     expect(Array.from(el.querySelectorAll('em.task-bed')).map((e) => e.textContent)).toEqual([
       'bylinková spirála', 'okrasné bylinky',
     ]);

@@ -15,14 +15,14 @@ Deno.test('toEventTask adds the plant and its place for generated tasks', () => 
   });
 });
 
-Deno.test('toEventTask lists every place of a task covering several plants, in order', () => {
+Deno.test('toEventTask lists every place of a task covering several plants, in order, a line per bed', () => {
   const task = toEventTask({
     ...base,
     plant: { name: 'Lungwort' },
     plantings: [place('Shade', 0, 0), place('Herbs', 2, 1), place('Herbs', 0, 3)],
   });
   assertEquals(task.plant_count, 3);
-  assertEquals(task.location, 'Herbs: row 1 col 4\nHerbs: row 3 col 2\nShade: row 1 col 1');
+  assertEquals(task.location, 'Herbs: row 1 col 4; row 3 col 2\nShade: row 1 col 1');
 });
 
 Deno.test('toEventTask writes Czech plant names and places for Czech users', () => {

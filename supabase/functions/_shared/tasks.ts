@@ -37,7 +37,24 @@ export interface TaskEventRow {
  * "Herbs: row 1 col 2" / "Herbs: řádek 1, sloupec 2", 1-based.
  */
 export function formatLocation(bed: string, row: number, col: number, language: Language): string {
-  return language === 'cs' ? `${bed}: řádek ${row}, sloupec ${col}` : `${bed}: row ${row} col ${col}`;
+  return `${bed}: ${formatCell(row, col, language)}`;
+}
+
+/** A cell as the app writes it (tasks.cell): "row 1 col 2" / "řádek 1, sloupec 2". */
+function formatCell(row: number, col: number, language: Language): string {
+  return language === 'cs' ? `řádek ${row}, sloupec ${col}` : `row ${row} col ${col}`;
+}
+
+/** The places one line per bed, as the app shows them: "Herbs: row 1 col 4; row 3 col 2". */
+function formatPlaces(places: (TaskPlace & { bed: { name: string } })[], language: Language): string {
+  const lines: { bed: string; cells: string[] }[] = [];
+  for (const p of places) {
+    const cell = formatCell(p.cell_row + 1, p.cell_col + 1, language);
+    const last = lines[lines.length - 1];
+    if (last?.bed === p.bed.name) last.cells.push(cell);
+    else lines.push({ bed: p.bed.name, cells: [cell] });
+  }
+  return lines.map((line) => `${line.bed}: ${line.cells.join('; ')}`).join('\n');
 }
 
 /** The task's places, by bed, then row, then column. */
@@ -48,7 +65,7 @@ export function taskPlaces(row: Pick<TaskEventRow, 'plantings'>): (TaskPlace & {
     .sort((a, b) => a.bed.name.localeCompare(b.bed.name) || a.cell_row - b.cell_row || a.cell_col - b.cell_col);
 }
 
-/** The event fields for a task, in the user's language; every place on its own line. */
+/** The event fields for a task, in the user's language; each bed's places on a line. */
 export function toEventTask(row: TaskEventRow, language: Language = 'en'): EventTask {
   const plant = row.plant;
   const places = taskPlaces(row);
@@ -61,7 +78,7 @@ export function toEventTask(row: TaskEventRow, language: Language = 'en'): Event
     google_calendar_event_id: row.google_calendar_event_id,
     plant_name: plant ? (language === 'cs' && plant.name_cs) || plant.name : null,
     plant_count: places.length,
-    location: places.length ? places.map((p) => formatLocation(p.bed.name, p.cell_row + 1, p.cell_col + 1, language)).join('\n') : null,
+    location: places.length ? formatPlaces(places, language) : null,
     language,
   };
 }

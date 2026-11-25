@@ -6,7 +6,8 @@ import { taskText } from './task-format';
 /**
  * A task as one line of text, the plant in bold and each bed in italics:
  *   Sklizeň — **Bazalka** (_bylinková spirála_: řádek 2, sloupec 2)
- *   Sklizeň — **Bazalka** (2×: _okrasné bylinky_: řádek 3, sloupec 2; _stinný záhonek_: …)
+ *   Sklizeň — **Bazalka** (3×: _okrasné bylinky_: řádek 1, sloupec 2; řádek 3, sloupec 2; _stinný záhonek_: …)
+ * Each bed is named once, before its cells.
  * `done` strikes the task out (not its places).
  */
 @Component({
@@ -19,9 +20,9 @@ import { taskText } from './task-format';
     } @else {
       {{ text.type }}@if (text.plant) { — <strong class="task-plant">{{ text.plant }}</strong>}
     }
-    @if (text.places.length) {
+    @if (text.count) {
       <small class="task-places text-body-secondary">
-        ({{ text.places.length > 1 ? text.places.length + '×: ' : '' }}@for (place of text.places; track $index) {@if (!$first) {; }<em class="task-bed">{{ place.bed }}</em>: {{ place.cell }}})
+        ({{ text.count > 1 ? text.count + '×: ' : '' }}@for (bed of text.beds; track $index) {@if (!$first) {; }<em class="task-bed">{{ bed.bed }}</em>: {{ bed.cells.join('; ') }}})
       </small>
     }
   `,
