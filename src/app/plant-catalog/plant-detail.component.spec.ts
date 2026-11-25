@@ -191,6 +191,9 @@ describe('PlantDetailComponent', () => {
     // Herbaceous is what most plants are: no chip for it.
     expect(chips.querySelector('.growth-form-chip')).toBeNull();
     expect(Array.from(chips.querySelectorAll('.use-chip')).map((c) => c.textContent!.trim())).toEqual(['vegetable']);
+    // Here a use chip shows its icon and its word; the life cycle has no icon.
+    expect(chips.querySelector('.use-chip app-icon svg')).not.toBeNull();
+    expect(chips.querySelector('.life-cycle-chip app-icon')).toBeNull();
 
     const strip = el.querySelector('dd.flowering app-month-strip [role=img]')!;
     expect(strip.getAttribute('aria-label')).toBe('Flowering: June to August');

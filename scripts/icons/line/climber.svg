@@ -1,0 +1,7 @@
+<!-- Samwise: a climber (popínavka), a vine winding up a stake. Drawn for Samwise in the style of Tabler Icons. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 3v18" />
+  <path d="M6 19c5 0 8.5 -1.2 8.5 -3.2s-8.5 -1.6 -8.5 -3.8s8.5 -1.6 8.5 -3.8s-4 -3.2 -8.5 -3.2" />
+  <path d="M14.5 15.8c1.4 -1.6 3.4 -2 5 -1.3c-.8 1.6 -2.8 2.1 -5 1.3z" />
+  <path d="M14.5 8.2c1.4 -1.6 3.4 -2 5 -1.3c-.8 1.6 -2.8 2.1 -5 1.3z" />
+</svg>

@@ -21,10 +21,11 @@ file. When a new pattern is needed, add it here in the same change.
   "Samwise" next to it is set in Uncial Antiqua (`.wordmark`, or the navbar brand); use
   that font for the name only, never for other text. Its colours (ink #2b2418, azure
   #7b93c4, leaf greens, cream highlights) belong to the logo, not the UI.
-- **Icons:** `<app-icon name="…" />`, Bootstrap Icons as inline SVG. Add an icon to
-  `scripts/generate-icons.mjs` and run `npm run icons`. No icon fonts, no emoji, no images
-  for icons. An icon next to text is decorative; an icon-only button needs `aria-label`
-  and `title`.
+- **Icons:** `<app-icon name="…" />`, inline SVG. Bootstrap Icons (add one to
+  `scripts/generate-icons.mjs`), or a 24 × 24 line icon: an `.svg` in
+  `scripts/icons/line` (Tabler Icons, MIT, or drawn in their style; see its README). Run
+  `npm run icons` after either. No icon fonts, no emoji, no images for icons. An icon next
+  to text is decorative; an icon on its own needs `aria-label` (`[label]`) and `title`.
 - **Shared components:** before writing markup, look for one that exists:
   `app-modal` (dialogs), `ConfirmDialogService` (confirmations), `app-loading` and
   `app-spinner` (waiting), `app-plant-chips`,
@@ -92,8 +93,11 @@ file. When a new pattern is needed, add it here in the same change.
 
 ## Chips, badges and status
 
-- Plant types: `.plant-chip` plus `.chip-<life cycle>` (filled, own colour),
-  `.chip-form` (grey), `.chip-use` (outlined). Use `app-plant-chips`, don't rebuild them.
+- Plant types: `.plant-chip` plus `.chip-<life cycle>` (filled, own colour, a word),
+  `.chip-form` (grey) and `.chip-use` (outlined), these two with their icon
+  (`GROWTH_FORM_ICONS`, `USE_ICONS`). Use `app-plant-chips`, don't rebuild them: icon +
+  word on the plant page and in filters, icons only in lists (`compact`, named in a
+  tooltip and for screen readers).
 - Filters: `.filter-pill` buttons with `aria-pressed`; active filters as removable chips.
 - Every chip and icon with a meaning also has text (visible, `title`, or
   `visually-hidden`): colour is never the only cue.

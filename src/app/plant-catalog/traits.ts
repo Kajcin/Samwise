@@ -16,6 +16,21 @@ export const GROWTH_FORMS: readonly GrowthForm[] = ['herbaceous', 'subshrub', 's
 export type PlantUse = 'vegetable' | 'fruit' | 'herb' | 'ornamental';
 export const PLANT_USES: readonly PlantUse[] = ['vegetable', 'fruit', 'herb', 'ornamental'];
 
+/** Growth forms and uses show an icon (life cycles show their colour instead). */
+export const GROWTH_FORM_ICONS: Record<GrowthForm, IconName> = {
+  herbaceous: 'seedling',
+  subshrub: 'subshrub',
+  shrub: 'shrub',
+  tree: 'tree',
+  climber: 'climber',
+};
+export const USE_ICONS: Record<PlantUse, IconName> = {
+  vegetable: 'carrot',
+  fruit: 'cherry',
+  herb: 'leaf',
+  ornamental: 'flower',
+};
+
 export const lifeCycleKey = (value: LifeCycle) => `traits.lifeCycles.${value}`;
 export const growthFormKey = (value: GrowthForm) => `traits.growthForms.${value}`;
 export const useKey = (value: PlantUse) => `traits.uses.${value}`;

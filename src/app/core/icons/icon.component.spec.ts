@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { IconComponent } from './icon.component';
-import { ICONS } from './icons.generated';
+import { ICONS, LINE_ICONS } from './icons.generated';
 
 describe('IconComponent', () => {
   async function render(name: string, label?: string) {
@@ -21,6 +21,15 @@ describe('IconComponent', () => {
     const paths = Array.from(svg.querySelectorAll('path'));
     expect(paths.map((p) => p.getAttribute('d'))).toEqual(ICONS.scissors.map((p) => p.d));
     expect(paths[0].namespaceURI).toBe('http://www.w3.org/2000/svg');
+  });
+
+  it('draws a line icon with a stroke, on its 24 × 24 grid', async () => {
+    const svg = await render('subshrub', 'subshrub');
+
+    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect([svg.getAttribute('fill'), svg.getAttribute('stroke')]).toEqual(['none', 'currentColor']);
+    expect(Array.from(svg.querySelectorAll('path')).map((p) => p.getAttribute('d'))).toEqual([...LINE_ICONS.subshrub]);
+    expect(svg.getAttribute('aria-label')).toBe('subshrub');
   });
 
   it('keeps fill rules where the icon has them', async () => {

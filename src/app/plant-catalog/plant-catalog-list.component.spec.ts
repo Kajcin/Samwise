@@ -143,6 +143,10 @@ describe('PlantCatalogListComponent', () => {
       expect(Array.from(groups[1].querySelectorAll('.filter-pill')).map((b) => b.textContent!.trim()))
         .toEqual(['herbaceous', 'subshrub', 'shrub', 'tree', 'climber']);
       expect(pill(el, 'perennial').getAttribute('aria-pressed')).toBe('false');
+      // Growth forms and uses show an icon (bylina: the seedling); life cycles their colour dot.
+      expect(Array.from(groups[1].querySelectorAll('.filter-pill')).every((b) => !!b.querySelector('app-icon.filter-icon svg'))).toBeTrue();
+      expect(groups[0].querySelector('.filter-icon')).toBeNull();
+      expect(groups[0].querySelector('.filter-dot')).not.toBeNull();
 
       el.querySelector<HTMLButtonElement>('button.close-filters')!.click();
       fixture.detectChanges();
@@ -220,9 +224,14 @@ describe('PlantCatalogListComponent', () => {
       const { el } = await render();
       const row = el.querySelector('li')!;
 
-      // Uses always in the same order, whatever order they were picked in.
-      expect(Array.from(row.querySelectorAll('.plant-chip')).map((c) => c.textContent!.trim()))
-        .toEqual(['perennial', 'subshrub', 'herb', 'ornamental']);
+      // The life cycle as a word; growth form and uses as icons, named in a tooltip and for
+      // screen readers. Uses always in the same order, whatever order they were picked in.
+      expect(row.querySelector('.life-cycle-chip')!.textContent!.trim()).toBe('perennial');
+      const iconChips = Array.from(row.querySelectorAll<HTMLElement>('.plant-chip.icon-only'));
+      expect(iconChips.map((c) => c.title)).toEqual(['subshrub', 'herb', 'ornamental']);
+      expect(iconChips.map((c) => c.textContent!.trim())).toEqual(['', '', '']);
+      expect(iconChips.map((c) => c.querySelector('svg')!.getAttribute('aria-label'))).toEqual(['subshrub', 'herb', 'ornamental']);
+      expect(iconChips[0].querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24'); // a line icon
       expect(row.querySelector('.fact-sun app-icon svg')!.getAttribute('aria-label')).toBe('Partial shade');
       expect(row.querySelector('.fact-water')!.textContent).toContain('7 d');
       expect(row.querySelector('.fact-water .visually-hidden')!.textContent!.trim()).toBe('Watering: every 7 days');

@@ -22,6 +22,7 @@ import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
 import {
   activeFilterCount,
   catalogSeason,
+  GROWTH_FORM_ICONS,
   GROWTH_FORMS,
   GrowthForm,
   growthFormKey,
@@ -36,8 +37,10 @@ import {
   PlantUse,
   SUN_ICONS,
   toggled,
+  USE_ICONS,
   useKey,
 } from './traits';
+import type { IconName } from '../core/icons/icons.generated';
 
 type FilterGroup = keyof PlantFilters;
 
@@ -50,6 +53,8 @@ interface FilterOption {
   cssClass: string;
   /** Life cycles show their chip colour as a dot before they're picked. */
   dot: boolean;
+  /** Growth forms and uses show their icon. */
+  icon: IconName | null;
 }
 
 /** An active filter, shown as a removable chip. */
@@ -60,10 +65,16 @@ interface ActiveFilter {
   chipClass: string;
 }
 
-const FILTER_GROUPS: { key: FilterGroup; label: string; values: readonly string[]; labelKey: (value: never) => string }[] = [
-  { key: 'lifeCycles', label: 'traits.lifeCycle', values: LIFE_CYCLES, labelKey: lifeCycleKey },
-  { key: 'growthForms', label: 'traits.growthForm', values: GROWTH_FORMS, labelKey: growthFormKey },
-  { key: 'uses', label: 'traits.use', values: PLANT_USES, labelKey: useKey },
+const FILTER_GROUPS: {
+  key: FilterGroup;
+  label: string;
+  values: readonly string[];
+  labelKey: (value: never) => string;
+  icons: Record<string, IconName> | null;
+}[] = [
+  { key: 'lifeCycles', label: 'traits.lifeCycle', values: LIFE_CYCLES, labelKey: lifeCycleKey, icons: null },
+  { key: 'growthForms', label: 'traits.growthForm', values: GROWTH_FORMS, labelKey: growthFormKey, icons: GROWTH_FORM_ICONS },
+  { key: 'uses', label: 'traits.use', values: PLANT_USES, labelKey: useKey, icons: USE_ICONS },
 ];
 
 function filterCssClass(group: FilterGroup, value: string): string {
@@ -218,6 +229,7 @@ export class PlantCatalogListComponent {
           pressed: (filters[group.key] as readonly string[]).includes(value),
           cssClass: filterCssClass(group.key, value),
           dot: group.key === 'lifeCycles',
+          icon: group.icons?.[value] ?? null,
         }),
       ),
     }));
