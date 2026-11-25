@@ -10,6 +10,7 @@
     "db:psql": "node scripts/psql.mjs",
     "dev:user": "node scripts/create-dev-user.mjs",
     "dev:calendar-sync": "node scripts/configure-calendar-sync.mjs",
+    "dev:functions": "supabase functions serve",
     "icons": "node scripts/generate-icons.mjs",
     "test:app": "ng test --watch=false --browsers=ChromeHeadless",
     "test:functions": "node scripts/test-functions.mjs",

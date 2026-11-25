@@ -120,7 +120,7 @@ injected into Edge Functions automatically.
 ```bash
 npx supabase start          # prints API URL, anon key, DB URL
 npx supabase migration up   # applies new migrations, keeping your data
-npx supabase functions serve
+npm run dev:functions       # serves the Edge Functions (npx supabase functions serve)
 ```
 
 The first time, `npx supabase db reset` sets the database up (migrations + seed data).
