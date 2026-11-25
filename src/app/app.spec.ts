@@ -34,7 +34,7 @@ describe('App', () => {
     fixture.detectChanges();
     const nav = fixture.nativeElement.querySelector('nav') as HTMLElement;
 
-    expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent!.trim())).toEqual(['Dashboard', 'Tasks', 'Garden', 'Plant catalog', 'Settings']);
+    expect(Array.from(nav.querySelectorAll('.navbar-nav a')).map((a) => a.textContent!.trim())).toEqual(['Dashboard', 'Tasks', 'Garden', 'Plant catalog', 'Settings']);
     expect(nav.textContent).toContain('dev@samwise.local');
   });
 
@@ -49,6 +49,25 @@ describe('App', () => {
     expect(logo.getAttribute('src')).toBe('logo-mark.svg');
     expect(logo.getAttribute('alt')).toBe('');
     expect(brand.textContent!.trim()).toBe('Samwise');
+  });
+
+  it('leads home when the logo is clicked, closing the menu on phones', async () => {
+    user.set({ email: 'dev@samwise.local' } as User);
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+    (el.querySelector('.navbar-toggler') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const brand = el.querySelector<HTMLAnchorElement>('a.navbar-brand')!;
+    expect(brand.getAttribute('href')).toBe('/');
+    brand.click();
+    fixture.detectChanges();
+
+    expect(navigate.calls.mostRecent().args[0].toString()).toBe('/');
+    expect(el.querySelector('#app-menu')!.classList).not.toContain('show');
   });
 
   it('opens and closes the menu on narrow screens', async () => {

@@ -1,7 +1,10 @@
 @if (auth.currentUser(); as user) {
   <nav class="navbar navbar-expand-md app-navbar mb-4">
     <div class="container">
-      <span class="navbar-brand"><img class="brand-logo" src="logo-mark.svg" width="34" height="34" alt="" />Samwise</span>
+      <!-- The logo leads home (the overview), and closes the menu on phones like the other links. -->
+      <a class="navbar-brand" routerLink="/" (click)="menuOpen.set(false)">
+        <img class="brand-logo" src="logo-mark.svg" width="34" height="34" alt="" />Samwise
+      </a>
       <button
         type="button"
         class="navbar-toggler"
