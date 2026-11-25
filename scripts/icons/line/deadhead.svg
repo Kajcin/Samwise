@@ -1,0 +1,9 @@
+<!-- Samwise: deadheading (odstraňování odkvětů), scissors cutting a flower's stem. Drawn for Samwise in the style of Tabler Icons. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M13 3v3a4 4 0 0 0 8 0v-3l-2 1.5l-2 -2l-2 2z" />
+  <path d="M17 10v11" />
+  <ellipse cx="4.5" cy="10.5" rx="2.2" ry="2.2" />
+  <ellipse cx="4.5" cy="19.5" rx="2.2" ry="2.2" />
+  <path d="M6.4 11.7l13.6 6.8" />
+  <path d="M6.4 18.3l13.6 -6.8" />
+</svg>

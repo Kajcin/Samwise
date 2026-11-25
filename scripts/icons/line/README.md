@@ -6,4 +6,4 @@ Only `<path d>` and `<ellipse>` (optionally rotated) are supported.
 
 - `seedling`, `tree`, `carrot`, `cherry`, `leaf`, `flower`: from
   [Tabler Icons](https://tabler.io/icons) 3.35.0, MIT licence (`TABLER-LICENSE`).
-- `subshrub`, `shrub`, `climber`: drawn for Samwise in the same style.
+- `subshrub`, `shrub`, `climber`, `deadhead`: drawn for Samwise in the same style.

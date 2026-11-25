@@ -31,7 +31,7 @@ export const TASK_TYPE_ICONS: Record<TaskType, IconName> = {
   mulch: 'layers',
   winter_protection: 'snow',
   cut_back: 'arrows-collapse-vertical',
-  deadhead: 'flower3',
+  deadhead: 'deadhead',
 };
 
 export type SunRequirement = NonNullable<Plant['sun_requirements']>;
