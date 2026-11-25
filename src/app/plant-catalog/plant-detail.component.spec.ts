@@ -397,7 +397,7 @@ describe('PlantDetailComponent', () => {
   it('deletes a care rule of your own plant (only there)', async () => {
     service.deleteCareRule.and.resolveTo();
     const { fixture, el } = await render(custom);
-    expect(el.textContent).toContain('tasks already created stay as they are');
+    expect(el.textContent).toContain('update this plant’s upcoming tasks right away');
     service.listCareRules.and.resolveTo([rules[0]]);
 
     el.querySelector<HTMLButtonElement>('button.delete-rule')!.click();
