@@ -22,8 +22,11 @@ insert into plantings (id, user_id, bed_id, cell_row, cell_col, plant_id, plante
    'e0000000-0000-0000-0000-000000000002', current_date - 30);
 -- The second plant was taken out of its bed, after one task was done.
 update plantings set status = 'removed' where id = 'c0000000-0000-0000-0000-000000000003';
-insert into tasks (user_id, planting_id, task_type, due_date, completed_at) values
-  ('11111111-1111-1111-1111-111111111111', 'c0000000-0000-0000-0000-000000000003', 'harvest', current_date - 5, now());
+insert into tasks (id, user_id, plant_id, task_type, due_date, completed_at) values
+  ('d0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'e0000000-0000-0000-0000-000000000002',
+   'harvest', current_date - 5, now());
+insert into task_plantings (task_id, planting_id) values
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003');
 
 create function pg_temp.expect_error(p_sql text, p_expected text) returns void language plpgsql as $$
 begin
@@ -66,7 +69,7 @@ do $$
 begin
   if exists (select 1 from plants_catalog where id in ('e0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003'))
      or exists (select 1 from plantings where id = 'c0000000-0000-0000-0000-000000000003')
-     or exists (select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000003') then
+     or exists (select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000003')) then
     raise exception 'TEST FAILED: the plant and its history should be gone';
   end if;
 end $$;

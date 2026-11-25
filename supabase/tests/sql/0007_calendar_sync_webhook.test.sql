@@ -115,7 +115,7 @@ values ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-1111111
         'b0000000-0000-0000-0000-000000000001', 0, 0, 'a0000000-0000-0000-0000-000000000001', current_date);
 do $$
 declare
-  generated int := (select count(*) from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001');
+  generated int := (select count(*) from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001'));
 begin
   if generated = 0 then
     raise exception 'TEST FAILED: planting generated no tasks';

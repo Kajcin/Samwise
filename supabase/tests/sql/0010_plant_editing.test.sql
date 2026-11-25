@@ -102,8 +102,8 @@ update plants_catalog set name = 'Chilli pepper' where id = 'e0000000-0000-0000-
 do $$
 declare
   upcoming int := (
-    select count(*) from tasks t join plantings p on p.id = t.planting_id
-     where p.plant_id = 'e0000000-0000-0000-0000-000000000001' and t.due_date >= current_date
+    select count(*) from tasks t
+     where t.plant_id = 'e0000000-0000-0000-0000-000000000001' and t.due_date >= current_date
   );
 begin
   if upcoming = 0 then raise exception 'TEST FAILED: the planting generated no tasks'; end if;

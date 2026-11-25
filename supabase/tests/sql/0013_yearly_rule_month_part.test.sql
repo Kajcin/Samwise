@@ -50,17 +50,17 @@ declare
   got text;
 begin
   select due_date || '..' || due_until into got from tasks
-   where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'prune' and due_date < s + 365;
+   where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'prune' and due_date < s + 365;
   if got <> s || '..' || (s + 14) then raise exception 'TEST FAILED: early half: %', got; end if;
 
   select due_date || '..' || due_until into got from tasks
-   where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'mulch' and due_date < s + 365;
+   where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'mulch' and due_date < s + 365;
   if got <> (s + 15) || '..' || (s + interval '1 month' - interval '1 day')::date then
     raise exception 'TEST FAILED: late half: %', got;
   end if;
 
   select due_date || '..' || due_until into got from tasks
-   where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'divide' and due_date < s + 365;
+   where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'divide' and due_date < s + 365;
   if got <> s || '..' || (s + interval '1 month' - interval '1 day')::date then
     raise exception 'TEST FAILED: whole month: %', got;
   end if;
@@ -75,25 +75,25 @@ do $$
 declare
   s date := (select start from next_month);
 begin
-  if exists (select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000002'
+  if exists (select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000002')
                 and task_type = 'prune' and due_date = s) then
     raise exception 'TEST FAILED: an early half that ended before planting got a task';
   end if;
-  if not exists (select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000002'
+  if not exists (select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000002')
                     and task_type = 'mulch' and due_date = s + 15) then
     raise exception 'TEST FAILED: the late half under way at planting is missing';
   end if;
 end $$;
 
 -- 4. The nightly top-up keeps the halves (and adds nothing twice).
-delete from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'mulch';
+delete from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'mulch';
 select top_up_recurring_tasks();
 select top_up_recurring_tasks();
 do $$
 declare
   s date := (select start from next_month);
 begin
-  if (select count(*) from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001'
+  if (select count(*) from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001')
          and task_type = 'mulch' and due_date = s + 15 and due_until = (s + interval '1 month' - interval '1 day')::date) <> 1 then
     raise exception 'TEST FAILED: the top-up didn''t restore the late-half task exactly once';
   end if;

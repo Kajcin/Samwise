@@ -3,28 +3,36 @@ import { TaskEventRow, toEventTask } from './tasks.ts';
 
 const base: TaskEventRow = {
   id: 't1', user_id: 'u1', due_date: '2026-11-20', task_type: 'harvest', completed_at: null,
-  google_calendar_event_id: 'evt-1', planting: null,
+  google_calendar_event_id: 'evt-1', plant: null, plantings: [],
 };
+const place = (bed: string, row: number, col: number) => ({ planting: { cell_row: row, cell_col: col, bed: { name: bed } } });
 
 Deno.test('toEventTask adds the plant and its place for generated tasks', () => {
-  const task = toEventTask({
-    ...base,
-    planting: { cell_row: 0, cell_col: 1, bed: { name: 'Herbs' }, plant: { name: 'Tomato' } },
-  });
+  const task = toEventTask({ ...base, plant: { name: 'Tomato' }, plantings: [place('Herbs', 0, 1)] });
   assertEquals(task, {
     task_id: 't1', due_date: '2026-11-20', due_until: null, task_type: 'harvest', completed_at: null, google_calendar_event_id: 'evt-1',
-    plant_name: 'Tomato', location: 'Herbs, row 1 col 2', language: 'en',
+    plant_name: 'Tomato', plant_count: 1, location: 'Herbs, row 1 col 2', language: 'en',
   });
 });
 
-Deno.test('toEventTask writes Czech plant names and places for Czech users', () => {
-  const planting = { cell_row: 2, cell_col: 0, bed: { name: 'Záhon' }, plant: { name: 'Tomato', name_cs: 'Rajče' } };
+Deno.test('toEventTask lists every place of a task covering several plants, in order', () => {
+  const task = toEventTask({
+    ...base,
+    plant: { name: 'Lungwort' },
+    plantings: [place('Shade', 0, 0), place('Herbs', 2, 1), place('Herbs', 0, 3)],
+  });
+  assertEquals(task.plant_count, 3);
+  assertEquals(task.location, 'Herbs, row 1 col 4\nHerbs, row 3 col 2\nShade, row 1 col 1');
+});
 
-  const task = toEventTask({ ...base, planting }, 'cs');
+Deno.test('toEventTask writes Czech plant names and places for Czech users', () => {
+  const plantings = [place('Záhon', 2, 0)];
+
+  const task = toEventTask({ ...base, plant: { name: 'Tomato', name_cs: 'Rajče' }, plantings }, 'cs');
   assertEquals([task.plant_name, task.location, task.language], ['Rajče', 'Záhon, řádek 3, sloupec 1', 'cs']);
 
   // A user's own plant has no Czech name: its name is used as typed.
-  const own = toEventTask({ ...base, planting: { ...planting, plant: { name: 'Chilli', name_cs: null } } }, 'cs');
+  const own = toEventTask({ ...base, plant: { name: 'Chilli', name_cs: null }, plantings }, 'cs');
   assertEquals(own.plant_name, 'Chilli');
 });
 

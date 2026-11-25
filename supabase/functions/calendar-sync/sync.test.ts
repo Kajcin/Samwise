@@ -12,7 +12,10 @@ const record: TaskRecord = {
   google_calendar_event_id: null,
 };
 const row = (overrides: Partial<TaskEventRow> = {}): TaskEventRow => ({
-  ...record, planting: { cell_row: 0, cell_col: 1, bed: { name: 'Herbs' }, plant: { name: 'Tomato' } }, ...overrides,
+  ...record,
+  plant: { name: 'Tomato' },
+  plantings: [{ planting: { cell_row: 0, cell_col: 1, bed: { name: 'Herbs' } } }],
+  ...overrides,
 });
 const connected: StoredCredentials = {
   refresh_token: 'r-1', access_token: 'cached', expires_at: '2026-11-23T12:30:00Z', calendar_id: 'cal-1',
@@ -107,7 +110,10 @@ Deno.test('the task is synced as it is now, not as the payload saw it', async ()
 });
 
 Deno.test('events are written in the user’s language', async () => {
-  const czechTomato = row({ planting: { cell_row: 0, cell_col: 1, bed: { name: 'Bylinky' }, plant: { name: 'Tomato', name_cs: 'Rajče' } } });
+  const czechTomato = row({
+    plant: { name: 'Tomato', name_cs: 'Rajče' },
+    plantings: [{ planting: { cell_row: 0, cell_col: 1, bed: { name: 'Bylinky' } } }],
+  });
   const { deps, log } = fakes({ language: 'cs', task: czechTomato });
 
   assertEquals(await handleTaskChange(deps, insert()), 'synced');

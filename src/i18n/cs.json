@@ -102,6 +102,7 @@
   "tasks": {
     "title": "{type} — {plant}",
     "location": "{bed}, řádek {row}, sloupec {col}",
+    "locations": "{count}×: {places}",
     "heading": "Úkoly",
     "filterType": "Typ",
     "allTypes": "Všechny typy",

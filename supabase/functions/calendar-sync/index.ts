@@ -6,6 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { deleteEvent, refreshAccessToken, upsertEvent } from '../_shared/google.ts';
 import { requireEnv } from '../_shared/http.ts';
 import { TASK_EVENT_SELECT, TaskEventRow } from '../_shared/tasks.ts';
+import { withSchemaRetry } from '../_shared/postgrest.ts';
 import { handleTaskChange, isAuthorizedWebhook, StoredCredentials, WebhookPayload } from './sync.ts';
 
 const text = (body: string, status = 200) => new Response(body, { status });
@@ -59,8 +60,10 @@ Deno.serve(async (req) => {
       loadLanguage: async (userId) =>
         check(await db.from('user_preferences').select('language').eq('user_id', userId).maybeSingle())?.language ??
           'en',
+      // The task's plant and plantings come through table links, which PostgREST may not
+      // know yet right after a migration added them: withSchemaRetry waits for that.
       loadTask: async (taskId) =>
-        check(await db.from('tasks').select(TASK_EVENT_SELECT).eq('id', taskId).maybeSingle()) as unknown as
+        check(await withSchemaRetry(() => db.from('tasks').select(TASK_EVENT_SELECT).eq('id', taskId).maybeSingle())) as unknown as
           | TaskEventRow
           | null,
       setEventId: async (taskId, eventId) => {

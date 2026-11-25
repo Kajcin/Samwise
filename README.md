@@ -303,6 +303,24 @@ with a plant takes the plant out (after a confirmation), like "Odebrat" in the g
 bed can be deleted only when nothing grows in it. Renaming a bed or moving its plants
 re-syncs their calendar events, since an event's location names the bed and the cell.
 
+## Care tasks
+
+Tasks come from each plant's care rules. A task belongs to the plant, not to one
+planting (migration 0019): several plants of the same kind share one task, shown once with
+how many there are and where, e.g. "Dělení trsů — Plicník lékařský (2×: stinný záhonek,
+řádek 1, sloupec 1; okrasné bylinky, řádek 3, sloupec 2)". The calendar event is titled
+"… (2×)" and lists the places.
+
+- One task per plant, task type and day (or half-month); `task_plantings` lists the
+  plantings it covers.
+- Repeating rules ("every 21 days") count from the plant's earliest active planting, so
+  all its plantings share one schedule. Rules counted from the planting day and yearly
+  rules give each planting its own dates; plantings whose dates fall together share them.
+- `sync_plant_tasks()` works the plant's tasks out again when you plant or take a plant
+  out (with the current care rules), and every night adds the next ones.
+- Taking a plant out detaches it from its unfinished tasks; a task left without plants
+  goes. Completed tasks stay as history.
+
 ## Security decisions
 
 - **Samwise uses its own calendar.** Connecting creates a "Samwise"

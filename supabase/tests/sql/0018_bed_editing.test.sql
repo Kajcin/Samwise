@@ -84,14 +84,17 @@ select pg_temp.expect(pg_temp.plant_at(), '1,2', 'the plant moved up');
 
 -- 7. A planted slot takes its plant with it (kept as history), and its unfinished tasks go.
 reset role;
-insert into tasks (user_id, planting_id, task_type, due_date) values
-  ('11111111-1111-1111-1111-111111111111', 'c0000000-0000-0000-0000-000000000001', 'harvest', current_date + 5);
+insert into tasks (id, user_id, plant_id, task_type, due_date) values
+  ('d0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'e0000000-0000-0000-0000-000000000001',
+   'harvest', current_date + 5);
+insert into task_plantings (task_id, planting_id) values
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001');
 set local role authenticated;
 select remove_bed_slot('b0000000-0000-0000-0000-000000000001', 1, 2);
 do $$
 begin
   if (select status from plantings where id = 'c0000000-0000-0000-0000-000000000001') <> 'removed'
-     or exists (select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and completed_at is null) then
+     or exists (select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and completed_at is null) then
     raise exception 'TEST FAILED: the plant in a removed slot should be taken out, its tasks gone';
   end if;
 end $$;

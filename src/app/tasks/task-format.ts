@@ -1,7 +1,7 @@
 import { plantName, taskTypeKey } from '../plant-catalog/labels';
 import { addDays, toIsoDate } from '../core/dates';
 import type { LanguageService } from '../core/i18n/language.service';
-import { TaskWithContext } from './task.service';
+import { TaskWithContext, taskPlaces } from './task.service';
 
 /** What the formatting below needs: the current language and its texts. */
 export type Translator = Pick<LanguageService, 'lang' | 't'>;
@@ -9,14 +9,21 @@ export type Translator = Pick<LanguageService, 'lang' | 't'>;
 /** "Harvest — Tomato" for generated tasks, "Prune" for manual ones. */
 export function taskTitle(task: TaskWithContext, i18n: Translator): string {
   const type = i18n.t(taskTypeKey(task.task_type));
-  if (!task.planting) return type;
-  return i18n.t('tasks.title', { type, plant: plantName(task.planting.plant, i18n.lang()) });
+  if (!task.plant) return type;
+  return i18n.t('tasks.title', { type, plant: plantName(task.plant, i18n.lang()) });
 }
 
-/** "Herbs, row 1 col 2" (1-based for people), or null for manual tasks. */
+/**
+ * Where the task's plants grow, 1-based for people: "Herbs, row 1 col 2", or for several
+ * plants "2×: Herbs, row 1 col 2; Shade, row 3 col 1". null for manual tasks.
+ */
 export function taskLocation(task: TaskWithContext, i18n: Translator): string | null {
-  const p = task.planting;
-  return p ? i18n.t('tasks.location', { bed: p.bed.name, row: p.cell_row + 1, col: p.cell_col + 1 }) : null;
+  const places = taskPlaces(task).map((p) =>
+    i18n.t('tasks.location', { bed: p.bed.name, row: p.cell_row + 1, col: p.cell_col + 1 }),
+  );
+  if (!places.length) return null;
+  if (places.length === 1) return places[0];
+  return i18n.t('tasks.locations', { count: places.length, places: places.join('; ') });
 }
 
 /** "Today", "Tomorrow", "Yesterday", otherwise e.g. "Mon 16 Nov 2026" / "Po 16. listopadu 2026". */

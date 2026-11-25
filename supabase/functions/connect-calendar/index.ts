@@ -4,6 +4,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { ensureSamwiseCalendar, exchangeCodeForTokens, upsertEvent } from '../_shared/google.ts';
 import { corsHeaders, json, requireEnv } from '../_shared/http.ts';
 import { TASK_EVENT_SELECT, TaskEventRow } from '../_shared/tasks.ts';
+import { withSchemaRetry } from '../_shared/postgrest.ts';
 import { connectCalendar } from './connect.ts';
 
 Deno.serve(async (req) => {
@@ -49,11 +50,13 @@ Deno.serve(async (req) => {
       },
       listTasksToSync: async (uid, fromDate) =>
         check(
-          await db.from('tasks').select(TASK_EVENT_SELECT)
-            .eq('user_id', uid)
-            // Due today or later, or a month-long task whose month is still under way.
-            .or(`due_date.gte.${fromDate},due_until.gte.${fromDate}`)
-            .order('due_date'),
+          await withSchemaRetry(() =>
+            db.from('tasks').select(TASK_EVENT_SELECT)
+              .eq('user_id', uid)
+              // Due today or later, or a month-long task whose month is still under way.
+              .or(`due_date.gte.${fromDate},due_until.gte.${fromDate}`)
+              .order('due_date')
+          ),
         ) as unknown as TaskEventRow[],
       loadLanguage: async (uid) =>
         check(await db.from('user_preferences').select('language').eq('user_id', uid).maybeSingle())?.language ?? 'en',

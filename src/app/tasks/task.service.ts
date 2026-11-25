@@ -7,8 +7,8 @@ import { TaskType } from '../plant-catalog/plant-catalog.service';
 export interface Task {
   id: string;
   user_id: string;
-  /** null for manual tasks. */
-  planting_id: string | null;
+  /** The plant of a generated task (migration 0019); null for manual tasks. */
+  plant_id?: string | null;
   task_type: TaskType;
   /** ISO date, YYYY-MM-DD. */
   due_date: string;
@@ -18,21 +18,34 @@ export interface Task {
   google_calendar_event_id: string | null;
 }
 
-/** Where a generated task's plant sits; null for manual tasks. */
-export interface TaskPlanting {
+/** Where one of a task's plants grows. */
+export interface TaskPlace {
   cell_row: number;
   cell_col: number;
   bed: { id: string; name: string };
-  /** name_cs: Czech name of a built-in plant. */
-  plant: { name: string; name_cs?: string | null };
 }
 
+/**
+ * A task with its plant and the plantings it covers: one task can cover several plants
+ * of the same kind (migration 0019). Manual tasks have neither.
+ */
 export interface TaskWithContext extends Task {
-  planting: TaskPlanting | null;
+  /** name_cs: Czech name of a built-in plant. */
+  plant: { name: string; name_cs?: string | null } | null;
+  plantings: { planting: TaskPlace | null }[];
 }
 
-/** PostgREST select that embeds the planting's bed and plant (follows the FKs, RLS applies). */
-export const TASK_SELECT = '*, planting:plantings(cell_row, cell_col, bed:beds(id, name), plant:plants_catalog(name, name_cs))';
+/** PostgREST select that embeds the plant and the plantings' beds (follows the FKs, RLS applies). */
+export const TASK_SELECT =
+  '*, plant:plants_catalog(name, name_cs), plantings:task_plantings(planting:plantings(cell_row, cell_col, bed:beds(id, name)))';
+
+/** The task's places, by bed, then row, then column. */
+export function taskPlaces(task: Pick<TaskWithContext, 'plantings'>): TaskPlace[] {
+  return (task.plantings ?? [])
+    .map((link) => link.planting)
+    .filter((p): p is TaskPlace => !!p?.bed)
+    .sort((a, b) => a.bed.name.localeCompare(b.bed.name) || a.cell_row - b.cell_row || a.cell_col - b.cell_col);
+}
 
 export interface TaskFilter {
   taskType?: TaskType;
@@ -42,7 +55,7 @@ export interface TaskFilter {
 export function filterTasks<T extends TaskWithContext>(tasks: T[], filter: TaskFilter): T[] {
   return tasks.filter((t) => {
     if (filter.taskType && t.task_type !== filter.taskType) return false;
-    if (filter.bedId && t.planting?.bed.id !== filter.bedId) return false;
+    if (filter.bedId && !taskPlaces(t).some((p) => p.bed.id === filter.bedId)) return false;
     return true;
   });
 }
@@ -87,7 +100,7 @@ export class TaskService {
     const userId = await currentUserId();
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ task_type: taskType, due_date: dueDate, user_id: userId, planting_id: null })
+      .insert({ task_type: taskType, due_date: dueDate, user_id: userId })
       .select(TASK_SELECT)
       .single();
     if (error) throw error;

@@ -53,7 +53,7 @@ values ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-1111111
 
 create function pg_temp.periods(p_planting uuid, p_type text) returns text language sql as $$
   select coalesce(string_agg(due_date || '..' || due_until, ', ' order by due_date), '')
-    from tasks where planting_id = p_planting and task_type = p_type;
+    from tasks where id in (select task_id from task_plantings where planting_id = p_planting) and task_type = p_type;
 $$;
 
 do $$
@@ -83,13 +83,13 @@ from months;
 do $$
 begin
   if exists (
-    select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000002' and task_type = 'cut_back'
+    select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000002') and task_type = 'cut_back'
        and due_date = (select this_month_start from months)
   ) then
     raise exception 'TEST FAILED: a month that ended before planting got a task';
   end if;
   if not exists (
-    select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000002' and task_type = 'cut_back'
+    select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000002') and task_type = 'cut_back'
        and due_date = (select (this_month_start + interval '1 year')::date from months)
   ) then
     raise exception 'TEST FAILED: next year''s cut-back is missing';
@@ -97,21 +97,21 @@ begin
 end $$;
 
 -- 4. The nightly top-up brings back a missing yearly task, keeps done ones, adds nothing twice.
-delete from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'mulch';
+delete from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'mulch';
 update tasks set completed_at = now()
- where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'cut_back'
+ where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'cut_back'
    and due_date = (select this_month_start from months);
 select top_up_recurring_tasks();
 select top_up_recurring_tasks();
 do $$
 begin
-  if (select count(*) from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'mulch') <> 1 then
+  if (select count(*) from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'mulch') <> 1 then
     raise exception 'TEST FAILED: the top-up should restore exactly one mulch task';
   end if;
-  if (select count(*) from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'cut_back') <> 2 then
+  if (select count(*) from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'cut_back') <> 2 then
     raise exception 'TEST FAILED: the top-up duplicated or dropped a cut-back task';
   end if;
-  if (select due_until from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'mulch')
+  if (select due_until from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'mulch')
      is null then
     raise exception 'TEST FAILED: a topped-up yearly task lost its period';
   end if;

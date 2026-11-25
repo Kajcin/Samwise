@@ -18,7 +18,7 @@ declare
   actual date[];
 begin
   select coalesce(array_agg(due_date order by due_date), '{}') into actual
-    from tasks where planting_id = p_planting and task_type = p_type;
+    from tasks where id in (select task_id from task_plantings where planting_id = p_planting) and task_type = p_type;
   if actual is distinct from p_expected then
     raise exception 'TEST FAILED: % tasks for planting %: expected %, got %', p_type, p_planting, p_expected, actual;
   end if;
@@ -37,7 +37,7 @@ select pg_temp.expect_due('c0000000-0000-0000-0000-000000000001', 'fertilize',
 
 do $$
 begin
-  if exists (select 1 from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001'
+  if exists (select 1 from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001')
              and (user_id <> '11111111-1111-1111-1111-111111111111' or completed_at is not null)) then
     raise exception 'TEST FAILED: generated tasks must belong to the planting owner and start incomplete';
   end if;
@@ -68,14 +68,14 @@ select pg_temp.expect_due('c0000000-0000-0000-0000-000000000003', 'fertilize',
 
 -- 4. Removing a planting deletes its unfinished tasks and keeps completed ones as history.
 update tasks set completed_at = now()
-  where planting_id = 'c0000000-0000-0000-0000-000000000001' and task_type = 'seed_start';
+  where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001') and task_type = 'seed_start';
 update plantings set status = 'removed' where id = 'c0000000-0000-0000-0000-000000000001';
 
 do $$
 declare
   remaining text[];
 begin
-  select array_agg(task_type) into remaining from tasks where planting_id = 'c0000000-0000-0000-0000-000000000001';
+  select array_agg(task_type) into remaining from tasks where id in (select task_id from task_plantings where planting_id = 'c0000000-0000-0000-0000-000000000001');
   if remaining is distinct from array['seed_start'] then
     raise exception 'TEST FAILED: after removal expected only the completed seed_start task, got %', remaining;
   end if;

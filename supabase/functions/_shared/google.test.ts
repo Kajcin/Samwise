@@ -165,6 +165,16 @@ Deno.test('eventBody makes a free all-day event titled with the task and plant',
   assertEquals(event.status, 'confirmed');
 });
 
+Deno.test('eventBody counts the plants a task covers, listing their places', () => {
+  const event = eventBody({
+    ...task, plant_name: 'Plicník lékařský', plant_count: 2, language: 'cs',
+    location: 'okrasné bylinky, řádek 3, sloupec 2\nstinný záhonek, řádek 1, sloupec 1',
+  });
+  assertEquals(event.summary, 'Sklizeň — Plicník lékařský (2×)');
+  assertEquals(event.description, 'okrasné bylinky, řádek 3, sloupec 2\nstinný záhonek, řádek 1, sloupec 1');
+  assertEquals(eventBody({ ...task, plant_name: 'Tomato', plant_count: 1 }).summary, 'Harvest — Tomato');
+});
+
 Deno.test('eventBody titles events in the task’s language', () => {
   const event = eventBody({ ...task, plant_name: 'Rajče', completed_at: '2026-08-20T10:00:00Z', language: 'cs' });
   assertEquals(event.summary, '✓ Sklizeň — Rajče');

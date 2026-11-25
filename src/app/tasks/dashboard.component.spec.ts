@@ -25,13 +25,14 @@ describe('DashboardComponent', () => {
 
   const today = new Date();
   const overdue: TaskWithContext = {
-    id: 't1', user_id: 'me', planting_id: 'p1', task_type: 'fertilize', due_date: toIsoDate(addDays(today, -2)),
+    id: 't1', user_id: 'me', plant_id: 'basil', task_type: 'fertilize', due_date: toIsoDate(addDays(today, -2)),
     completed_at: null, google_calendar_event_id: null,
-    planting: { cell_row: 0, cell_col: 0, bed: { id: 'b1', name: 'Herbs' }, plant: { name: 'Basil' } },
+    plant: { name: 'Basil' },
+    plantings: [{ planting: { cell_row: 0, cell_col: 0, bed: { id: 'b1', name: 'Herbs' } } }],
   };
   const manualToday: TaskWithContext = {
-    id: 't2', user_id: 'me', planting_id: null, task_type: 'prune', due_date: toIsoDate(today),
-    completed_at: null, google_calendar_event_id: null, planting: null,
+    id: 't2', user_id: 'me', plant_id: null, task_type: 'prune', due_date: toIsoDate(today),
+    completed_at: null, google_calendar_event_id: null, plant: null, plantings: [],
   };
   const beds: Bed[] = [
     { id: 'b1', user_id: 'me', name: 'Herbs', rows: 2, cols: 2 },

@@ -5,12 +5,13 @@ import { provideI18n } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
 
 const base: TaskWithContext = {
-  id: 't', user_id: 'me', planting_id: null, task_type: 'prune', due_date: '2026-11-16',
-  completed_at: null, google_calendar_event_id: null, planting: null,
+  id: 't', user_id: 'me', plant_id: null, task_type: 'prune', due_date: '2026-11-16',
+  completed_at: null, google_calendar_event_id: null, plant: null, plantings: [],
 };
 const planted: TaskWithContext = {
-  ...base, planting_id: 'p1', task_type: 'harvest',
-  planting: { cell_row: 0, cell_col: 1, bed: { id: 'b1', name: 'Herbs' }, plant: { name: 'Tomato', name_cs: 'Rajče' } },
+  ...base, plant_id: 'tomato', task_type: 'harvest',
+  plant: { name: 'Tomato', name_cs: 'Rajče' },
+  plantings: [{ planting: { cell_row: 0, cell_col: 1, bed: { id: 'b1', name: 'Herbs' } } }],
 };
 
 function i18nIn(lang: 'en' | 'cs'): LanguageService {
@@ -37,8 +38,22 @@ describe('taskTitle / taskLocation', () => {
     const i18n = i18nIn('cs');
     expect(taskTitle(planted, i18n)).toBe('Sklizeň — Rajče');
     expect(taskLocation(planted, i18n)).toBe('Herbs, řádek 1, sloupec 2');
-    const own = { ...planted, planting: { ...planted.planting!, plant: { name: 'Chilli', name_cs: null } } };
+    const own = { ...planted, plant: { name: 'Chilli', name_cs: null } };
     expect(taskTitle(own, i18n)).toBe('Sklizeň — Chilli');
+  });
+
+  it('counts the plants of a task covering several, listing their places by bed', () => {
+    const shared: TaskWithContext = {
+      ...planted,
+      plantings: [
+        { planting: { cell_row: 0, cell_col: 0, bed: { id: 'b2', name: 'stinný záhonek' } } },
+        { planting: { cell_row: 2, cell_col: 1, bed: { id: 'b1', name: 'okrasné bylinky' } } },
+      ],
+    };
+    const i18n = i18nIn('cs');
+    expect(taskLocation(shared, i18n)).toBe('2×: okrasné bylinky, řádek 3, sloupec 2; stinný záhonek, řádek 1, sloupec 1');
+    i18n.use('en');
+    expect(taskLocation(shared, i18n)).toBe('2×: okrasné bylinky, row 3 col 2; stinný záhonek, row 1 col 1');
   });
 });
 

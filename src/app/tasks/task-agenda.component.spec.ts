@@ -7,17 +7,17 @@ import { GardenService } from '../garden/garden.service';
 
 function task(overrides: Partial<TaskWithContext>): TaskWithContext {
   return {
-    id: 'x', user_id: 'me', planting_id: null, task_type: 'prune', due_date: '2026-11-20',
-    completed_at: null, google_calendar_event_id: null, planting: null, ...overrides,
+    id: 'x', user_id: 'me', plant_id: null, task_type: 'prune', due_date: '2026-11-20',
+    completed_at: null, google_calendar_event_id: null, plant: null, plantings: [], ...overrides,
   };
 }
 
-const herbs = { cell_row: 0, cell_col: 0, bed: { id: 'b1', name: 'Herbs' }, plant: { name: 'Basil' } };
-const veg = { cell_row: 0, cell_col: 1, bed: { id: 'b2', name: 'Veg' }, plant: { name: 'Tomato' } };
+const herbs = { plant: { name: 'Basil' }, plantings: [{ planting: { cell_row: 0, cell_col: 0, bed: { id: 'b1', name: 'Herbs' } } }] };
+const veg = { plant: { name: 'Tomato' }, plantings: [{ planting: { cell_row: 0, cell_col: 1, bed: { id: 'b2', name: 'Veg' } } }] };
 const all = [
-  task({ id: 'done', task_type: 'harvest', due_date: '2026-11-01', completed_at: '2026-11-01T09:00:00Z', planting_id: 'p1', planting: herbs }),
-  task({ id: 'a', task_type: 'fertilize', due_date: '2026-11-20', planting_id: 'p1', planting: herbs }),
-  task({ id: 'b', task_type: 'fertilize', due_date: '2026-11-20', planting_id: 'p2', planting: veg }),
+  task({ id: 'done', task_type: 'harvest', due_date: '2026-11-01', completed_at: '2026-11-01T09:00:00Z', ...herbs }),
+  task({ id: 'a', task_type: 'fertilize', due_date: '2026-11-20', ...herbs }),
+  task({ id: 'b', task_type: 'fertilize', due_date: '2026-11-20', ...veg }),
   task({ id: 'c', task_type: 'prune', due_date: '2026-11-22' }),
 ];
 

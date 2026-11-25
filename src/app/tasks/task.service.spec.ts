@@ -14,17 +14,17 @@ function fakeQuery(result: { data: unknown; error: unknown }) {
 
 function task(overrides: Partial<TaskWithContext>): TaskWithContext {
   return {
-    id: 'x', user_id: 'me', planting_id: null, task_type: 'harvest', due_date: '2026-08-20',
-    completed_at: null, google_calendar_event_id: null, planting: null, ...overrides,
+    id: 'x', user_id: 'me', plant_id: null, task_type: 'harvest', due_date: '2026-08-20',
+    completed_at: null, google_calendar_event_id: null, plant: null, plantings: [], ...overrides,
   };
 }
 
 describe('filterTasks', () => {
-  const inHerbs = { cell_row: 0, cell_col: 0, bed: { id: 'bed-1', name: 'Herbs' }, plant: { name: 'Basil' } };
-  const inVeg = { cell_row: 1, cell_col: 1, bed: { id: 'bed-2', name: 'Veg' }, plant: { name: 'Tomato' } };
+  const inHerbs = { plant: { name: 'Basil' }, plantings: [{ planting: { cell_row: 0, cell_col: 0, bed: { id: 'bed-1', name: 'Herbs' } } }] };
+  const inVeg = { plant: { name: 'Tomato' }, plantings: [{ planting: { cell_row: 1, cell_col: 1, bed: { id: 'bed-2', name: 'Veg' } } }] };
   const tasks = [
-    task({ id: '1', planting_id: 'p1', task_type: 'harvest', planting: inHerbs }),
-    task({ id: '2', planting_id: 'p2', task_type: 'fertilize', planting: inVeg }),
+    task({ id: '1', task_type: 'harvest', ...inHerbs }),
+    task({ id: '2', task_type: 'fertilize', ...inVeg }),
     task({ id: '3', task_type: 'fertilize', completed_at: '2026-08-26T00:00:00Z' }),
   ];
 
@@ -42,6 +42,12 @@ describe('filterTasks', () => {
 
   it('combines filters', () => {
     expect(filterTasks(tasks, { taskType: 'fertilize', bedId: 'bed-2' }).map((t) => t.id)).toEqual(['2']);
+  });
+
+  it('finds a task covering plants in several beds under each of them', () => {
+    const shared = task({ id: '3', plantings: [...inHerbs.plantings, ...inVeg.plantings], plant: inHerbs.plant });
+    expect(filterTasks([shared], { bedId: 'bed-1' }).length).toBe(1);
+    expect(filterTasks([shared], { bedId: 'bed-2' }).length).toBe(1);
   });
 });
 
@@ -130,7 +136,7 @@ describe('TaskService', () => {
     spyOn(supabase, 'from').and.returnValue(query);
 
     expect(await service.addManualTask('prune', '2026-09-01')).toEqual(created as any);
-    expect(query.insert).toHaveBeenCalledWith({ task_type: 'prune', due_date: '2026-09-01', user_id: 'me', planting_id: null });
+    expect(query.insert).toHaveBeenCalledWith({ task_type: 'prune', due_date: '2026-09-01', user_id: 'me' });
     expect(query.select).toHaveBeenCalledWith(TASK_SELECT);
   });
 });

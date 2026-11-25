@@ -28,7 +28,9 @@ export interface EventTask {
   google_calendar_event_id: string | null;
   /** Plant name for generated tasks; null/absent for manual tasks. */
   plant_name?: string | null;
-  /** Human-readable place, e.g. "Herbs, row 1 col 2". */
+  /** How many plants of it the task covers (migration 0019); shown as "(2×)" when more than one. */
+  plant_count?: number;
+  /** Human-readable places, one per line, e.g. "Herbs, row 1 col 2". */
   location?: string | null;
   /** Language of the event title; English if absent. */
   language?: Language;
@@ -192,7 +194,8 @@ export async function deleteCalendar(accessToken: string, calendarId: string): P
 /** The Google Calendar event for a task: a free (non-blocking) all-day event. */
 export function eventBody(task: EventTask) {
   const label = TASK_LABELS[task.language ?? 'en'][task.task_type] ?? task.task_type;
-  const title = task.plant_name ? `${label} — ${task.plant_name}` : label;
+  const plant = task.plant_name && (task.plant_count ?? 0) > 1 ? `${task.plant_name} (${task.plant_count}×)` : task.plant_name;
+  const title = plant ? `${label} — ${plant}` : label;
   return {
     summary: task.completed_at ? `✓ ${title}` : title,
     description: task.location ?? undefined,

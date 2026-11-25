@@ -3,10 +3,10 @@ import { connectCalendar, ConnectDeps } from './connect.ts';
 import type { EventTask } from '../_shared/google.ts';
 import type { TaskEventRow } from '../_shared/tasks.ts';
 
-const herbsTomato = { cell_row: 0, cell_col: 0, bed: { name: 'Herbs' }, plant: { name: 'Tomato' } };
+const herbs = [{ planting: { cell_row: 0, cell_col: 0, bed: { name: 'Herbs' } } }];
 const row = (id: string, overrides: Partial<TaskEventRow> = {}): TaskEventRow => ({
   id, user_id: 'u1', due_date: '2026-11-20', task_type: 'harvest', completed_at: null,
-  google_calendar_event_id: null, planting: herbsTomato, ...overrides,
+  google_calendar_event_id: null, plant: { name: 'Tomato' }, plantings: herbs, ...overrides,
 });
 
 /** In-memory fakes recording what connectCalendar does. */
@@ -49,7 +49,7 @@ function fakes(
 }
 
 Deno.test('first connect creates the calendar, stores credentials and backfills upcoming tasks', async () => {
-  const { deps, log } = fakes({ tasks: [row('t1'), row('t2', { task_type: 'prune', planting: null })] });
+  const { deps, log } = fakes({ tasks: [row('t1'), row('t2', { task_type: 'prune', plant: null, plantings: [] })] });
 
   const result = await connectCalendar(deps, 'u1', 'code-1');
 
@@ -117,8 +117,7 @@ Deno.test('a recreated calendar (the old one was deleted) clears old event ids',
 });
 
 Deno.test('connecting writes the events in the user’s language', async () => {
-  const czech = { ...herbsTomato, plant: { name: 'Tomato', name_cs: 'Rajče' } };
-  const { deps, log } = fakes({ language: 'cs', tasks: [row('t1', { planting: czech })] });
+  const { deps, log } = fakes({ language: 'cs', tasks: [row('t1', { plant: { name: 'Tomato', name_cs: 'Rajče' } })] });
 
   await connectCalendar(deps, 'u1', 'code-1');
 
