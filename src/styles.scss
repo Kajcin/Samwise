@@ -72,6 +72,20 @@ $border-radius-lg: 0.75rem;
       top: 2px;
     }
   }
+
+  // Optical centring, where the links share the line with the name: the eye reads the
+  // name by its small letters (amwise), which sit low under the tall S. Raise the name
+  // and lower the links a little, so both run along one centre line.
+  @include media-breakpoint-up(md) {
+    .navbar-brand {
+      position: relative;
+      top: -3px;
+    }
+    .navbar-collapse {
+      position: relative;
+      top: 3px;
+    }
+  }
 }
 
 // The name next to the logo, in the logo's medieval hand (public/logo.svg).
