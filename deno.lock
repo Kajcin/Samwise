@@ -81,6 +81,7 @@
         "npm:@angular/forms@^22.2.0",
         "npm:@angular/platform-browser@^22.2.0",
         "npm:@angular/router@^22.2.0",
+        "npm:@fontsource/uncial-antiqua@^5.3.0",
         "npm:@jsverse/transloco-messageformat@8.4.0",
         "npm:@jsverse/transloco@8.4.0",
         "npm:@supabase/supabase-js@^2.119.0",

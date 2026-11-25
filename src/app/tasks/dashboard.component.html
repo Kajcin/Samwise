@@ -68,7 +68,7 @@
               <li class="bed list-group-item">
                 <a routerLink="/garden">{{ summary.bed.name }}</a>
                 <div class="small text-body-secondary">
-                  {{ i18n.t('dashboard.cellsPlanted', { planted: summary.plantingCount, cells: summary.bed.rows * summary.bed.cols }) }}
+                  {{ i18n.t('dashboard.cellsPlanted', { planted: summary.plantingCount, cells: slotCount(summary.bed) }) }}
                 </div>
               </li>
             } @empty {

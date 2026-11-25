@@ -16,9 +16,119 @@
     @for (bed of beds(); track bed.id) {
       <section class="card mb-4">
         <div class="card-body">
-          <h2 class="h5 card-title">
-            {{ bed.name }} <small class="text-body-secondary fw-normal">({{ bed.rows }} × {{ bed.cols }})</small>
-          </h2>
+          @if (editingBedId() === bed.id) {
+            <form class="d-flex flex-wrap align-items-center gap-2 mb-2 bed-edit-header" novalidate (submit)="finishEditing($event, bed)">
+              <label class="visually-hidden" [for]="'bed-name-' + bed.id">{{ i18n.t('garden.bedName') }}</label>
+              <input
+                [id]="'bed-name-' + bed.id"
+                class="form-control bed-name-input"
+                name="bedName"
+                [value]="editName()"
+                (input)="editName.set($any($event.target).value)"
+              />
+              <div class="ms-auto d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger delete-bed"
+                  [disabled]="!!editBusy()"
+                  [attr.aria-busy]="isEditBusy('delete')"
+                  [attr.aria-label]="i18n.t('garden.deleteBed')"
+                  [title]="i18n.t('garden.deleteBed')"
+                  (click)="deleteBed(bed)"
+                >
+                  @if (isEditBusy('delete')) {
+                    <app-spinner />
+                  } @else {
+                    <app-icon name="trash" />
+                  }
+                </button>
+                <button type="submit" class="btn btn-sm btn-primary done-editing" [disabled]="!!editBusy()" [attr.aria-busy]="isEditBusy('rename')">
+                  @if (isEditBusy('rename')) {
+                    <app-spinner class="me-1" />
+                  } @else {
+                    <app-icon name="check-lg" class="me-1" />
+                  }
+                  {{ i18n.t('garden.done') }}
+                </button>
+              </div>
+            </form>
+            <p class="small text-body-secondary">{{ i18n.t('garden.editHint') }}</p>
+            @if (editError()) {
+              <div class="alert alert-danger edit-error" role="alert">{{ i18n.text(editError()) }}</div>
+            }
+
+            <div class="table-responsive mb-3">
+              <table class="bed-grid bed-edit-grid">
+                @for (row of editGrid(bed); track $index) {
+                  <tr>
+                    @for (cell of row; track cell.col) {
+                      <td>
+                        @switch (cell.kind) {
+                          @case ('slot') {
+                            <button
+                              type="button"
+                              class="remove-slot"
+                              [class.planted]="!!cell.planting"
+                              [disabled]="!!editBusy() || slotCount(bed) <= 1"
+                              [title]="slotCount(bed) <= 1 ? i18n.t('garden.errors.lastSlot') : i18n.t('garden.removeSlot')"
+                              [attr.aria-label]="
+                                i18n.t('garden.removeSlotLabel', {
+                                  row: cell.row + 1,
+                                  col: cell.col + 1,
+                                  content: cell.planting ? plantLabel(cell.planting.plant_id) : i18n.t('garden.empty'),
+                                })
+                              "
+                              (click)="removeSlot(bed, cell)"
+                            >
+                              @if (isEditBusy('remove:' + cell.row + ':' + cell.col)) {
+                                <app-spinner />
+                              } @else {
+                                {{ cell.planting ? plantLabel(cell.planting.plant_id) : '' }}
+                                <app-icon name="x-lg" class="remove-mark" />
+                              }
+                            </button>
+                          }
+                          @case ('add') {
+                            <button
+                              type="button"
+                              class="add-slot"
+                              [disabled]="!!editBusy()"
+                              [title]="i18n.t('garden.addSlot')"
+                              [attr.aria-label]="i18n.t('garden.addSlotLabel', { row: cell.row + 1, col: cell.col + 1 })"
+                              (click)="addSlot(bed, cell)"
+                            >
+                              @if (isEditBusy('add:' + cell.row + ':' + cell.col)) {
+                                <app-spinner />
+                              } @else {
+                                <app-icon name="plus-lg" />
+                              }
+                            </button>
+                          }
+                          @default {
+                            <span class="cell-spacer" aria-hidden="true"></span>
+                          }
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </table>
+            </div>
+          } @else {
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+            <h2 class="h5 card-title mb-0">
+              {{ bed.name }}
+              <small class="text-body-secondary fw-normal">({{ i18n.t('garden.slotCount', { count: slotCount(bed) }) }})</small>
+            </h2>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary edit-bed flex-shrink-0"
+              [disabled]="!!editingBedId()"
+              (click)="startEditing(bed)"
+            >
+              <app-icon name="pencil" class="me-1" />{{ i18n.t('garden.edit') }}
+            </button>
+          </div>
           <p class="small text-body-secondary">{{ i18n.t('garden.hint') }}</p>
 
           <!-- Wide beds scroll sideways on phones instead of squashing the cells. -->
@@ -28,6 +138,9 @@
                 <tr>
                   @for (cell of row; track $index; let c = $index) {
                     <td>
+                      @if (cell === gap) {
+                        <span class="cell-spacer" aria-hidden="true"></span>
+                      } @else {
                       <button
                         type="button"
                         [class.planted]="!!cell"
@@ -56,6 +169,7 @@
                           {{ cell ? plantLabel(cell.plant_id) : '+' }}
                         }
                       </button>
+                      }
                     </td>
                   }
                 </tr>
@@ -124,6 +238,7 @@
                 }
               </div>
             }
+          }
           }
         </div>
       </section>

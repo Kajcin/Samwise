@@ -1,8 +1,10 @@
 import { provideI18n } from '../core/i18n/i18n';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { buildGrid, GardenLayoutComponent } from './garden-layout.component';
-import { Bed, CellOccupiedError, GardenService, Planting } from './garden.service';
+import { buildEditGrid, buildGrid, editErrorMessage, GAP, GardenLayoutComponent } from './garden-layout.component';
+import { msg } from '../core/i18n/i18n';
+import { ConfirmDialogService } from '../core/confirm/confirm-dialog.service';
+import { Bed, BedEditError, CellOccupiedError, GardenService, Planting } from './garden.service';
 import { Plant, PlantCatalogService } from '../plant-catalog/plant-catalog.service';
 import { PlantPhoto, PlantPhotosService } from '../plant-catalog/plant-photos.service';
 
@@ -21,9 +23,40 @@ describe('buildGrid', () => {
 
   it('places each active planting at its cell', () => {
     const grid = buildGrid(2, 2, [planting(0, 1), planting(1, 0)]);
-    expect(grid[0][1]?.id).toBe('0-1');
-    expect(grid[1][0]?.id).toBe('1-0');
+    expect((grid[0][1] as Planting).id).toBe('0-1');
+    expect((grid[1][0] as Planting).id).toBe('1-0');
     expect(grid[0][0]).toBeNull();
+  });
+
+  it('marks the gaps of a bed that isn’t a full rectangle', () => {
+    const grid = buildGrid(2, 2, [planting(0, 0)], [[1, 1]]);
+    expect(grid[1][1]).toBe(GAP);
+    expect(grid[1][0]).toBeNull();
+  });
+});
+
+describe('buildEditGrid', () => {
+  const kinds = (grid: ReturnType<typeof buildEditGrid>) => grid.map((row) => row.map((c) => c.kind[0]).join(''));
+
+  it('offers a slot in each gap and next to each edge slot, never in the corners', () => {
+    // An L: slots at (0,0), (1,0), (1,1); (0,1) is a gap. The edit grid adds a ring around
+    // the box (s = slot, a = "+", n = nothing): above the gap and right of it touch no slot.
+    const grid = buildEditGrid({ rows: 2, cols: 2 }, buildGrid(2, 2, [], [[0, 1]]), 20);
+    expect(kinds(grid)).toEqual(['nann', 'asan', 'assa', 'naan']);
+  });
+
+  it('stops at the size limit', () => {
+    const grid = buildEditGrid({ rows: 1, cols: 2 }, buildGrid(1, 2, []), 2);
+    expect(kinds(grid)).toEqual(['naan', 'nssn', 'naan']);
+  });
+});
+
+describe('editErrorMessage', () => {
+  it('explains what the database refused', () => {
+    expect(editErrorMessage(new BedEditError('slot_last'))).toEqual(msg('garden.errors.lastSlot'));
+    expect(editErrorMessage(new BedEditError('bed_too_large'))).toEqual(msg('garden.errors.tooLarge', { max: 20 }));
+    expect(editErrorMessage(new BedEditError('bed_not_empty'))).toEqual(msg('garden.errors.bedNotEmpty'));
+    expect(editErrorMessage(new Error('offline'))).toEqual(msg('garden.errors.edit', { detail: 'offline' }));
   });
 });
 
@@ -31,6 +64,7 @@ describe('GardenLayoutComponent', () => {
   let garden: jasmine.SpyObj<GardenService>;
   let catalog: jasmine.SpyObj<PlantCatalogService>;
   let photos: jasmine.SpyObj<PlantPhotosService>;
+  let dialog: jasmine.SpyObj<ConfirmDialogService>;
 
   const bed: Bed = { id: 'bed-1', user_id: 'me', name: 'Herbs', rows: 1, cols: 2 };
   const plants = [
@@ -55,7 +89,12 @@ describe('GardenLayoutComponent', () => {
   }
 
   beforeEach(() => {
-    garden = jasmine.createSpyObj<GardenService>('GardenService', ['listBeds', 'listActivePlantings', 'assignPlanting', 'removePlanting', 'createBed']);
+    garden = jasmine.createSpyObj<GardenService>('GardenService', [
+      'listBeds', 'listActivePlantings', 'assignPlanting', 'removePlanting', 'createBed',
+      'addSlot', 'removeSlot', 'renameBed', 'deleteBed',
+    ]);
+    dialog = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['ask']);
+    dialog.ask.and.resolveTo(true);
     catalog = jasmine.createSpyObj<PlantCatalogService>('PlantCatalogService', ['list']);
     garden.listBeds.and.resolveTo([bed]);
     garden.listActivePlantings.and.resolveTo([planting(0, 0)]);
@@ -69,7 +108,146 @@ describe('GardenLayoutComponent', () => {
         { provide: GardenService, useValue: garden },
         { provide: PlantCatalogService, useValue: catalog },
         { provide: PlantPhotosService, useValue: photos },
+        { provide: ConfirmDialogService, useValue: dialog },
       ],
+    });
+  });
+
+  describe('editing a bed', () => {
+    const editButton = (el: HTMLElement) => el.querySelector<HTMLButtonElement>('button.edit-bed')!;
+    const addButtons = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLButtonElement>('button.add-slot'));
+    const slotButtons = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLButtonElement>('button.remove-slot'));
+    const byLabel = (buttons: HTMLButtonElement[], label: string) => buttons.find((b) => b.getAttribute('aria-label') === label)!;
+
+    it('switches the card to editing: the name, a "+" around and inside the bed, removable slots', async () => {
+      const { el, settle } = await render();
+      expect(el.querySelector('h2')!.textContent).toContain('(2 cells)');
+
+      editButton(el).click();
+      await settle();
+
+      expect(el.querySelector<HTMLInputElement>('input[name=bedName]')!.value).toBe('Herbs');
+      expect(el.textContent).toContain('Click + to add a cell, or click a cell to remove it.');
+      expect(slotButtons(el).map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Remove the cell at row 1, column 1: Basil',
+        'Remove the cell at row 1, column 2: empty',
+      ]);
+      // Above and below each slot, and at both ends of the row: 6.
+      expect(addButtons(el).length).toBe(6);
+      expect(el.querySelector('select[name=plant]')).toBeNull();
+    });
+
+    it('adds a slot with "+", and redraws the bed', async () => {
+      garden.addSlot.and.resolveTo({ ...bed, cols: 3 });
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      byLabel(addButtons(el), 'Add a cell at row 1, column 3').click();
+      await settle();
+
+      expect(garden.addSlot).toHaveBeenCalledWith('bed-1', 0, 2);
+      expect(slotButtons(el).length).toBe(3);
+    });
+
+    it('removes an empty slot straight away, and asks first when a plant grows in it', async () => {
+      garden.removeSlot.and.resolveTo({ ...bed, cols: 1 });
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      dialog.ask.and.resolveTo(false);
+      byLabel(slotButtons(el), 'Remove the cell at row 1, column 1: Basil').click();
+      await settle();
+      expect(dialog.ask.calls.mostRecent().args[0].message).toContain('Basil grows in this cell.');
+      expect(garden.removeSlot).not.toHaveBeenCalled(); // cancelled
+
+      dialog.ask.calls.reset();
+      byLabel(slotButtons(el), 'Remove the cell at row 1, column 2: empty').click();
+      await settle();
+      expect(dialog.ask).not.toHaveBeenCalled();
+      expect(garden.removeSlot).toHaveBeenCalledWith('bed-1', 0, 1);
+    });
+
+    it('doesn’t offer to remove the last slot', async () => {
+      garden.listBeds.and.resolveTo([{ ...bed, cols: 1 }]);
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      expect(slotButtons(el)[0].disabled).toBeTrue();
+      expect(slotButtons(el)[0].title).toContain('The last cell can’t be removed.');
+    });
+
+    it('saves a new name when done, and needs one', async () => {
+      garden.renameBed.and.resolveTo({ ...bed, name: 'Kitchen herbs' });
+      const { el, settle, button } = await render();
+      editButton(el).click();
+      await settle();
+      const name = el.querySelector<HTMLInputElement>('input[name=bedName]')!;
+
+      name.value = '  ';
+      name.dispatchEvent(new Event('input'));
+      button('Done').click();
+      await settle();
+      expect(el.querySelector('.edit-error')!.textContent).toContain('Name is required.');
+
+      name.value = 'Kitchen herbs';
+      name.dispatchEvent(new Event('input'));
+      button('Done').click();
+      await settle();
+      expect(garden.renameBed).toHaveBeenCalledWith('bed-1', 'Kitchen herbs');
+      expect(el.querySelector('h2')!.textContent).toContain('Kitchen herbs');
+      expect(el.querySelector('input[name=bedName]')).toBeNull();
+    });
+
+    it('won’t delete a bed something grows in', async () => {
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      el.querySelector<HTMLButtonElement>('button.delete-bed')!.click();
+      await settle();
+
+      expect(dialog.ask).not.toHaveBeenCalled();
+      expect(garden.deleteBed).not.toHaveBeenCalled();
+      expect(el.querySelector('.edit-error')!.textContent).toContain('can’t be deleted while something grows in it');
+    });
+
+    it('deletes an empty bed after confirmation', async () => {
+      garden.deleteBed.and.resolveTo();
+      garden.listActivePlantings.and.resolveTo([]);
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      el.querySelector<HTMLButtonElement>('button.delete-bed')!.click();
+      await settle();
+
+      expect(dialog.ask.calls.mostRecent().args[0].message).toBe('“Herbs” will be deleted.');
+      expect(garden.deleteBed).toHaveBeenCalledWith('bed-1');
+      expect(el.querySelector('section.card')).toBeNull();
+    });
+
+    it('says why when the database refuses', async () => {
+      garden.addSlot.and.rejectWith(new BedEditError('bed_too_large'));
+      const { el, settle } = await render();
+      editButton(el).click();
+      await settle();
+
+      addButtons(el)[0].click();
+      await settle();
+
+      expect(el.querySelector('.edit-error')!.textContent).toContain('A bed can be at most 20 rows by 20 columns.');
+    });
+
+    it('shows a gap as empty space outside edit mode', async () => {
+      garden.listBeds.and.resolveTo([{ ...bed, rows: 2, gaps: [[1, 1]] }]);
+      const { el, cells } = await render();
+
+      expect(cells().length).toBe(3);
+      expect(el.querySelectorAll('.cell-spacer').length).toBe(1);
+      expect(el.querySelector('h2')!.textContent).toContain('(3 cells)');
     });
   });
 

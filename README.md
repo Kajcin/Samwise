@@ -290,6 +290,19 @@ The catalog list also shows each plant's sun (icon), watering interval and one s
 Flowering and harvest are sets of months (migration 0016), not ranges, so a plant can have
 two seasons (spinach: spring and autumn). You pick them by clicking months in the edit form.
 
+## Garden beds
+
+A bed starts as a grid of rows × columns. **Upravit** on its card switches it to editing:
+a "+" in each gap and next to its edges adds a cell, clicking a cell removes it, and the
+bed can be renamed or deleted. So beds can be any shape: an L, or with a path through it.
+
+The database keeps each bed's box (`rows`, `cols`) and its `gaps`, the positions in the box
+that aren't part of it (migration 0018). `add_bed_slot` and `remove_bed_slot` keep the box
+tight: adding a cell at the top or left moves the plants down or right. Removing a cell
+with a plant takes the plant out (after a confirmation), like "Odebrat" in the garden. A
+bed can be deleted only when nothing grows in it. Renaming a bed or moving its plants
+re-syncs their calendar events, since an event's location names the bed and the cell.
+
 ## Security decisions
 
 - **Samwise uses its own calendar.** Connecting creates a "Samwise"

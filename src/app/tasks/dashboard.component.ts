@@ -6,7 +6,7 @@ import { TASK_TYPE_ICONS } from '../plant-catalog/labels';
 import { RouterLink } from '@angular/router';
 import { isOverdue, TaskService, TaskWithContext } from './task.service';
 import { formatDue, taskLocation, taskTitle } from './task-format';
-import { Bed, GardenService } from '../garden/garden.service';
+import { Bed, GardenService, slotCount } from '../garden/garden.service';
 import { messageOf } from '../core/errors';
 import { Message, msg } from '../core/i18n/i18n';
 import { LanguageService } from '../core/i18n/language.service';
@@ -30,6 +30,7 @@ const UPCOMING_DAYS = 7;
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  protected readonly slotCount = slotCount;
   private tasks = inject(TaskService);
   private garden = inject(GardenService);
   protected i18n = inject(LanguageService);

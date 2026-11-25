@@ -1,4 +1,4 @@
-import { CellOccupiedError, GardenService, cellKey } from './garden.service';
+import { BedEditError, CellOccupiedError, GardenService, cellKey, isGap, slotCount } from './garden.service';
 import { supabase } from '../core/supabase-client';
 
 function signedInAs(userId: string): void {
@@ -113,5 +113,40 @@ describe('GardenService plantings', () => {
 
     expect(update).toHaveBeenCalledWith({ status: 'removed' });
     expect(eq).toHaveBeenCalledWith('id', 'p1');
+  });
+
+  it('addSlot() and removeSlot() go through the database functions and return the bed', async () => {
+    const bed = { id: 'b1', rows: 1, cols: 3, gaps: [] };
+    const rpc = spyOn(supabase, 'rpc').and.resolveTo({ data: bed, error: null } as any);
+
+    expect(await service.addSlot('b1', 0, 2)).toEqual(bed as any);
+    expect(rpc).toHaveBeenCalledWith('add_bed_slot', { p_bed_id: 'b1', p_row: 0, p_col: 2 });
+    await service.removeSlot('b1', 0, 0);
+    expect(rpc).toHaveBeenCalledWith('remove_bed_slot', { p_bed_id: 'b1', p_row: 0, p_col: 0 });
+  });
+
+  it('turns the database’s refusals into BedEditError, and passes other errors on', async () => {
+    const rpc = spyOn(supabase, 'rpc');
+    rpc.and.resolveTo({ data: null, error: { message: 'slot_last', code: 'P0001' } } as any);
+    const refused = await service.removeSlot('b1', 0, 0).catch((e) => e);
+    expect(refused).toEqual(jasmine.any(BedEditError));
+    expect((refused as BedEditError).code).toBe('slot_last');
+
+    rpc.and.resolveTo({ data: null, error: { message: 'bed_not_empty', code: 'P0001' } } as any);
+    await expectAsync(service.deleteBed('b1')).toBeRejectedWithError(BedEditError);
+
+    rpc.and.resolveTo({ data: null, error: { message: 'offline' } } as any);
+    const other = await service.addSlot('b1', 0, 0).catch((e) => e);
+    expect(other).not.toEqual(jasmine.any(BedEditError));
+  });
+});
+
+describe('slotCount and isGap', () => {
+  it('count the cells of the box that aren’t gaps', () => {
+    const bed = { rows: 2, cols: 3, gaps: [[0, 2], [1, 2]] as [number, number][] };
+    expect(slotCount(bed)).toBe(4);
+    expect(slotCount({ rows: 2, cols: 2 })).toBe(4);
+    expect(isGap(bed, 1, 2)).toBeTrue();
+    expect(isGap(bed, 2, 1)).toBeFalse();
   });
 });
