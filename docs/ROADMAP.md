@@ -36,6 +36,8 @@ perennials: divide, mulch, winter protection, cut back. A yearly rule can also n
 of its month (migration 0013): "every year in early May" (1st-15th) / "late May" (16th-last).
 A repeating rule can keep to some months, or to the plant's harvest or flowering months
 (migration 0021): "every 7 days during harvest", counted from the 1st of each period.
+A task type for removing faded flowers, "Deadhead" / "Odstraňování odkvětů" (migration
+0023); the built-in marigold deadheads every 7 days while it flowers.
 
 Possible follow-ups:
 - "Every N years" (e.g. divide every 3 years), counted from the planting year.

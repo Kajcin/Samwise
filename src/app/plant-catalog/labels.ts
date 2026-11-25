@@ -10,6 +10,7 @@ export const TASK_TYPES: readonly TaskType[] = [
   'transplant',
   'prune',
   'cut_back',
+  'deadhead',
   'fertilize',
   'mulch',
   'divide',
@@ -30,6 +31,7 @@ export const TASK_TYPE_ICONS: Record<TaskType, IconName> = {
   mulch: 'layers',
   winter_protection: 'snow',
   cut_back: 'arrows-collapse-vertical',
+  deadhead: 'flower3',
 };
 
 export type SunRequirement = NonNullable<Plant['sun_requirements']>;

@@ -66,6 +66,7 @@ export const TASK_LABELS: Record<Language, Record<string, string>> = {
     mulch: 'Mulch',
     winter_protection: 'Winter protection',
     cut_back: 'Cut back',
+    deadhead: 'Deadhead',
   },
   cs: {
     seed_start: 'Výsev',
@@ -77,6 +78,7 @@ export const TASK_LABELS: Record<Language, Record<string, string>> = {
     mulch: 'Mulčování',
     winter_protection: 'Zimní ochrana',
     cut_back: 'Seříznutí',
+    deadhead: 'Odstraňování odkvětů',
   },
 };
 

@@ -74,7 +74,8 @@ export type TaskType =
   | 'divide'
   | 'mulch'
   | 'winter_protection'
-  | 'cut_back';
+  | 'cut_back'
+  | 'deadhead';
 
 export interface CareRule {
   id: string;

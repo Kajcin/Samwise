@@ -514,7 +514,7 @@ describe('PlantDetailComponent', () => {
     };
 
     expect(Array.from(el.querySelectorAll<HTMLOptionElement>('select[name=task] option')).map((o) => o.textContent!.trim()))
-      .toEqual(['Seed start', 'Transplant', 'Prune', 'Cut back', 'Fertilize', 'Mulch', 'Divide', 'Winter protection', 'Harvest']);
+      .toEqual(['Seed start', 'Transplant', 'Prune', 'Cut back', 'Deadhead', 'Fertilize', 'Mulch', 'Divide', 'Winter protection', 'Harvest']);
     set('task', 'cut_back');
     set('timing', 'yearly');
     expect(el.querySelector('input[name=offset]')).toBeNull();
