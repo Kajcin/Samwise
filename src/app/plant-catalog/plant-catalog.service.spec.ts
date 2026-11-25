@@ -67,6 +67,7 @@ describe('PlantCatalogService', () => {
     };
     const seededRules = [
       { task_type: 'harvest', timing_type: 'offset_from_planting', offset_days: 75, recurrence_days: null, notes: null },
+      { task_type: 'harvest', timing_type: 'recurring', offset_days: null, recurrence_days: 7, months: [], season: 'harvest', notes: null },
     ];
     const cloned = { ...seeded, id: 'clone-1', user_id: 'me' };
 
@@ -75,13 +76,14 @@ describe('PlantCatalogService', () => {
     const insertPlant = jasmine.createSpy('insertPlant').and.returnValue({ select: () => ({ single: cloneSingle }) });
     const rulesEq = jasmine.createSpy('rulesEq').and.resolveTo({ data: seededRules, error: null });
     const insertRules = jasmine.createSpy('insertRules').and.resolveTo({ data: null, error: null });
+    const selectRules = jasmine.createSpy('selectRules').and.returnValue({ eq: rulesEq });
 
     spyOn(supabase, 'from').and.callFake(((table: string) => {
       if (table === 'plants_catalog') {
         return { select: () => ({ eq: () => ({ single: sourceSingle }) }), insert: insertPlant };
       }
       if (table === 'care_rules') {
-        return { select: () => ({ eq: rulesEq }), insert: insertRules };
+        return { select: selectRules, insert: insertRules };
       }
       throw new Error('unexpected table ' + table);
     }) as any);
@@ -96,7 +98,14 @@ describe('PlantCatalogService', () => {
     expect(insertedPlant.harvest_months).toEqual([7, 8, 9, 10]);
     expect('id' in insertedPlant).toBeFalse();
     expect(rulesEq).toHaveBeenCalledWith('plant_id', 'seed-1');
-    expect(insertRules).toHaveBeenCalledWith([jasmine.objectContaining({ plant_id: 'clone-1', task_type: 'harvest', offset_days: 75 })]);
+    // Every timing field comes along: yearly months, and the months a repeating rule keeps to.
+    expect(selectRules.calls.mostRecent().args[0].split(',')).toEqual(
+      jasmine.arrayContaining(['month', 'month_part', 'months', 'season']),
+    );
+    expect(insertRules).toHaveBeenCalledWith([
+      jasmine.objectContaining({ plant_id: 'clone-1', task_type: 'harvest', offset_days: 75 }),
+      jasmine.objectContaining({ plant_id: 'clone-1', recurrence_days: 7, season: 'harvest' }),
+    ]);
   });
 });
 

@@ -1,6 +1,7 @@
 import type { CareRule, Plant, TaskType } from './plant-catalog.service';
 import type { IconName } from '../core/icons/icons.generated';
 import { Lang, Message, msg } from '../core/i18n/i18n';
+import { monthRuns } from './traits';
 
 // Texts live in src/i18n/{en,cs}.json; these are their keys.
 
@@ -38,8 +39,16 @@ export const sunKey = (sun: SunRequirement) => `sun.${sun}`;
 /** Month 1-12, as it stands alone ("June" / "červen"). */
 export const monthKey = (month: number) => `months.${month}`;
 
+/** "May to September, November" as one message (runs joined by commas); months not empty. */
+function monthsMessage(months: readonly number[]): Message {
+  const runs = monthRuns(months).map(([from, to]) =>
+    from === to ? msg(monthKey(from)) : msg('traits.monthRange', { from: msg(monthKey(from)), to: msg(monthKey(to)) }),
+  );
+  return runs.reduceRight((rest, run) => msg('rules.monthList', { first: run, rest }));
+}
+
 export function describeRuleTiming(
-  rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days' | 'month' | 'month_part'>,
+  rule: Pick<CareRule, 'timing_type' | 'offset_days' | 'recurrence_days' | 'month' | 'month_part' | 'months' | 'season'>,
 ): Message {
   if (rule.timing_type === 'yearly') {
     // "every year in early May" / "každý rok začátkem května" (the month as "of May").
@@ -48,7 +57,14 @@ export function describeRuleTiming(
     // One text per month: Czech says "v červenci", "v září", … (each month its own form).
     return msg(`rules.yearly.${rule.month}`);
   }
-  if (rule.timing_type === 'recurring') return msg('rules.everyDays', { days: rule.recurrence_days });
+  if (rule.timing_type === 'recurring') {
+    // "every 7 days (July to September)", "every 7 days during harvest".
+    const every = msg('rules.everyDays', { days: rule.recurrence_days });
+    if (rule.season === 'harvest') return msg('rules.everyDaysInHarvest', { every });
+    if (rule.season === 'flowering') return msg('rules.everyDaysInFlowering', { every });
+    if (rule.months?.length) return msg('rules.everyDaysInMonths', { every, months: monthsMessage(rule.months) });
+    return every;
+  }
   if (rule.offset_days === 0) return msg('rules.onPlantingDay');
   return msg('rules.daysAfterPlanting', { days: rule.offset_days });
 }

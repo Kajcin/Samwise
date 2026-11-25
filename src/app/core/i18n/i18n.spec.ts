@@ -3,6 +3,7 @@ import MessageFormat from '@messageformat/core';
 import { parse, Token } from '@messageformat/parser';
 import { browserLanguage, LANGS, provideI18n, TRANSLATIONS } from './i18n';
 import { LanguageService } from './language.service';
+import { describeRuleTiming } from '../../plant-catalog/labels';
 
 type Tree = { [key: string]: string | Tree };
 
@@ -103,6 +104,14 @@ describe('LanguageService', () => {
     expect(i18n.text(early)).toBe('every year in early May');
     i18n.use('cs');
     expect(i18n.text(early)).toBe('každý rok začátkem května');
+  });
+
+  it('describes a repeating rule within months, in Czech too', () => {
+    const rule = { timing_type: 'recurring' as const, offset_days: null, recurrence_days: 3, months: [12, 1, 4, 5, 9] };
+    expect(i18n.text(describeRuleTiming(rule))).toBe('every 3 days (April to May, September, December to January)');
+    i18n.use('cs');
+    expect(i18n.text(describeRuleTiming(rule))).toBe('každé 3 dny (duben až květen, září, prosinec až leden)');
+    expect(i18n.text(describeRuleTiming({ ...rule, months: [], season: 'harvest' }))).toBe('každé 3 dny v době sklizně');
   });
 
   it('joins several messages into one text', () => {

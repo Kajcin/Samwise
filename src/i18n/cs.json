@@ -80,6 +80,10 @@
   },
   "rules": {
     "everyDays": "{days, plural, one {každý den} few {každé # dny} other {každých # dní}}",
+    "everyDaysInMonths": "{every} ({months})",
+    "everyDaysInHarvest": "{every} v době sklizně",
+    "everyDaysInFlowering": "{every} v době kvetení",
+    "monthList": "{first}, {rest}",
     "onPlantingDay": "v den výsadby",
     "daysAfterPlanting": "{days, plural, one {# den po výsadbě} few {# dny po výsadbě} other {# dní po výsadbě}}",
     "yearly": {
@@ -259,6 +263,13 @@
     "monthPartHint": "Začátek = 1.–15., konec = od 16. do konce měsíce.",
     "offsetDays": "Dní po výsadbě",
     "recurrenceDays": "Každých N dní",
+    "ruleMonths": "Jen v některých měsících",
+    "ruleMonthsHint": "Nic nevybráno = celý rok. Každé období se počítá od 1. dne svého prvního měsíce.",
+    "ruleSeason": {
+      "harvest": "V době sklizně",
+      "flowering": "V době kvetení"
+    },
+    "ruleSeasonHint": "Měsíce podle rostliny; když je změníte, úkoly se posunou s nimi.",
     "saveRule": "Uložit pravidlo",
     "addRule": "Přidat pravidlo",
     "edit": "Upravit",

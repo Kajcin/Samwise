@@ -80,6 +80,10 @@
   },
   "rules": {
     "everyDays": "{days, plural, one {every day} other {every # days}}",
+    "everyDaysInMonths": "{every} ({months})",
+    "everyDaysInHarvest": "{every} during harvest",
+    "everyDaysInFlowering": "{every} during flowering",
+    "monthList": "{first}, {rest}",
     "onPlantingDay": "on planting day",
     "daysAfterPlanting": "{days, plural, one {# day after planting} other {# days after planting}}",
     "yearly": {
@@ -259,6 +263,13 @@
     "monthPartHint": "Beginning = 1st–15th, end = 16th to the last day.",
     "offsetDays": "Days after planting",
     "recurrenceDays": "Every N days",
+    "ruleMonths": "Only in some months",
+    "ruleMonthsHint": "None picked = all year. Each period counts from the 1st of its first month.",
+    "ruleSeason": {
+      "harvest": "During harvest",
+      "flowering": "During flowering"
+    },
+    "ruleSeasonHint": "The plant's months; when you change them, the tasks move with them.",
     "saveRule": "Save rule",
     "addRule": "Add rule",
     "edit": "Edit",

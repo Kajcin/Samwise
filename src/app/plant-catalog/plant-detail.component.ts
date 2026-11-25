@@ -7,7 +7,7 @@ import { PlantPhotosComponent } from './plant-photos.component';
 import { PlantChipsComponent } from './plant-chips.component';
 import { MonthStripComponent } from './month-strip.component';
 import { PlantTraitsFieldsComponent } from './plant-traits-fields.component';
-import { describeMonths, GrowthForm, hasLifeCycle, LifeCycle, PlantUse, SUN_ICONS } from './traits';
+import { describeMonths, GrowthForm, hasLifeCycle, LifeCycle, PlantUse, Season, SUN_ICONS } from './traits';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -203,6 +203,13 @@ export class PlantDetailComponent {
   newRuleMonth = signal<number | null>(null);
   /** null = the whole month. */
   newRuleMonthPart = signal<MonthPart | null>(null);
+  /** Repeating rules: the months they keep to (none = all year), or a season of the plant. */
+  newRuleMonths = signal<readonly number[]>([]);
+  newRuleSeason = signal<Season | null>(null);
+  /** The seasons a repeating rule can follow: those the plant has months for. */
+  protected ruleSeasons = computed(() =>
+    (['harvest', 'flowering'] as const).filter((season) => this.seasonMonths(season).length),
+  );
   /** The "add a care rule" dialog. */
   ruleDialogOpen = signal(false);
   protected readonly monthParts: { id: string; value: MonthPart | null; label: string }[] = [
@@ -273,7 +280,20 @@ export class PlantDetailComponent {
     this.newRuleRecurrenceDays.set(null);
     this.newRuleMonth.set(null);
     this.newRuleMonthPart.set(null);
+    this.newRuleMonths.set([]);
+    this.newRuleSeason.set(null);
     this.newRuleError.set(null);
+  }
+
+  protected seasonMonths(season: Season): readonly number[] {
+    const plant = this.plant();
+    return (season === 'harvest' ? plant?.harvest_months : plant?.flowering_months) ?? [];
+  }
+
+  /** Follows the plant's season instead of months picked by hand, or stops following it. */
+  toggleRuleSeason(season: Season): void {
+    this.newRuleSeason.set(this.newRuleSeason() === season ? null : season);
+    this.newRuleMonths.set([]);
   }
 
   async addCareRule(event: Event): Promise<void> {
@@ -294,6 +314,8 @@ export class PlantDetailComponent {
         recurrence_days: recurrence,
         month,
         month_part: timing === 'yearly' ? this.newRuleMonthPart() : null,
+        months: timing === 'recurring' && !this.newRuleSeason() ? [...this.newRuleMonths()] : [],
+        season: timing === 'recurring' ? this.newRuleSeason() : null,
         notes: null,
       });
       this.closeRuleDialog();

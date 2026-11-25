@@ -316,6 +316,11 @@ how many there are and where, e.g. "Dělení trsů — Plicník lékařský (2×
 - Repeating rules ("every 21 days") count from the plant's earliest active planting, so
   all its plantings share one schedule. Rules counted from the planting day and yearly
   rules give each planting its own dates; plantings whose dates fall together share them.
+- A repeating rule can keep to some months (migration 0021): months picked on a strip
+  ("každých 14 dní (duben až květen, září)"), or the plant's harvest or flowering months
+  ("každých 7 dní v době sklizně"), followed when you change them on the plant. Within
+  months, the count starts again on the 1st of each period (a run of consecutive months,
+  also over the new year): every 7 days from July gives 1, 8, 15 … July every year.
 - `sync_plant_tasks()` works the plant's tasks out again when you plant or take a plant
   out, and when its care rules change (migration 0020), and every night adds the next
   ones. Upcoming unfinished tasks follow the rules; completed and past ones stay.

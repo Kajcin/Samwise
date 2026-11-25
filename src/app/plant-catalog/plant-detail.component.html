@@ -362,6 +362,40 @@
                     (input)="onDaysInput('recurrence', $any($event.target).value)"
                   />
                 </div>
+                <fieldset class="mb-3 rule-months">
+                  <legend class="form-label fs-6 mb-2">{{ i18n.t('plant.ruleMonths') }}</legend>
+                  @if (ruleSeasons().length) {
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                      @for (season of ruleSeasons(); track season) {
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm rule-season rule-season-{{ season }}"
+                          [class.active]="newRuleSeason() === season"
+                          [attr.aria-pressed]="newRuleSeason() === season"
+                          (click)="toggleRuleSeason(season)"
+                        >
+                          <app-icon [name]="season === 'harvest' ? 'basket' : 'flower1'" class="me-1" />{{ i18n.t('plant.ruleSeason.' + season) }}
+                        </button>
+                      }
+                    </div>
+                  }
+                  @let season = newRuleSeason();
+                  @if (season) {
+                    <app-month-strip class="d-block" [kind]="season" size="lg" [months]="seasonMonths(season)" />
+                    <div class="form-text">{{ i18n.t('plant.ruleSeasonHint') }}</div>
+                  } @else {
+                    <app-month-strip
+                      class="d-block rule-months-picker"
+                      kind="rule"
+                      size="lg"
+                      editable
+                      [label]="i18n.t('plant.ruleMonths')"
+                      [months]="newRuleMonths()"
+                      (monthsChange)="newRuleMonths.set($event)"
+                    />
+                    <div class="form-text">{{ i18n.t('plant.ruleMonthsHint') }}</div>
+                  }
+                </fieldset>
               }
               @if (newRuleError()) {
                 <div class="alert alert-danger" role="alert">{{ i18n.text(newRuleError()) }}</div>

@@ -222,8 +222,96 @@ describe('PlantDetailComponent', () => {
     await fixture.whenStable();
 
     expect(service.addCareRule).toHaveBeenCalledWith('p2', {
-      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, month: null, month_part: null, notes: null,
+      task_type: 'seed_start', timing_type: 'recurring', offset_days: null, recurrence_days: 7, month: null, month_part: null,
+      months: [], season: null, notes: null,
     });
+  });
+
+  /** Opens the rule dialog with a repeating rule every `days` days. */
+  function startRecurringRule(fixture: { detectChanges(): void }, el: HTMLElement, days: string) {
+    el.querySelector<HTMLButtonElement>('button.add-rule')!.click();
+    fixture.detectChanges();
+    setField(el, 'timing', 'recurring');
+    fixture.detectChanges();
+    setField(el, 'recurrence', days);
+  }
+
+  it('limits a repeating rule to months picked on the strip', async () => {
+    service.addCareRule.and.resolveTo(rules[0]);
+    const { fixture, el } = await render(custom);
+    startRecurringRule(fixture, el, '14');
+
+    const strip = el.querySelector('.rule-months app-month-strip [role=group]')!;
+    expect(strip.getAttribute('aria-label')).toBe('Only in some months');
+    const months = strip.querySelectorAll<HTMLButtonElement>('button.month');
+    months[3].click(); // April
+    months[4].click(); // May
+    months[8].click(); // September
+    fixture.detectChanges();
+    expect(months[3].getAttribute('aria-pressed')).toBe('true');
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(service.addCareRule).toHaveBeenCalledWith('p2', jasmine.objectContaining({
+      timing_type: 'recurring', recurrence_days: 14, months: [4, 5, 9], season: null,
+    }));
+  });
+
+  it("lets a repeating rule follow the plant's harvest or flowering months instead", async () => {
+    service.addCareRule.and.resolveTo(rules[0]);
+    const { fixture, el } = await render(custom);
+    startRecurringRule(fixture, el, '7');
+    el.querySelectorAll<HTMLButtonElement>('.rule-months-picker button.month')[0].click();
+    fixture.detectChanges();
+
+    const seasons = Array.from(el.querySelectorAll<HTMLButtonElement>('button.rule-season'));
+    expect(seasons.map((b) => b.textContent!.trim())).toEqual(['During harvest', 'During flowering']);
+    seasons[0].click();
+    fixture.detectChanges();
+
+    // The plant's harvest months, shown and not pickable; the months picked before are dropped.
+    expect(seasons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(el.querySelector('.rule-months-picker')).toBeNull();
+    expect(el.querySelector('.rule-months app-month-strip [role=img]')!.getAttribute('aria-label')).toBe('Harvest: July to October');
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(service.addCareRule).toHaveBeenCalledWith('p2', jasmine.objectContaining({
+      task_type: 'seed_start', recurrence_days: 7, months: [], season: 'harvest',
+    }));
+  });
+
+  it('offers only the seasons the plant has months for, and pressing one again lets go of it', async () => {
+    const { fixture, el } = await render({ ...custom, harvest_months: [] });
+    startRecurringRule(fixture, el, '7');
+
+    const seasons = Array.from(el.querySelectorAll<HTMLButtonElement>('button.rule-season'));
+    expect(seasons.map((b) => b.textContent!.trim())).toEqual(['During flowering']);
+    seasons[0].click();
+    fixture.detectChanges();
+    seasons[0].click();
+    fixture.detectChanges();
+
+    expect(seasons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(el.querySelector('.rule-months-picker')).not.toBeNull();
+  });
+
+  it('describes a repeating rule with its months or the season it follows', async () => {
+    service.listCareRules.and.resolveTo([
+      { ...rules[0], id: 'm1', months: [4, 5, 9] },
+      { ...rules[0], id: 'm2', task_type: 'harvest', recurrence_days: 7, months: [], season: 'harvest' },
+      { ...rules[0], id: 'm3', task_type: 'prune', recurrence_days: 3, months: [12, 1, 2] },
+      { ...rules[0], id: 'm4', task_type: 'cut_back', recurrence_days: 10, season: 'flowering' },
+    ]);
+    const { el } = await render(seeded);
+    const texts = () => Array.from(el.querySelectorAll('li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim());
+
+    expect(texts()).toEqual(jasmine.arrayWithExactContents([
+      'Fertilize — every 14 days (April to May, September)',
+      'Harvest — every 7 days during harvest',
+      'Prune — every 3 days (December to February)',
+      'Cut back — every 10 days during flowering',
+    ]));
   });
 
   it('shows a validation error for a rule without days', async () => {
@@ -435,7 +523,8 @@ describe('PlantDetailComponent', () => {
     await fixture.whenStable();
 
     expect(service.addCareRule).toHaveBeenCalledWith('p2', {
-      task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, month_part: null, notes: null,
+      task_type: 'cut_back', timing_type: 'yearly', offset_days: null, recurrence_days: null, month: 7, month_part: null,
+      months: [], season: null, notes: null,
     });
   });
 

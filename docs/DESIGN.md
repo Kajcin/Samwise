@@ -147,7 +147,8 @@ Never leave people guessing whether something is happening.
 - Prefer forms that read the same in every language over abbreviations (the month
   strip numbers its months 1.–12.).
 - Months: a season is a set of months, shown and picked with `app-month-strip`; in text,
-  runs of months read "květen až září, listopad" (`describeMonths`).
+  runs of months read "květen až září, listopad" (`describeMonths`). Flowering months are
+  purple, harvest orange, and other months (a care rule's, `kind="rule"`) green.
 
 ## Accessibility
 

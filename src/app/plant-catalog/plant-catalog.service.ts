@@ -3,7 +3,7 @@ import { supabase } from '../core/supabase-client';
 import { currentUserId } from '../core/current-user';
 import type { Lang } from '../core/i18n/i18n';
 import { plantName, plantNotes, ruleNotes } from './labels';
-import type { GrowthForm, LifeCycle, PlantUse } from './traits';
+import type { GrowthForm, LifeCycle, PlantUse, Season } from './traits';
 
 export interface Plant {
   id: string;
@@ -88,6 +88,12 @@ export interface CareRule {
   month?: number | null;
   /** Yearly rules: early = 1st-15th, late = 16th-last day, null = the whole month (migration 0013). */
   month_part?: MonthPart | null;
+  /**
+   * Repeating rules only: the months they apply in (1-12, empty = all year), or the
+   * plant's harvest or flowering months, followed when they change (migration 0021).
+   */
+  months?: number[];
+  season?: Season | null;
   notes: string | null;
   /** Czech notes; rules of built-in plants only. */
   notes_cs?: string | null;
@@ -139,7 +145,7 @@ export class PlantCatalogService {
 
     const { data: rules, error: rulesError } = await supabase
       .from('care_rules')
-      .select('task_type,timing_type,offset_days,recurrence_days,notes,notes_cs')
+      .select('task_type,timing_type,offset_days,recurrence_days,month,month_part,months,season,notes,notes_cs')
       .eq('plant_id', plantId);
     if (rulesError) throw rulesError;
 
@@ -223,7 +229,7 @@ export class PlantCatalogService {
     return data as CareRule;
   }
 
-  /** Tasks already generated from the rule stay; it only affects future plantings. */
+  /** The plant's upcoming tasks follow (migration 0020); done tasks stay. */
   async deleteCareRule(ruleId: string): Promise<void> {
     const { error } = await supabase.from('care_rules').delete().eq('id', ruleId);
     if (error) throw error;

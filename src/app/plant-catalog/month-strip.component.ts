@@ -7,6 +7,7 @@ import { describeMonths, Season, toggled } from './traits';
  *   <app-month-strip kind="harvest" [months]="[4, 5, 9]" />              small, for lists
  *   <app-month-strip kind="harvest" [months]="…" size="lg" />            numbered 1.-12.
  *   <app-month-strip kind="harvest" [(months)]="…" size="lg" editable />  click to pick
+ *   <app-month-strip kind="rule" [(months)]="…" [label]="…" editable />  a care rule's months
  * The months are numbered so the strip reads the same in every language. Screen readers
  * get the season as one sentence, or (editable) a toggle button per month.
  */
@@ -15,7 +16,7 @@ import { describeMonths, Season, toggled } from './traits';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (editable()) {
-      <div class="strip strip-lg {{ kind() }}" role="group" [attr.aria-label]="i18n.t(kind() === 'harvest' ? 'plant.harvest' : 'plant.flowering')">
+      <div class="strip strip-lg {{ kind() }}" role="group" [attr.aria-label]="groupLabel()">
         @for (cell of cells(); track cell.month) {
           <button
             type="button"
@@ -31,7 +32,7 @@ import { describeMonths, Season, toggled } from './traits';
         }
       </div>
     } @else {
-      <div class="strip {{ kind() }}" [class.strip-lg]="size() === 'lg'" role="img" [attr.aria-label]="label()" [title]="label()">
+      <div class="strip {{ kind() }}" [class.strip-lg]="size() === 'lg'" role="img" [attr.aria-label]="summary()" [title]="summary()">
         @for (cell of cells(); track cell.month) {
           <span class="month" [class.on]="cell.on" aria-hidden="true">
             @if (size() === 'lg') {
@@ -61,6 +62,9 @@ import { describeMonths, Season, toggled } from './traits';
     }
     .harvest .month.on {
       background: #a64f0f;
+    }
+    .rule .month.on {
+      background: var(--bs-primary);
     }
     .strip-lg {
       display: grid;
@@ -103,7 +107,10 @@ import { describeMonths, Season, toggled } from './traits';
 export class MonthStripComponent {
   protected i18n = inject(LanguageService);
   months = model<readonly number[]>([]);
-  kind = input<Season>('flowering');
+  /** A plant's season, or (rule) the months a care rule keeps to. */
+  kind = input<Season | 'rule'>('flowering');
+  /** What the months are, for screen readers; by default the season's name. */
+  label = input<string>();
   size = input<'sm' | 'lg'>('sm');
   editable = input(false, { transform: booleanAttribute });
 
@@ -112,7 +119,14 @@ export class MonthStripComponent {
     return Array.from({ length: 12 }, (_, i) => ({ month: i + 1, on: months.includes(i + 1) }));
   });
 
-  protected label = computed(() => {
+  protected groupLabel = computed(
+    () => this.label() ?? this.i18n.t(this.kind() === 'harvest' ? 'plant.harvest' : 'plant.flowering'),
+  );
+
+  protected summary = computed(() => {
+    if (this.kind() === 'rule') {
+      return `${this.groupLabel()}: ${describeMonths(this.months(), (key, params) => this.i18n.t(key, params))}`;
+    }
     const harvest = this.kind() === 'harvest';
     if (!this.months().length) return this.i18n.t(harvest ? 'traits.harvestUnknown' : 'traits.floweringUnknown');
     return this.i18n.t(harvest ? 'traits.harvestMonths' : 'traits.floweringMonths', {
