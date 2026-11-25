@@ -277,7 +277,7 @@
     "sourceUrl": "Source link",
     "sourceUrlHint": "A page about the plant, e.g. on a nursery’s website.",
     "deleteRule": "Delete rule",
-    "rulesNote": "Changes to care rules apply to new plantings; tasks already created stay as they are.",
+    "rulesNote": "Changes to care rules update this plant’s upcoming tasks right away. Completed tasks stay as they are.",
     "errors": {
       "offsetRequired": "Offset days is required for an offset rule.",
       "offsetInvalid": "Offset days must be a whole number of 0 or more.",

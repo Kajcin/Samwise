@@ -277,7 +277,7 @@
     "sourceUrl": "Odkaz na zdroj",
     "sourceUrlHint": "Stránka o rostlině, např. na webu zahradnictví.",
     "deleteRule": "Smazat pravidlo",
-    "rulesNote": "Změny pravidel péče platí pro nové výsadby; už vytvořené úkoly zůstanou, jak jsou.",
+    "rulesNote": "Změny pravidel péče se hned promítnou do nadcházejících úkolů této rostliny. Hotové úkoly zůstanou, jak jsou.",
     "errors": {
       "offsetRequired": "U pravidla podle výsadby vyplňte počet dní.",
       "offsetInvalid": "Počet dní po výsadbě musí být celé číslo 0 nebo větší.",

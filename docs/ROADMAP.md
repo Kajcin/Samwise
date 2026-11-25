@@ -75,8 +75,8 @@ tasks, the garden view) before adding columns.
   watering and flowering or harvest months at a glance.
 - Possible next: suggest care from the type (e.g. offer seasonal rules for perennials), fill
   the types in from a lookup (Wikidata doesn't say how a plant is grown, so probably by hand).
-- Later: changing a care rule doesn't update tasks already generated for plants in the
-  ground (the plant page says so); regenerating them is a possible follow-up.
+- Done: changing a care rule updates the plant's upcoming tasks right away (migration
+  0020); completed tasks stay.
 
 ## Plant photos
 

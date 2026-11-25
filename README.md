@@ -317,7 +317,8 @@ how many there are and where, e.g. "Dělení trsů — Plicník lékařský (2×
   all its plantings share one schedule. Rules counted from the planting day and yearly
   rules give each planting its own dates; plantings whose dates fall together share them.
 - `sync_plant_tasks()` works the plant's tasks out again when you plant or take a plant
-  out (with the current care rules), and every night adds the next ones.
+  out, and when its care rules change (migration 0020), and every night adds the next
+  ones. Upcoming unfinished tasks follow the rules; completed and past ones stay.
 - Taking a plant out detaches it from its unfinished tasks; a task left without plants
   goes. Completed tasks stay as history.
 
